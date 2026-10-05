@@ -1,0 +1,134 @@
+/* ============================================================
+   transaction-recap-polish.css
+   Lapisan refinement visual — WAJIB dimuat setelah
+   transaction-recap.css & transaction-recap-enhanced.css.
+   Murni override; markup lama tetap jalan tanpa class baru
+   (.tab-count & .amount-icon opsional tapi disarankan).
+   ============================================================ */
+
+/* ---------- 1. Ritme halaman ---------- */
+.recap-workspace{max-width:1440px;margin-inline:auto;}
+#pemakaian-bs{scroll-margin-top:1.25rem;}
+
+/* ---------- 2. Link kembali sebagai pill ---------- */
+.recap-back{padding:.42rem .85rem .42rem .65rem;border:1px solid #e4e7f4;border-radius:999px;background:#fff;box-shadow:0 1px 2px rgb(23 32 51 / .05);transition:border-color .15s,background .15s,box-shadow .15s;}
+.recap-back:hover{border-color:#c7d2fe;background:#f5f7ff;box-shadow:0 4px 12px -8px rgb(67 56 202 / .4);}
+.recap-back i{font-size:.75rem;}
+
+/* ---------- 3. Header sebagai hero card ---------- */
+.recap-head{position:relative;overflow:hidden;padding:1.35rem 1.5rem 1.25rem;border:1px solid #e4e7f4;border-radius:18px;background:radial-gradient(900px 200px at 0% 0%,#eef2ff 0%,rgb(238 242 255 / 0) 62%),linear-gradient(180deg,#fff,#fbfcff);box-shadow:0 1px 2px rgb(23 32 51 / .04);}
+.recap-head::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,#4f46e5,#7c3aed 45%,#0ea5e9);}
+.recap-head::after{content:'';position:absolute;right:-70px;top:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(closest-side,rgb(79 70 229 / .08),transparent);}
+.recap-eyebrow{display:inline-flex;align-items:center;gap:.42rem;padding:.3rem .65rem;border:1px solid #dbe3ff;border-radius:999px;background:#eef2ff;font-size:.64rem;}
+.recap-eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.recap-head h1,.recap-head h2{letter-spacing:-.02em;}
+.recap-head p{position:relative;z-index:1;}
+
+/* ---------- 4. Kartu filter ---------- */
+.recap-filter{border-color:#e4e7f4;border-radius:16px;box-shadow:0 1px 2px rgb(23 32 51 / .04),0 10px 28px -22px rgb(67 56 202 / .35);}
+.filter-title i{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:#eef2ff;color:#4338ca;font-size:.78rem;}
+@media(min-width:768px){
+    .recap-filter-grid.recap-filter-grid-module{grid-template-columns:minmax(220px,460px) minmax(150px,210px) auto;}
+}
+.recap-filter .form-control{border-radius:10px;border-color:#dbe3ef;background:#fbfcfe;transition:border-color .15s,box-shadow .15s,background .15s;}
+.recap-filter .form-control:hover{border-color:#c7d2fe;}
+.recap-filter .form-control:focus{border-color:#a5b4fc;background:#fff;box-shadow:0 0 0 4px rgb(79 70 229 / .12);outline:none;}
+.recap-filter-actions .btn-primary{border-radius:10px;box-shadow:0 8px 18px -10px rgb(79 70 229 / .65);transition:transform .15s,box-shadow .15s,background .15s;}
+.recap-filter-actions .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgb(79 70 229 / .75);}
+.recap-filter-actions .btn-primary:active{transform:none;}
+
+/* Tab status + badge jumlah */
+.recap-status-tabs{gap:.45rem;}
+.recap-status-tabs a{border-color:#e4e7f4;background:#fbfcfe;font-weight:600;transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .15s;}
+.recap-status-tabs a:hover{border-color:#a5b4fc;background:#f5f7ff;color:#3730a3;transform:translateY(-1px);box-shadow:0 5px 12px -8px rgb(67 56 202 / .45);}
+.recap-status-tabs a[aria-current=true]{background:linear-gradient(135deg,#4f46e5,#6d28d9);border-color:transparent;color:#fff;box-shadow:0 8px 16px -10px rgb(79 70 229 / .8);}
+.tab-count{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:.5rem;padding:0 .38rem;border-radius:999px;background:rgb(23 32 51 / .07);font-size:.64rem;font-weight:800;font-variant-numeric:tabular-nums;}
+.tab-count.is-zero{opacity:.5;}
+.recap-status-tabs a[aria-current=true] .tab-count{background:rgb(255 255 255 / .25);}
+
+/* ---------- 5. Ringkasan: total hero + kartu statistik ---------- */
+.recap-amount-summary{margin-bottom:1.35rem;}
+.recap-submission-total{position:relative;overflow:hidden;border:0;border-radius:16px;padding:1.05rem 1.3rem;background:linear-gradient(135deg,#4338ca,#4f46e5 55%,#6d28d9);box-shadow:0 14px 30px -18px rgb(67 56 202 / .7);}
+.recap-submission-total::after{content:'';position:absolute;right:-50px;top:-80px;width:230px;height:230px;border-radius:50%;background:radial-gradient(closest-side,rgb(255 255 255 / .2),transparent);}
+.recap-submission-total span{position:relative;z-index:1;color:#c7d2fe;font-size:.72rem;font-weight:650;letter-spacing:.02em;}
+.recap-submission-total strong{position:relative;z-index:1;color:#fff;font-size:clamp(1.25rem,2.3vw,1.65rem);letter-spacing:-.02em;}
+
+.recap-amount-summary .recap-breakdown{gap:.75rem;margin-top:.75rem;padding-top:0;}
+.recap-breakdown a{--tone:#94a3b8;border-color:#e7ebf5;border-radius:14px;padding:.85rem .95rem;box-shadow:inset 3px 0 0 var(--tone),0 1px 2px rgb(23 32 51 / .05);transition:transform .16s,box-shadow .16s,border-color .16s,background .16s;}
+.recap-breakdown a:hover{transform:translateY(-2px);border-color:#c7d2fe;box-shadow:inset 3px 0 0 var(--tone),0 12px 24px -16px rgb(23 32 51 / .35);}
+.recap-breakdown a>span{display:flex;align-items:center;gap:.5rem;min-height:0;font-size:.72rem;line-height:1.35;}
+.amount-icon{display:grid;place-items:center;flex:0 0 26px;width:26px;height:26px;border-radius:8px;font-size:.78rem;background:rgb(23 32 51 / .05);color:#475569;}
+.recap-breakdown strong{font-size:.95rem;margin-top:.6rem;}
+.recap-breakdown small{font-size:.68rem;}
+
+.recap-breakdown .approved{--tone:#16a34a;}
+.recap-breakdown .rejected{--tone:#e11d48;}
+.recap-breakdown .pending{--tone:#d97706;}
+.recap-breakdown .difference{--tone:#7c3aed;}
+.recap-breakdown .revision{--tone:#b45309;}
+.recap-breakdown .recheck{--tone:#2563eb;}
+.recap-breakdown .approved .amount-icon{background:#dcfce7;color:#166534;}
+.recap-breakdown .rejected .amount-icon{background:#ffe4e6;color:#9f1239;}
+.recap-breakdown .pending .amount-icon{background:#fef3c7;color:#92400e;}
+.recap-breakdown .difference .amount-icon{background:#ede9fe;color:#5b21b6;}
+.recap-breakdown .revision .amount-icon{background:#ffedd5;color:#9a3412;}
+.recap-breakdown .recheck .amount-icon{background:#dbeafe;color:#1d4ed8;}
+
+/* ---------- 6. Tabel & footer ---------- */
+.recap-section-head h2,.recap-section-head h3{font-size:.98rem;letter-spacing:-.01em;}
+.recap-list{border-color:#e4e7f4;border-radius:16px;box-shadow:0 1px 2px rgb(23 32 51 / .04);}
+.usage-table thead th{background:linear-gradient(180deg,#f8fafc,#f3f6fb);text-transform:uppercase;letter-spacing:.07em;font-size:.65rem;border-bottom:1px solid #e4e7f4;}
+.usage-table tbody tr{transition:background .15s;}
+.recap-table-footer{background:linear-gradient(180deg,#f8fafc,#f3f6fb);}
+@media(min-width:768px){
+    .recap-footer-totals{gap:.5rem;}
+    .recap-footer-totals span{display:inline-flex;align-items:center;gap:.4rem;background:#fff;border:1px solid #e4e7f4;border-radius:999px;padding:.32rem .7rem;font-size:.69rem;}
+}
+
+/* ---------- 7. Empty state ---------- */
+.recap-empty-enhanced{padding:3.2rem 1.5rem 2.6rem;border-radius:18px;border-color:#dfe5f2;background:linear-gradient(180deg,#f8faff 0%,#fff 72%);}
+.empty-illustration{width:150px;height:150px;margin-bottom:1.1rem;}
+.empty-title{font-size:1.12rem;letter-spacing:-.01em;}
+.empty-description{font-size:.84rem;}
+.empty-actions .btn{border-radius:10px;box-shadow:0 8px 18px -12px rgb(23 32 51 / .35);}
+.empty-actions .btn-primary{box-shadow:0 10px 20px -12px rgb(79 70 229 / .7);}
+
+/* ---------- 8. Guide (details) ---------- */
+.recap-guide{border:1px solid #e4e7f4;border-radius:14px;background:#fbfcfe;padding:.85rem 1.15rem;}
+.recap-guide summary{list-style:none;display:flex;align-items:center;gap:.5rem;}
+.recap-guide summary::-webkit-details-marker{display:none;}
+.recap-guide summary::before{content:'\203A';display:grid;place-items:center;width:18px;height:18px;border-radius:6px;background:#eef2ff;color:#4338ca;font-weight:800;font-size:.8rem;transition:transform .15s;}
+.recap-guide[open] summary::before{transform:rotate(90deg);}
+
+/* ---------- 9. Konsistensi kartu modul (dashboard) ---------- */
+.usage-module{border-color:#e4e7f4;box-shadow:0 1px 2px rgb(23 32 51 / .04);}
+
+/* ---------- 10. Motion masuk (hormati reduced-motion) ---------- */
+@media(prefers-reduced-motion:no-preference){
+    @keyframes polishRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    .recap-back{animation:polishRise .38s cubic-bezier(.22,.9,.34,1) backwards;}
+    .recap-head{animation:polishRise .42s cubic-bezier(.22,.9,.34,1) .04s backwards;}
+    .recap-filter{animation:polishRise .42s cubic-bezier(.22,.9,.34,1) .08s backwards;}
+    .recap-submission-total{animation:polishRise .42s cubic-bezier(.22,.9,.34,1) .12s backwards;}
+    .recap-breakdown a{animation:polishRise .42s cubic-bezier(.22,.9,.34,1) backwards;}
+    .recap-breakdown a:nth-child(1){animation-delay:.14s}
+    .recap-breakdown a:nth-child(2){animation-delay:.18s}
+    .recap-breakdown a:nth-child(3){animation-delay:.22s}
+    .recap-breakdown a:nth-child(4){animation-delay:.26s}
+    .recap-breakdown a:nth-child(5){animation-delay:.30s}
+    .recap-breakdown a:nth-child(6){animation-delay:.34s}
+    .recap-list{animation:polishRise .42s cubic-bezier(.22,.9,.34,1) .16s backwards;}
+    .recap-guide{animation:polishRise .42s cubic-bezier(.22,.9,.34,1) .20s backwards;}
+    .usage-module{animation:polishRise .42s cubic-bezier(.22,.9,.34,1) backwards;}
+    .usage-module:nth-child(1){animation-delay:.10s}
+    .usage-module:nth-child(2){animation-delay:.14s}
+    .usage-module:nth-child(3){animation-delay:.18s}
+    .usage-module:nth-child(4){animation-delay:.22s}
+}
+
+/* ---------- 11. Print: matikan dekorasi ---------- */
+@media print{
+    .recap-head::before,.recap-head::after,.recap-submission-total::after{display:none;}
+    .recap-submission-total{background:#eef2ff !important;box-shadow:none;}
+    .recap-submission-total span,.recap-submission-total strong{color:#1e1b4b !important;}
+}

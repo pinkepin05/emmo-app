@@ -1,0 +1,14 @@
+{
+  "verified_at_utc": "2026-09-25T04:21:16.104683+00:00",
+  "source_files": 253,
+  "schema_tables": 28,
+  "chat_parts": 15,
+  "all_source_copies_sha256_match": true,
+  "all_original_source_files_unchanged": true,
+  "all_source_files_present_in_chat_parts_in_full": true,
+  "unexpected_source_or_chat_files": false,
+  "actual_env_or_business_data_included": false,
+  "new_feature_implemented": false,
+  "application_tests_run_for_packaging": false,
+  "zip_check": "See adjacent qwen-pengecekan-pemakaian-bs.zip.sha256.json for archive checksum and entry verification."
+}

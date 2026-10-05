@@ -1,0 +1,1539 @@
+{
+  "generated_at_utc": "2026-09-25T04:21:13.884014+00:00",
+  "purpose": "Existing application source and implementation instructions for Qwen; no new feature implementation.",
+  "source_file_count": 253,
+  "source_total_bytes": 1954400,
+  "schema_table_count": 28,
+  "chat_part_count": 15,
+  "excluded": [
+    ".env",
+    "vendor",
+    "node_modules",
+    "database rows/dumps",
+    "storage",
+    "bootstrap/cache",
+    ".git",
+    "private backups",
+    "user uploads"
+  ],
+  "files": [
+    {
+      "path": ".editorconfig",
+      "bytes": 252,
+      "sha256": "f78cc5a2ef8ba61ad956d0f5db453748a981270f6a1b9f4a5a00df8690e7946d",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": ".env.example",
+      "bytes": 1120,
+      "sha256": "f038b39a024961b073fd20a11c938bfab3b2c4fa11197edf6a27ad7bfcbedf41",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3911,
+      "sha256": "d8b15dfcda5b6e61a96730afedc1ed5376e46ba367e21749a9d789cc222009c4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Console/Commands/RecalculateCashFlow.php",
+      "bytes": 969,
+      "sha256": "d02521799bd2013e1a8e1978864dbfef881cc81e22e5722d503aadc6fe8e0752",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Console/Commands/RepairDocumentNumbers.php",
+      "bytes": 4455,
+      "sha256": "52ce4b194f3ea0b301ae56bc8463fe08acb90b4fcb67f583829b7792c21ebab4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Events/CashFlowChanged.php",
+      "bytes": 397,
+      "sha256": "6cccee7cc6b8ab1d8a37c543d72b3cd4c2509ba88e7c7aa7bbbfbba22c413b41",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Exports/CashFlowExport.php",
+      "bytes": 2699,
+      "sha256": "42d1cc5959e3b1e1530b497e0b7069843da5b7331d702fb33d295f6d53667d91",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Exports/CashFlowSheetExport.php",
+      "bytes": 1450,
+      "sha256": "deedf5d4915f1a4761f2b01383faf9c846edde718182f501fd2e47ee7dcf44cf",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Exports/LaporanTableExport.php",
+      "bytes": 2146,
+      "sha256": "b910c57f8d14098f71dcab84bf41469a427cd94c49a2226e8ab886f0dc6459ab",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/AccessManagementController.php",
+      "bytes": 1784,
+      "sha256": "7a274492a76a15f9a634d17be3398c88a174223c514bffbf25f9febb63a4c9b7",
+      "chat_file": "kode-untuk-chat/02-controller-transaksi-finance-laporan-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/ApprovalAtasanController.php",
+      "bytes": 5249,
+      "sha256": "98c5cb8cff76bd72c6f992f7d0d472cd5fd7633a6cf17f1f34e130f644821e68",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/ApprovalFinanceController.php",
+      "bytes": 6513,
+      "sha256": "3e52dad9fdae5f3cfb61b5ed131f8cd6fba8b793699f78e20a46b4515e05d843",
+      "chat_file": "kode-untuk-chat/02-controller-transaksi-finance-laporan-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/AuthController.php",
+      "bytes": 1451,
+      "sha256": "8626c6ceb13d70887dd54e267ba78c8ff838b4e605fc7f957687932caca50ed7",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/BsBalanceController.php",
+      "bytes": 3775,
+      "sha256": "9526945731fb91de83b15bdff61a07a5735b2a0914afcce7c454585ec35be397",
+      "chat_file": "kode-untuk-chat/02-controller-transaksi-finance-laporan-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/BsUsageApprovalController.php",
+      "bytes": 2603,
+      "sha256": "2bc802a286f2397e141b85197a4f4b761fc135516c1b5616d3a8cf0494a8013a",
+      "chat_file": "kode-untuk-chat/02-controller-transaksi-finance-laporan-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/CashFlowController.php",
+      "bytes": 6078,
+      "sha256": "bc05d13be153b755c79f5edce2baca83e652240ccb603518113fd8c1622a0d75",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/CompanyController.php",
+      "bytes": 2659,
+      "sha256": "7b0f6944519920e24e514ed7efc3f9fa8a8fe819a77a390e022df0c6c2772596",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/Controller.php",
+      "bytes": 77,
+      "sha256": "25d1c1ef8e6cc8a376553faacfba2b07d9dfaee9bdbb84f14f77517580e9deb1",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/CostCategoryController.php",
+      "bytes": 3134,
+      "sha256": "edc153fcaccebb98925dc95dbecd0b4ae3343695175078adcef13692664d86b6",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/DashboardMasterController.php",
+      "bytes": 1172,
+      "sha256": "f5a7e07ad59b226944e9b3e12595ad22dab94b4687243490c91882d51d027508",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/EventHourGroupController.php",
+      "bytes": 2153,
+      "sha256": "8a98efd2f58b728c01556db3fa153fe6bbd01a2e7c777955abe1dc2cc6d8f995",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/LaporanBsController.php",
+      "bytes": 1817,
+      "sha256": "3584d4b9bf1e7b5e26f0e1294726f7ee447625970a4fe10379998747e88c675e",
+      "chat_file": "kode-untuk-chat/02-controller-transaksi-finance-laporan-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/LevelController.php",
+      "bytes": 2181,
+      "sha256": "944de7df1cdafd7d065fbb756f460c281fe55477c252d27bdd37763289367703",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/NotificationController.php",
+      "bytes": 1157,
+      "sha256": "4667c5390446af301d190f5ab69e8929622aedd973c7b4e6e00219d4d83d83b7",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/PengajuanBsController.php",
+      "bytes": 4081,
+      "sha256": "ae921625dded2b8285eb6aa3c78653ef465a7074973bf8f320c1593d71ddfdd4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/PeriodeController.php",
+      "bytes": 3833,
+      "sha256": "351bb1517a5e494683831b3f578cc50965e867470a8cfd283f04f35304241bdc",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/PerongkosanEventDalamKotaController.php",
+      "bytes": 11553,
+      "sha256": "54213462897a5ec1759078f1620e275a63f6d99c27285c6e777379b9eef37bfd",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/PerongkosanEventLuarKotaController.php",
+      "bytes": 13530,
+      "sha256": "8bc0fb4849cc6c724325d476cad7ce8bc542a69b99902b42c0bbfbb63a67678e",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/PlafonEventDalamKotaController.php",
+      "bytes": 3556,
+      "sha256": "d0756334f714b894bdc20c4a4cb5d48812330e25c6645cf25d2adbe0f3f6c807",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/PlafonEventLuarKotaController.php",
+      "bytes": 5253,
+      "sha256": "215da098d4f877990b2fc7c765944667f63875f1b32f42e1c85db970858bc558",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/PositionController.php",
+      "bytes": 2318,
+      "sha256": "b043d688326531c794faa21fd97b153058c841d1b4ce9632b5398e7377ac9f32",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/ProfileController.php",
+      "bytes": 669,
+      "sha256": "0db4dedcc6fb6457b550f3d8876a61ee0ab25282f98e80d221495fe58baf9bcb",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/RoleController.php",
+      "bytes": 1845,
+      "sha256": "93be561fc3dc6514706fab9a54915fe5e82e642087f3f870eac6351e0eddfa6a",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/SettingPlafonPerjalananDinasController.php",
+      "bytes": 5468,
+      "sha256": "10adc871ac66a2aff237d5c19117c63e356d1bd0b81417664f4d21f567dd9375",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/TransaksiController.php",
+      "bytes": 2778,
+      "sha256": "bec9118194cffb8f00707728e67d4814d2cf9311ef834778c5e716338cdcf5a1",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/TransaksiOperasionalController.php",
+      "bytes": 15629,
+      "sha256": "44cea19d9b273987bbe4a58076c00586966ddb1d0d6c8a352f1513ecdad85d0a",
+      "chat_file": "kode-untuk-chat/02-controller-transaksi-finance-laporan-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/TransaksiPerjalananDinasController.php",
+      "bytes": 31145,
+      "sha256": "a1f631c7b57cdd46122bd55533177501fafeba7dfde86d71e387e4ee18ea7579",
+      "chat_file": "kode-untuk-chat/02-controller-transaksi-finance-laporan-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/UserController.php",
+      "bytes": 4499,
+      "sha256": "d06dc38ce8220275674b6096e8f76965e176c8dd2a35294264ba32d41fe48931",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/WeekdayGroupController.php",
+      "bytes": 2025,
+      "sha256": "1dde0723aed4302abc6c4746c39701067c65a93405a0afff6c091bdcd4e4c096",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Controllers/WilayahController.php",
+      "bytes": 5520,
+      "sha256": "f132bb8efc539e915c4d3c70aab04a200ac24c535737f36644bd349057d7fd96",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Http/Middleware/AtomicBsRequest.php",
+      "bytes": 5123,
+      "sha256": "85a0e66fc5f4774d22bc2d12655b7e25585a7ea171c7d41d00281adb0b35fc4f",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Http/Middleware/AtomicEventRequest.php",
+      "bytes": 2451,
+      "sha256": "ca32507a3f6c233896e40a65dac7756737059d957ff003d91bdb7471eb6facee",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Http/Middleware/CheckActiveAtasan.php",
+      "bytes": 1190,
+      "sha256": "9cc18bcf10c99df501963e06b6cb386ff5d6fd0d1b195763460cff64a74a0e78",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Http/Middleware/CheckActiveCompany.php",
+      "bytes": 1224,
+      "sha256": "de525d05a762592abcf82868c8406dd9131db9ae2b026ce1117deeabae254b02",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Http/Middleware/InjectNotificationBell.php",
+      "bytes": 1004,
+      "sha256": "695d26f0ca4c319b4554ff6c9610d619258f645ec273565df191c505a3110d00",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Listeners/UpdateCashFlowSnapshot.php",
+      "bytes": 500,
+      "sha256": "9165b5535afba7134ad5cc68bb267171d48c7344f813f811389c90d9b237b841",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Models/ApprovalBsFinance.php",
+      "bytes": 608,
+      "sha256": "ade8ff3f1242ab1ae67b66b9a4bd6bb4bb9726eb665e8376e83eff0bb89dbc65",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/AuditLog.php",
+      "bytes": 538,
+      "sha256": "22fd59f5e3cd04d01962a57ecead1997a85bc4e1ad300077b5936cf87772577d",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/BsActivityLog.php",
+      "bytes": 858,
+      "sha256": "6fdcbac106735e7bcf2e62c0ae1258229a9f0492f935b7132aa151009da6344e",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/BsCashFlowSnapshot.php",
+      "bytes": 502,
+      "sha256": "369e2254e589ec1299ac4e84a29362e020977017d71822396722fd65187f3720",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/BsUsageApprovalLog.php",
+      "bytes": 751,
+      "sha256": "875f12d9900c5e3eeef33c250e3d23bda7e76a8a4f2d2195b645fdd94c9f6b76",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/CashFlowSnapshot.php",
+      "bytes": 692,
+      "sha256": "1a22c06beb8097fb695066e1303ed21ee84e214571fda63f36bcc14b1273b993",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/Company.php",
+      "bytes": 1025,
+      "sha256": "866906fed9f76f1db6d5e552a741ba5836f45282629c4b1a9f9641d1e3566aa2",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/Concerns/UsesBsBalance.php",
+      "bytes": 1051,
+      "sha256": "34cc29f7a4fd975649c3215ec258eaa6b55bc788ac10c354da99216596538694",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/CostCategory.php",
+      "bytes": 284,
+      "sha256": "37e44f93e4c64dff71bce6f768b5b5248b02cad23da7003531ece9167a991279",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/EventHourGroup.php",
+      "bytes": 248,
+      "sha256": "eb7d739c99838058ae38941c48e17888e763a080bb5202276471a9ed541a5429",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/Level.php",
+      "bytes": 263,
+      "sha256": "d5cbb7c09f966589e084146f424dbc37b451f0150f8d31615af632ba3b061cec",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/PengajuanBs.php",
+      "bytes": 1795,
+      "sha256": "3441409a184ac9ff6fda89a6336d839b5ef8267b289e23b7e529ecdacf76eb6c",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/Periode.php",
+      "bytes": 291,
+      "sha256": "6c3984f42ce6ed90a868fd28b4ed46696fb9cf2d7447a981b8ac07eccd3ae003",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/PerongkosanEventDalamKota.php",
+      "bytes": 1099,
+      "sha256": "429d7318908ed618bee9b7bca04b39cf08f74530130b966b20bcb40b8585dbb2",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/PerongkosanEventLuarKota.php",
+      "bytes": 1085,
+      "sha256": "56565d418e1fbe6f83bcec61320384415ceb7d1b4779b76c73026272eb1873ae",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/PlafonEventDalamKota.php",
+      "bytes": 897,
+      "sha256": "eea85a03759da1195e490e7961fd9e1f8f0e40cd16a93d148d2e9cf648cdb739",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/PlafonEventLuarKota.php",
+      "bytes": 895,
+      "sha256": "2ae6419dd9c67b09716564cb4e68ab3781683995bafced3beda424679f9b412b",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/Position.php",
+      "bytes": 270,
+      "sha256": "33389a3242fb1a4c1d93dc0fc6fd58ae9b5381b6ec7ecd755dfbd107771eed35",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/ReimbursementClaim.php",
+      "bytes": 1007,
+      "sha256": "5a87764a2b4a05ee55ba31b8732eebbf4b1350b7db71d07ac85e6eba97bafdb9",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/ReimbursementLog.php",
+      "bytes": 338,
+      "sha256": "d7c0bcc18439cd3767a129f428a8b4d1ecfae6dce9a0ec079f1d28d5d6e3e424",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/Role.php",
+      "bytes": 971,
+      "sha256": "1e877a928e709981e698a3650b6741c6afa6fa1e70f9aa23360541bceee0a90f",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/SettingPlafonPerjalananDinas.php",
+      "bytes": 951,
+      "sha256": "cbd6dbae19b2f2cac1650608deeac4dd2274f80125bd0f9905bd782e68b888fe",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/StockCashFlowSnapshot.php",
+      "bytes": 760,
+      "sha256": "eb8381a7934cd374656dd396ca96ec0bf8f1ccbddb47d5edf56c568a0519a02e",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/TransaksiOperasionalDetail.php",
+      "bytes": 728,
+      "sha256": "80add31c2d2b067ec121603c72d26dc59f27eb90c3bac22038d46a814104aade",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/TransaksiOperasionalHeader.php",
+      "bytes": 1076,
+      "sha256": "10c789cfe834f9864ebfc209f50f835151db12be2fe05054156fe9828385084e",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/TransaksiPerjalananDinasDetail.php",
+      "bytes": 926,
+      "sha256": "5ff69546d8f602ba3303a834258adec468190b06df4e5dfc558807060f22c556",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/TransaksiPerjalananDinasHeader.php",
+      "bytes": 2365,
+      "sha256": "d8c2d798481fb739da006f268fdc07b51d883e2def2bb33b58e2033ca4c66f35",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/User.php",
+      "bytes": 3026,
+      "sha256": "8b277bda2ddb959555e52a1e9bd354b593efa46267c91e1ff94867755437990f",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Models/WeekdayGroup.php",
+      "bytes": 243,
+      "sha256": "883f800fb3c465f05caa6983e02b2292d615ef3c3445b0d005c9ae13d253b485",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/Wilayah.php",
+      "bytes": 644,
+      "sha256": "3f513622512cd291fce7ebd7b9cb0331f25c3c363743d0b95b0d2c3073013ceb",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Models/WilayahDistance.php",
+      "bytes": 567,
+      "sha256": "ccc1cf42cb2df63efdd68dc88f3a3ec8db84c5facdf68729df107a9674f8a1b8",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Notifications/BsApproved.php",
+      "bytes": 742,
+      "sha256": "3f5043095f0b6e5a4d04116bb17e2b57afa238f86ce1ff1eaca9510617bc02e2",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Notifications/BsCreated.php",
+      "bytes": 814,
+      "sha256": "3c5e4987906505849c0aaaea11051b1c334250ee4a719b366814137551d99a71",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Notifications/BsDisbursed.php",
+      "bytes": 804,
+      "sha256": "013feac16c69367820035700e6541f2955f7ff0cd9a20325603fa244fd00a120",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Notifications/BsRejected.php",
+      "bytes": 661,
+      "sha256": "b1788383230dde338e78bd93b5755520dae60ce488c581ada61ab49595e93af3",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Notifications/BsSettled.php",
+      "bytes": 1052,
+      "sha256": "508357d7fda3d6532c2dc55bd50a16b8f38d2a8206ccc9210482c2adbef266fb",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Notifications/BsUsageApprovalUpdated.php",
+      "bytes": 1148,
+      "sha256": "6e36c23b99bc2764d2c822348c924e2844d7f74593cbc15053b3163eebc31fe7",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Notifications/TransaksiOverPlafon.php",
+      "bytes": 980,
+      "sha256": "ad0ee3f02948415adbebd2aaecbaecc15017fcc0677df285da25e21ac839d33d",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Observers/RoleObserver.php",
+      "bytes": 1103,
+      "sha256": "79148faf35f262ec493b61f4d328e1c3faa4c9c2b9f6213e5fe0c620b68e738e",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Observers/UserObserver.php",
+      "bytes": 974,
+      "sha256": "4007be3caf7e772f979dbb42ae8845e5cdf976bc9f00ff6220de9b3f67bd724f",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Providers/AppServiceProvider.php",
+      "bytes": 1112,
+      "sha256": "4d828d71f56d6c64c1541f8e51ba01c6d2f53ab19f75c1b51c2cf54ba1a836fe",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Providers/EventServiceProvider.php",
+      "bytes": 187,
+      "sha256": "5341515b03afdfd58688ca2f77cad05bc8df2f5a97ea5517f5117163d3487e45",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "app/Services/BonSementaraService.php",
+      "bytes": 1250,
+      "sha256": "eac2026302a1694ab6aaea079bc80342c39ce9830f5d99ac562be5a10d24ee92",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/BsCashFlowService.php",
+      "bytes": 7151,
+      "sha256": "e720ec88244cd9e7dfe7d77c3f5cef3aa5a9fcddd1ebe53f5a967fb918646c62",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/BsNotifications.php",
+      "bytes": 517,
+      "sha256": "8526e6fc5c79a8c69ef31bbe4b9f6f68813133c03ecf71a9933bf5fe43800fa4",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/BsPeriodClosingService.php",
+      "bytes": 5791,
+      "sha256": "b99478eacc4a3181f8fd301e66e55f77e59b8e2c7b7622390f3d26c166197215",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/BsValidationService.php",
+      "bytes": 8405,
+      "sha256": "e196edddf4f587e0e8b356a46a14180380f23ee93ea8b0e605b87507cb218fbe",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/CashFlowService.php",
+      "bytes": 5972,
+      "sha256": "10a1957734510df90f4bec4242322d2be91d72f5a84d2dff5d6883b5c6e778a9",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/DocumentNumberService.php",
+      "bytes": 2401,
+      "sha256": "45b6a475ec1e7fa7de0e75c8065e84048b5bd7f4d8552f741999b0fa78c471f5",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Services/PeriodService.php",
+      "bytes": 3130,
+      "sha256": "d5baf731e6492d374ae3061b1c7f2c5aceadf1691cc1161328dadfbe8adf4d5d",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Services/PlafonService.php",
+      "bytes": 5371,
+      "sha256": "1c828a73e3ebc85b5218765c88af11f3e33b4006959a75a0e12074d631db158b",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/StockCashFlowService.php",
+      "bytes": 5337,
+      "sha256": "3b5cb5a6de5a3e97b5733663eb7e53aca39526992cf97be12befc7be44660e0f",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Services/TransactionFundingService.php",
+      "bytes": 1862,
+      "sha256": "182ab8b5da6b6fece9d686396c679d25dbaee32098f2b56b1f7fefa63a6f5e23",
+      "chat_file": "kode-untuk-chat/03-layanan-saldo-middleware-01.md"
+    },
+    {
+      "path": "app/Support/AppTime.php",
+      "bytes": 1109,
+      "sha256": "531959067437a244e87c594e9fe10672cd253808e45408e37fe5d1fcb48f617a",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Support/Money.php",
+      "bytes": 805,
+      "sha256": "9b51f058206f18068afa0b6635fb7e3c8016fecb495298bdabd3b7e7c32f2e20",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "app/Traits/FiltersByPeriod.php",
+      "bytes": 646,
+      "sha256": "44517072e947baffcfa0c807902e01014c9b11ffd2d2d1a55c2fe2fdd3b5c58e",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "artisan",
+      "bytes": 425,
+      "sha256": "f91a517c0c5d3a904c3f390933964a5e08ec1fc68146882730daac4aca4ffcec",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-01.md"
+    },
+    {
+      "path": "bootstrap/app.php",
+      "bytes": 1416,
+      "sha256": "84089c20a2d2a2538d9571b0ae971a690d2491d3d5e270dddcfd1586d5f3c96a",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "bootstrap/providers.php",
+      "bytes": 89,
+      "sha256": "f720e185207a343d4c19fc99dbb317a4187efbcd7d38a303a695bbdd77ffb943",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "composer.json",
+      "bytes": 2967,
+      "sha256": "2a52c538f1a8006668e6d6fa26ca97d91e9f78abd957b67712b11ec2db787df1",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "composer.lock",
+      "bytes": 337963,
+      "sha256": "5184a4be483c9c3b79d708b34c09ca1be313be3da2bd9d0667ce41e26b97ff78",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-02.md"
+    },
+    {
+      "path": "config/app.php",
+      "bytes": 4488,
+      "sha256": "51c49a728d4b65476bbc14f1dac64efa04da01453e83db5687fa00d1a887ac52",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/auth.php",
+      "bytes": 4040,
+      "sha256": "c7e204e9785c9f596d66fb884b493f658f2327f157646bdb4088efd6b3a7773f",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/bs.php",
+      "bytes": 263,
+      "sha256": "d3a16edde46a9bc50374eb78d30f97685e4f578bd05b2ec115c232ed7d61d633",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "config/cache.php",
+      "bytes": 3683,
+      "sha256": "b8bcf382283330b94c0a602ff06452de819041ea709e28eea5065d51d1d7d085",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/database.php",
+      "bytes": 6982,
+      "sha256": "06759b7b36b8641e9025fe03dd728970c4cb02d5b58ff709cbb0649987b4bfc2",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/filesystems.php",
+      "bytes": 2783,
+      "sha256": "dac3d2a0e7076987a26c58b53fa462f75b8956c43b3680257381b560ac990bdb",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/logging.php",
+      "bytes": 4340,
+      "sha256": "299ec1ba5b5a803c8e20f666ae7628e442e856cc2ff7ac9e2adb17b97e8ad63b",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/mail.php",
+      "bytes": 3631,
+      "sha256": "c43ff49a31c5f32ce21eb7159f2a4b3cd2f4074eaed5838d265646dbfedd3474",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/permission.php",
+      "bytes": 1233,
+      "sha256": "076b01b09d2d494632675623410c176c93b27b5a1d10f4b6dff5ea70c4f3aa15",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "config/queue.php",
+      "bytes": 4199,
+      "sha256": "6101774da7c8b79af46d0028f2b8b31a484c3f7eda10b76e5b27b6093ad364a4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/sanctum.php",
+      "bytes": 3105,
+      "sha256": "f8ae35944312702e9004765c753e16ec8b0cb0a7bcc3f379efa250bfd7a53753",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/services.php",
+      "bytes": 1039,
+      "sha256": "8258c4487eb1d73a97e569eb0e411e3f25368044812df4cba807860432be1d92",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "config/session.php",
+      "bytes": 7848,
+      "sha256": "f2e75e189021597e29940c0859c00c3088ec591e403768fff5143c5687a80f59",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "database/factories/UserFactory.php",
+      "bytes": 1044,
+      "sha256": "50bdc543f1b09d1a57260be55ad0e1a68aee4b34f63e1109dc94d9bcd3080526",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/0001_01_01_000000_create_users_table.php",
+      "bytes": 871,
+      "sha256": "380c085f6088eeeb0ec8d5541c7b6e832fe566c5f27ebf3eb87b2d855ca70e85",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/0001_01_01_000001_create_cache_table.php",
+      "bytes": 867,
+      "sha256": "2ca8398390ecef8eaf72aeac7fefce67f7de631b6f2ec7b7081c8db8953215dc",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/0001_01_01_000002_create_jobs_table.php",
+      "bytes": 1812,
+      "sha256": "7c9c712adf4091c87bf2612f4d0dccdfa1df4501553e4ac068b83d7bd5462fa5",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_06_17_050908_create_personal_access_tokens_table.php",
+      "bytes": 863,
+      "sha256": "c81ecde85ea5072188c468dcaf79776728b6eb8f684d63fc0d88a4908484ca75",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_07_07_065552_add_jarak_durasi_to_perongkosan_event_luar_kota_table.php",
+      "bytes": 773,
+      "sha256": "7e0bb3f364612b03420e16a960a2d31df030bdf706a8d08d88bb6e505a860755",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_07_07_095857_add_jarak_durasi_to_transaksi_perjalanan_dinas_header_table.php",
+      "bytes": 790,
+      "sha256": "90fcba0c3a52c5c47feacb0185e8acab76594730a9e6316a36ae1a805b7e5c64",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_07_08_014711_create_wilayah_distances_table.php",
+      "bytes": 1616,
+      "sha256": "60197d3d4c929d6f33a9ee4fb044d6c440aa03f8cb7d7f5aa7d912933400925e",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_07_16_075422_create_permission_tables.php",
+      "bytes": 6523,
+      "sha256": "9be723cec2a8625506c8e0073a4bbabca1fbb08dbbbfb67ab55fe3e93d7298f0",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_08_26_031245_add_audit_columns_to_periode_table.php",
+      "bytes": 736,
+      "sha256": "2a9ec41d49888b2c7b54df61e105b8ae86b16947b00a1bd2966f9607eeaa1215",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_08_27_010727_fix_bs_id_nullable_in_operasional_header.php",
+      "bytes": 2036,
+      "sha256": "30d2d34f48fa1df58ec2704c51d9aa82211000500a00dc40990fb5fd1044df19",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_08_27_085533_add_soft_deletes_to_detail_tables.php",
+      "bytes": 705,
+      "sha256": "12f660a74f45952a4622fc49adb4fac6d0e95a76db608706df64d016daefd6fb",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_08_27_085556_create_audit_logs_table.php",
+      "bytes": 1271,
+      "sha256": "e9ba638ae0c715da30153f7034b0021e4c6ddbdde06b0e4f8b871c3c956307e7",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_04_065700_create_cash_flow_snapshots_table.php",
+      "bytes": 1383,
+      "sha256": "907d0d235c07728f598e64f82da3111b1834579ceca6f134daf5973c8ab1e20c",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_08_015951_add_tipe_pengajuan_to_pengajuan_bs_table.php",
+      "bytes": 609,
+      "sha256": "52e5560e7362c933521a17e5468ed74ba4eda4b5452817aa4fac149e66bf60b5",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_08_051501_add_status_to_transaksi_operasional_header.php",
+      "bytes": 721,
+      "sha256": "5f4243ab2305a73bce1391e55699d981252a3af454e17052853b56355525e704",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_10_044520_add_rejected_finance_to_pengajuan_bs_status_enum.php",
+      "bytes": 610,
+      "sha256": "618a6600fc1bfec74ee8607cb9692b145eae877a430655160a3c82daaf5acc6a",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_16_100000_add_bs_cash_flow_and_travel_validation.php",
+      "bytes": 1861,
+      "sha256": "5cc665129b757a33b16f36c2f5deb001f2f51cbce0e9c48d0d5b8e9383b7a87b",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_17_100000_restore_readable_document_numbers.php",
+      "bytes": 1820,
+      "sha256": "33af6df1e3509287c521343ea18313781e34874c2709e8cf9097f9d7900e11b1",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_18_100000_defer_closing_balances_until_period_close.php",
+      "bytes": 1268,
+      "sha256": "03757568f09bb5ac9dff1c54855282c575802e43c651e02cd5dd11c38f249204",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_18_110000_create_stock_cash_flow_snapshots_table.php",
+      "bytes": 1000,
+      "sha256": "3cd77f67b98821bc8fa8e06bc010cd844f35ff083e9b61b2feb77c0964d369a5",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_21_100000_create_reimbursement_claims.php",
+      "bytes": 2146,
+      "sha256": "fa663e3f516bea03122c5189edda04a4b208f9657405acacc70c2b87d73e97d1",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_23_100000_add_payment_proofs_to_reimbursement_claims.php",
+      "bytes": 546,
+      "sha256": "e5a300a20348926eafd05d18bc12875220f702d0c01d3191c3b310e00b860cd7",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_23_110000_add_personal_funds_to_stock_cash_flow.php",
+      "bytes": 870,
+      "sha256": "b0cb5cd3dccaf448598c71161e8f463510fdd0b960a2bff8aa1be6704813b33e",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_24_140000_add_pooled_bs_funding.php",
+      "bytes": 1797,
+      "sha256": "dd26cf4043f4c8f275a1b736a300675b99a7f65f6b3d65444bf3913c74289bc2",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/migrations/2026_09_24_160000_add_bs_owner_approval.php",
+      "bytes": 1889,
+      "sha256": "d9a2a761004bf749485236d5d853328021854b8d327b659d57321c74352b8606",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/seeders/BsPermissionSeeder.php",
+      "bytes": 816,
+      "sha256": "bb5b4523303778762bbdcf150455dc03525a46ac9fea706ea171168627e91a09",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/seeders/DatabaseSeeder.php",
+      "bytes": 482,
+      "sha256": "cf8e4b6e48360218bb5534f66419c955288f78338eb8a3dba9d8ac3394ec3dbc",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "database/seeders/PermissionSeeder.php",
+      "bytes": 4522,
+      "sha256": "e9c3fe10a44041926f2cb8dede723646ea4742a379540d4944be42109f12fea2",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "database/seeders/WilayahSeeder.php",
+      "bytes": 2600,
+      "sha256": "466e1b6c253766f8a6e0ca1111d7eeb9e78aa443b875bdfd19451cc58208f8a4",
+      "chat_file": "kode-untuk-chat/06-migrasi-seeder-factory-01.md"
+    },
+    {
+      "path": "docs/audit-kesesuaian-rev4.md",
+      "bytes": 12139,
+      "sha256": "50dac366d30283e0577f1e5bb49610f9241ed76d93e1920e407424207a320c22",
+      "chat_file": "kode-untuk-chat/08-dokumentasi-existing-01.md"
+    },
+    {
+      "path": "docs/evaluasi-stok-kas.md",
+      "bytes": 26786,
+      "sha256": "ac62ce33b04e5fa89bb448d00c4ca517b1005e1ee872ffe12bf6fa1e69a10c65",
+      "chat_file": "kode-untuk-chat/08-dokumentasi-existing-01.md"
+    },
+    {
+      "path": "docs/implementasi-bs.md",
+      "bytes": 13956,
+      "sha256": "d8f9d25a0192f944321a7081f07c2c5a5e856a03462ddf39d778fe72ae74c569",
+      "chat_file": "kode-untuk-chat/08-dokumentasi-existing-01.md"
+    },
+    {
+      "path": "docs/nomor-dokumen.md",
+      "bytes": 3174,
+      "sha256": "1c89b5ae857d2e054a51598a62dc5637474e308b1c71d36464032a40bdf6cbcd",
+      "chat_file": "kode-untuk-chat/08-dokumentasi-existing-01.md"
+    },
+    {
+      "path": "docs/reimbursement-pribadi.md",
+      "bytes": 2624,
+      "sha256": "03abb87d8b6d3055c8c2dfc7fc2c088949763e3b6cd90103c2fa44ca0e2cc676",
+      "chat_file": "kode-untuk-chat/08-dokumentasi-existing-01.md"
+    },
+    {
+      "path": "docs/saldo-bs-gabungan.md",
+      "bytes": 9255,
+      "sha256": "a46b34355fd6f7074a4299bb672c8feae1c60f4bdca4b6451018db5d30ffa27a",
+      "chat_file": "kode-untuk-chat/08-dokumentasi-existing-01.md"
+    },
+    {
+      "path": "docs/waktu-aplikasi.md",
+      "bytes": 1910,
+      "sha256": "99a5573829ebaf9b6f925f8a6dfb64aea373b9d993c9478a036be67b832c3a16",
+      "chat_file": "kode-untuk-chat/08-dokumentasi-existing-01.md"
+    },
+    {
+      "path": "package.json",
+      "bytes": 414,
+      "sha256": "e1bf666b49a401c06ede562b32fc741b8e8dc45cca0a67de136edfbd51335f33",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "phpunit.xml",
+      "bytes": 1322,
+      "sha256": "493369cfb7feea104da4bec214c2cc6526ca2f1b9d937c50a2961fc59cb61aaf",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "public/index.php",
+      "bytes": 543,
+      "sha256": "eba77cba39695b6bd091fe5211d481f7ebb2ce2d8d26230b5a609465d0a4aff9",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "public/js/application-time.js",
+      "bytes": 2425,
+      "sha256": "9415c2859cb62d90280a073ecd906b12d6ab6c201b68b02f0753d7807782ea4e",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "public/js/bs-balance.js",
+      "bytes": 2415,
+      "sha256": "e37906eac6e781b8d42227acf64e1c0c0d8da70c621d1ea673687a4e94c44dae",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "public/js/sidebar.js",
+      "bytes": 4396,
+      "sha256": "ae7abab6f7a624ccf78802df9faa586ebffe0f256c8020da9f48d59d90671510",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/css/app.css",
+      "bytes": 390,
+      "sha256": "9f49ed837fdc773b89a294d1e86dc68828ef2f774d7e797ba5f89c2a08c84760",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/js/app.js",
+      "bytes": 22,
+      "sha256": "cf6dab196c721f6911ff99cc4f910897f978599a2d289971a316a5fc33091f94",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/js/bootstrap.js",
+      "bytes": 127,
+      "sha256": "6fd9fc82e68fa915a882f4e227b9faacbe7bfd66cb953c628840e83bda6b72f4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/Pagination/bootstrap-5-htmx.blade.php",
+      "bytes": 2952,
+      "sha256": "1d7437bd4dadb2458057e60813281633ac96a406ca4307a231afc89c694ee49c",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/Positions/create.blade.php",
+      "bytes": 4693,
+      "sha256": "d37303a7443912db9fb60c98d813920f67dbe12d2b91d9f3c723cd9566885ee6",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/Positions/edit.blade.php",
+      "bytes": 2410,
+      "sha256": "7869db5dd045872ed28bd64b92eb7448d40948decfbf73f78d10df4d3869f617",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/admin/access-management.blade.php",
+      "bytes": 26847,
+      "sha256": "02c6fb6324d05c04dbb8bd73de4b9eb1097e70c4e0d4bc938bf2d56488dffad1",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/approval-atasan/detail.blade.php",
+      "bytes": 20606,
+      "sha256": "2ae282f442eec3b799dd9eaec5cd78f0bfee68d676c7ec7406d4b9feba5fb16f",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/approval-atasan/index.blade.php",
+      "bytes": 22232,
+      "sha256": "a95f98632ccc9b2e04ec0d757c44fbadc2e583ec265b5f6b31ee9eda96391b6a",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/approval-finance/detail.blade.php",
+      "bytes": 21776,
+      "sha256": "70cc79ed8ad47a3ff8dad6b7deda2c6a05c1397455da5f4bc50b8be40ed71a17",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/approval-finance/index.blade.php",
+      "bytes": 31905,
+      "sha256": "f5356e900b8314fafeabde1c56f1891a59430e80624101888e2591d8e569e178",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/auth/login.blade.php",
+      "bytes": 7920,
+      "sha256": "511ac5718e2122a52d134a0c11dbe13c46723017607fe257223a90d41dff7277",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/bs-balance/show.blade.php",
+      "bytes": 3571,
+      "sha256": "00d14b516844c68367569fd456efd6b098cbb358a45ed6d55a4a3c25ea1f865e",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/bs-usage-approvals/actions.blade.php",
+      "bytes": 1385,
+      "sha256": "0468e6df1358b89a3af74fb5d757791d2b3b39f7035c6d808fa4799479f7d820",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/bs-usage-approvals/history.blade.php",
+      "bytes": 1078,
+      "sha256": "e9623babd84c500e9ab42322deb08014572a988d5701ca1af81cfd0242862d48",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/bs-usage-approvals/index.blade.php",
+      "bytes": 2564,
+      "sha256": "1a46881f333e212eb7b5129a2021e7ef8828ca471aefd39099467ac0b3023ce6",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/bs-usage-approvals/show.blade.php",
+      "bytes": 3244,
+      "sha256": "7cf0ce290c54166954f6961129818d0221e384a6208ebc6194d815c580d7a41d",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/cash-flow/index.blade.php",
+      "bytes": 10534,
+      "sha256": "34b7a47d7e03647efcacc9d7b90f41f6a2fae0431e469eca4e03655c618677b4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/cash-flow/partials/expense-breakdown.blade.php",
+      "bytes": 1044,
+      "sha256": "b33220d25d8f61b25caef8259080d82f78162b8d92fdb829aee757f20b97b30a",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/cash-flow/partials/styles.blade.php",
+      "bytes": 12283,
+      "sha256": "4ca7635c331d387f19295f386523cf2f275d7fb3e50ac6d774382b285f8fb3ba",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/cash-flow/partials/transaction-section.blade.php",
+      "bytes": 3112,
+      "sha256": "383945a0f687fb061994202460ec62c9fc7e2336eb867da2801063a445342ef6",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/cash-flow/show.blade.php",
+      "bytes": 12701,
+      "sha256": "053a8f0d2e51ff3324fef7840392c28c2c42f6b79635e57250f9bf85492fc9d7",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/companies/create.blade.php",
+      "bytes": 4684,
+      "sha256": "905965a150d04485db3c47666b80c2aad0dd89d91f13376943b9a5d91a45a3ed",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/companies/edit.blade.php",
+      "bytes": 2374,
+      "sha256": "26b62da6dbd952d03415ddcd97320ddfb00f542825fa3e66683b9888271d53f0",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/components/sidebar-module.blade.php",
+      "bytes": 1360,
+      "sha256": "647e3064fb6b726151ce11d60a9de162170e7b043023fef52fc5907facb56176",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/components/sidebar.blade.php",
+      "bytes": 13112,
+      "sha256": "9315d763dbcafebe737ce3b4cc0a0b4b6cc3eb039c382649ab12d4a4b71de04c",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/cost_categories/create.blade.php",
+      "bytes": 4836,
+      "sha256": "38928d58753f01b3ce3a02e17032bf6081f14d3ffcebc81aa4c05d8ef57070bf",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/cost_categories/edit.blade.php",
+      "bytes": 2742,
+      "sha256": "f53a35e84f63718d20031e825c2ffcc3bf6978a422b8eb576a48c3a2c0ee2360",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/dashboard/master_data.blade.php",
+      "bytes": 14358,
+      "sha256": "2e712bd77dc8343c2f31c6815f274b173e214f738ffc647241d1189c4e252d66",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/dashboard/portal.blade.php",
+      "bytes": 10498,
+      "sha256": "6eb89a2778ce0375a5a1ea4037a4f657f9317420498c403f0baef8eee8ad0f6d",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/dashboard/transaksi.blade.php",
+      "bytes": 12979,
+      "sha256": "2091baf0f0fedc0726a72bdeab9467424bba9fcbde5d84fc6c0ebe6162002b41",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/event_hour_groups/create.blade.php",
+      "bytes": 4677,
+      "sha256": "0af52171afab4a6e7e8a92cd6bb95b3573e8e2068ed40d3606a135f108ccd635",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/event_hour_groups/edit.blade.php",
+      "bytes": 2882,
+      "sha256": "8b265f796100a6f66201936af9d5df307365d4fecb388cca7586e7d798d7918c",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/laporan-bs/index.blade.php",
+      "bytes": 6935,
+      "sha256": "14ea8672465c7f085b8d317e615d823081c3df99cbe97519d058f68497ec972e",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/layouts/app-with-sidebar.blade.php",
+      "bytes": 17539,
+      "sha256": "09e43506029a187040566c89a722df2e2fd1d1ea961d34bf151dd2c165a2eea9",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/levels/create.blade.php",
+      "bytes": 4648,
+      "sha256": "45781017853dae71708070a143dd1c6cd4288262871cc534ab7a8917da177ff4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/levels/edit.blade.php",
+      "bytes": 2260,
+      "sha256": "863d89878e599b4a2202b2a3ebc6e15001c8eed63e3a6b7db9de6e1ea4ce6b48",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-03.md"
+    },
+    {
+      "path": "resources/views/partials/application-time.blade.php",
+      "bytes": 5239,
+      "sha256": "9ddb5aa6110406408b945e3e62c4ecee0859ee200cae006af92ce9fd05fdb257",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/partials/bs-approval-link.blade.php",
+      "bytes": 497,
+      "sha256": "0c18f9d686643297836e548c6eb8121663a58c9a751906a976100a9d99fa4250",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/partials/notification-bell.blade.php",
+      "bytes": 4556,
+      "sha256": "a6258af641b33c59da94fef9a9ab7cd15d186a6655c8598b42aa88ca421084d0",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/partials/transaction-funding.blade.php",
+      "bytes": 2852,
+      "sha256": "35671c9c0eaffc0841c8ff05cca3bb6fc28f9669da49cbb2f9cd79c74a5a143a",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/partials/travel-confirmation.blade.php",
+      "bytes": 3117,
+      "sha256": "ffe9506c22aa93ad08e314adc8166284035ea3d854c0f2650c1c3886d0a071a2",
+      "chat_file": "kode-untuk-chat/05-layout-menu-laporan-aset-01.md"
+    },
+    {
+      "path": "resources/views/pengajuan-bs/create.blade.php",
+      "bytes": 17918,
+      "sha256": "590359888e70c65fdd3ffda9d577798d628d79fec5fef004986f83d2346ef3ee",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/pengajuan-bs/index.blade.php",
+      "bytes": 7359,
+      "sha256": "39a183d56c4a760026705b5fd80ad0b04d2816c900cc8090457ea79cdfa6b975",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/pengajuan-bs/show.blade.php",
+      "bytes": 12099,
+      "sha256": "35ffa5d7a8633817c6306a53c19fe23897ab7cc2c703e863f09be4f09e80f087",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/periode/index.blade.php",
+      "bytes": 10519,
+      "sha256": "344963bae633c3006df30f5999e63133abf32f22cbfdb913f5de700b697d520c",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/periode/show.blade.php",
+      "bytes": 6051,
+      "sha256": "9c465bdd04bc0a89dda1b675f37e93ce1f24b98950df0d2b66d95546e5db134c",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_dalam_kota/create.blade.php",
+      "bytes": 21236,
+      "sha256": "0ae0a40b333797c56b38bbddedb0edd2dbe858d116bae678f3a9d1926cc0a1bf",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_dalam_kota/edit.blade.php",
+      "bytes": 25781,
+      "sha256": "4ebba776470fc47f704f0bb681cacb6dfe885ae9ed0d093045c732ede973a512",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_dalam_kota/index.blade.php",
+      "bytes": 17721,
+      "sha256": "9d51737a7e8e41127e0eefcb7a580d0beb55c9da6c631c5c7219993a7b5951c4",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_dalam_kota/show.blade.php",
+      "bytes": 23937,
+      "sha256": "0140edd2937ff65510747202bc4bd6a32c7d3d04b4f9110f3e39019c9e1401eb",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-04.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_luar_kota/create.blade.php",
+      "bytes": 37519,
+      "sha256": "99427393681985b3339bf1a90a050a47ba5c74790462835523e9bbcab7df0c83",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_luar_kota/edit.blade.php",
+      "bytes": 34302,
+      "sha256": "763a85945916e72b770b551637655386adfb757360dd53d752262d46bd37a6c8",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_luar_kota/index.blade.php",
+      "bytes": 35251,
+      "sha256": "54b22543e3985a6d7f62aec64b6f5208120e2ffd86998d59974ff7b0385fb98f",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/perongkosan_event_luar_kota/show.blade.php",
+      "bytes": 3304,
+      "sha256": "2ee47366c3bd43804f6a1056d9fb3e1cb3dedb3fac391f8b2802c74bbe66a6ac",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/plafon_event_dalam_kota/create.blade.php",
+      "bytes": 11403,
+      "sha256": "bd3c7245f64e75ed437aca973c151d5f43bb7ac9e1bce7b5e8a5c22c40ed5d62",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/plafon_event_dalam_kota/edit.blade.php",
+      "bytes": 7157,
+      "sha256": "2feb9066b053558c0f99d416f4f0d7b171154f7b751eeb9a3a9dc2e71e01b0ea",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/plafon_event_luar_kota/create.blade.php",
+      "bytes": 7123,
+      "sha256": "095ab121103329997c28a326caf055f451a8aa7923c9f666ba36378c34334989",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/plafon_event_luar_kota/edit.blade.php",
+      "bytes": 5236,
+      "sha256": "c8a48bbfd5a5712f802e4fa2c4ae926101c1129183368ea758957ac75ebd748a",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/profile/index.blade.php",
+      "bytes": 32176,
+      "sha256": "965b3ef8ac841038f685ae159a39af2faf77c0d64ef7e26237a30fef636de33d",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/roles/create.blade.php",
+      "bytes": 4907,
+      "sha256": "d754e7f8dcaf90c150813146cb110ad2c6234fe85ff0a79a3fd3bb98bcc24059",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/roles/edit.blade.php",
+      "bytes": 673,
+      "sha256": "43014998a16f1174b9cf0a0cb6846e895fb7662dd9ca8147edb99452f23c8347",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-05.md"
+    },
+    {
+      "path": "resources/views/setting_plafon_perjalanan_dinas/create.blade.php",
+      "bytes": 11645,
+      "sha256": "d0e4eb63bbee22374b6ec6f659e5c26193307d8e468ec30e9785a3cc92e1444c",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/setting_plafon_perjalanan_dinas/edit.blade.php",
+      "bytes": 9094,
+      "sha256": "1f3fbb494f7d09e0d82240eb21de37f481ba60ee23a0d07a50113dbb41820370",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/transaksi_operasional/create.blade.php",
+      "bytes": 32978,
+      "sha256": "80bdce4694953aec9aae39542e2c1b1fa11930fe6ada2266af654900351cf03e",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/transaksi_operasional/index.blade.php",
+      "bytes": 20375,
+      "sha256": "6d86b073899e31e7190c0e9ee9a69c29e2ebff43dde60c8bac0e0509327f8698",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/transaksi_operasional/show.blade.php",
+      "bytes": 40241,
+      "sha256": "473cc8a5d6056a66715c95dbb70fe2fb86baaa1150b95491ab05cb6b625358a7",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-01.md"
+    },
+    {
+      "path": "resources/views/transaksi_perjalanan_dinas/create.blade.php",
+      "bytes": 35754,
+      "sha256": "ad59b25922adf5fb74c4a55bdeba07ec773acf1f3ef1ddb4aa9a009c225827a8",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-02.md"
+    },
+    {
+      "path": "resources/views/transaksi_perjalanan_dinas/index.blade.php",
+      "bytes": 17581,
+      "sha256": "d010538465516b006aef4a5163c0cd6a9d473ece39146c835130a4910254b51a",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-02.md"
+    },
+    {
+      "path": "resources/views/transaksi_perjalanan_dinas/show.blade.php",
+      "bytes": 41081,
+      "sha256": "0bd4e39280885788616ee28248e61341e9cb339b5c392583d0c65a1f7b42f935",
+      "chat_file": "kode-untuk-chat/04-tampilan-transaksi-dan-finance-02.md"
+    },
+    {
+      "path": "resources/views/users/create.blade.php",
+      "bytes": 15614,
+      "sha256": "97c38f805baeff77c5031e2e7df5ecbf110f3f8b2d6067ee805e802f798f7475",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/users/edit.blade.php",
+      "bytes": 12554,
+      "sha256": "6845011692a7e8b65eb17ee83a4464f42c5ac9ec3e0bba822c4c73f781190bab",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/weekday_groups/create.blade.php",
+      "bytes": 4541,
+      "sha256": "984c50d1ef7a63953c1ce8c332f78ae6136fe768acf2a9427b8e7b4602c81943",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/weekday_groups/edit.blade.php",
+      "bytes": 2723,
+      "sha256": "c5b3e19681ed9000b0d043350cd229359dc86b721849f816c108e0e2b4a62cc5",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/welcome.blade.php",
+      "bytes": 82648,
+      "sha256": "648e5b7137d50fb6a75e241d07a3339b2075c3c9f657d0f99ceb04bf54f64195",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/wilayah/create.blade.php",
+      "bytes": 14277,
+      "sha256": "701ab2687f180c8097e62946c2114e7531363e22c98a1e717974e4be62662280",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "resources/views/wilayah/edit.blade.php",
+      "bytes": 4808,
+      "sha256": "d1a708f39a5f1414795f5abaf17d674918eadb59ac730865528369a78070b98e",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "routes/api.php",
+      "bytes": 495,
+      "sha256": "fed01f5015c123ba167ac6743830ab130a405b4c839b6dbac49d262314b98734",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "routes/console.php",
+      "bytes": 210,
+      "sha256": "9adccc33e7dd400683e434774077c7fdb2f299c5712cedf16a43fdf56f2850fa",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    },
+    {
+      "path": "routes/web.php",
+      "bytes": 21464,
+      "sha256": "5b24bea796d00efb9a5b93c516c68be4bfc91eff8b7d1e2f0bced7b25ffcdc1f",
+      "chat_file": "kode-untuk-chat/01-inti-model-route-penomoran-izin-01.md"
+    },
+    {
+      "path": "tests/Feature/ApplicationTimeTest.php",
+      "bytes": 2391,
+      "sha256": "5329f1150e62c476c796dfb00031fefd26b683d072f0c928e51b693f27810861",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/Feature/BsCashFlowTest.php",
+      "bytes": 132718,
+      "sha256": "2f4590cf5e8ab89298ff69054e1b583b567b958bae0a1a04eaf3403da50c1d9a",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/Feature/DashboardAccessTest.php",
+      "bytes": 6565,
+      "sha256": "9d409e9e6d92de2abfb69aa4980e2ef0d7938769617c4e532866b9da7ea23b3e",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/Feature/DocumentNumberTest.php",
+      "bytes": 3543,
+      "sha256": "6d4d1358c581c0b08a587be10b89244ef52dbe8c56431f9b50bf3c77296228c8",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/Feature/ExampleTest.php",
+      "bytes": 359,
+      "sha256": "aaa4a192fb4aa96d4e81eda06a29968da3d9a73b71026b87a67297e66dd985b8",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/Feature/MasterDataPagesTest.php",
+      "bytes": 10645,
+      "sha256": "5b164bfdf17735a7cefdcf56adc7cb323fe924208cafde00e1d18a60fddf05c7",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/Feature/ProfilePageTest.php",
+      "bytes": 4888,
+      "sha256": "5852c256b50233832bf282370ce1e734c4b07fca96db98e09fdfd2e5a36e95f2",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/TestCase.php",
+      "bytes": 142,
+      "sha256": "c7c209f5579c42647c1f7b2a79ac828e8b54ac62a98442045a6e94fa2c0d0ebc",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "tests/Unit/ExampleTest.php",
+      "bytes": 243,
+      "sha256": "ffacae5c1a2a44c809420af5b3b404910da1b12167d58764dac6d10b8ba8cfaf",
+      "chat_file": "kode-untuk-chat/07-pengujian-existing-01.md"
+    },
+    {
+      "path": "vite.config.js",
+      "bytes": 436,
+      "sha256": "b981a284135bcb7da21ea5e1aaa2dc31c8daeef92d9b4e5c79538bdb8dfaf6f0",
+      "chat_file": "kode-untuk-chat/09-kode-pendukung-lain-06.md"
+    }
+  ]
+}
