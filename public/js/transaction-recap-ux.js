@@ -24,7 +24,6 @@ class TransactionRecapUX {
 
         this.updateFilterChips();
         
-        // Listen for filter changes
         filterForm.addEventListener('submit', (e) => {
             setTimeout(() => this.updateFilterChips(), 100);
         });
@@ -37,7 +36,6 @@ class TransactionRecapUX {
         const urlParams = new URLSearchParams(window.location.search);
         const filters = [];
 
-        // Map filter names to labels
         const filterMap = {
             'pemakaian_periode': { label: 'Periode', icon: 'bi-calendar' },
             'pemakaian_jenis': { label: 'Modul', icon: 'bi-grid' },
@@ -45,19 +43,18 @@ class TransactionRecapUX {
             'pemakaian_referensi': { label: 'Referensi', icon: 'bi-search' }
         };
 
-        // Status labels
         const statusLabels = {
             '': 'Semua status',
+            'CHECKED': 'Sudah Dicek',
             'FOLLOW_UP': 'Perlu Tindak Lanjut',
-            'PENDING': 'Pending / Belum Dicek',
+            'PENDING': 'Belum Dicek',
             'REVISION': 'Perlu Revisi (keputusan lama)',
-            'RECHECK': 'Perlu Cek Ulang',
-            'APPROVED': 'Disetujui',
-            'REJECTED': 'Ditolak',
-            'DIFFERENCE': 'Selisih Persetujuan Finance'
+            'APPROVED': 'Dikonfirmasi Finance',
+            'REJECTED': 'Ditolak Penuh',
+            'NOT_APPROVED': 'Ditolak Penuh / Sebagian',
+            'DIFFERENCE': 'Selisih Konfirmasi Finance'
         };
 
-        // Type labels (you might need to get these from data attributes)
         const typeLabels = {
             'OPR': 'Operasional Sales',
             'PD': 'Perjalanan Dinas',
@@ -74,7 +71,6 @@ class TransactionRecapUX {
                 } else if (key === 'pemakaian_jenis') {
                     displayValue = typeLabels[value] || value;
                 } else if (key === 'pemakaian_periode') {
-                    // Format: YYYY-MM to MMMM YYYY
                     const [year, month] = value.split('-');
                     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
                                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -91,7 +87,6 @@ class TransactionRecapUX {
             }
         });
 
-        // Render chips
         chipsContainer.innerHTML = '';
         
         if (filters.length === 0) {
@@ -133,7 +128,6 @@ class TransactionRecapUX {
             chipsContainer.appendChild(chip);
         });
 
-        // Add clear all button if more than 1 filter
         if (filters.length > 1) {
             const clearAll = document.createElement('a');
             clearAll.className = 'filter-chip';
@@ -162,7 +156,6 @@ class TransactionRecapUX {
 
     /* ===== Toast Notifications ===== */
     setupToastNotifications() {
-        // Check for flash messages (Laravel session)
         const flashMessage = document.querySelector('[data-flash-message]');
         if (flashMessage) {
             const type = flashMessage.dataset.flashType || 'info';
@@ -170,10 +163,8 @@ class TransactionRecapUX {
             this.showToast(message, type);
         }
 
-        // Setup form submission feedback
         document.querySelectorAll('form[data-ajax]').forEach(form => {
             form.addEventListener('submit', (e) => {
-                // You can add AJAX handling here
                 this.showToast('Permintaan sedang diproses...', 'info');
             });
         });
@@ -207,12 +198,10 @@ class TransactionRecapUX {
 
         container.appendChild(toast);
 
-        // Auto remove after 5 seconds
         setTimeout(() => {
             this.removeToast(toast);
         }, 5000);
 
-        // Close button
         toast.querySelector('.toast-close').addEventListener('click', () => {
             this.removeToast(toast);
         });
@@ -240,7 +229,6 @@ class TransactionRecapUX {
         const quickActionsBar = document.querySelector('.quick-actions-bar');
         if (!quickActionsBar) return;
 
-        // Add keyboard navigation
         quickActionsBar.addEventListener('keydown', (e) => {
             const buttons = quickActionsBar.querySelectorAll('.quick-action-btn');
             const currentIndex = Array.from(buttons).indexOf(document.activeElement);
@@ -262,19 +250,14 @@ class TransactionRecapUX {
         const table = document.querySelector('.usage-table');
         if (!table) return;
 
-        // Add row selection (for future bulk actions)
         const rows = table.querySelectorAll('tbody tr');
         rows.forEach(row => {
             row.addEventListener('click', (e) => {
-                // Don't trigger if clicking on links or buttons
                 if (e.target.closest('a, button')) return;
-                
-                // You can add row selection logic here
                 row.classList.toggle('selected');
             });
         });
 
-        // Add keyboard navigation for table
         table.addEventListener('keydown', (e) => {
             const focusedRow = document.activeElement.closest('tr');
             if (!focusedRow) return;
@@ -296,7 +279,6 @@ class TransactionRecapUX {
 
     /* ===== Loading States ===== */
     setupLoadingStates() {
-        // Add loading state to buttons
         document.querySelectorAll('[data-loading]').forEach(button => {
             button.addEventListener('click', (e) => {
                 if (button.classList.contains('loading')) {
@@ -309,7 +291,6 @@ class TransactionRecapUX {
                 button.disabled = true;
                 button.innerHTML = '<i class="bi bi-hourglass-split"></i> Memproses...';
                 
-                // Reset after 3 seconds (you should handle actual completion)
                 setTimeout(() => {
                     button.classList.remove('loading');
                     button.disabled = false;
@@ -322,14 +303,12 @@ class TransactionRecapUX {
     /* ===== Keyboard Shortcuts ===== */
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + K to focus search
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
                 const searchInput = document.querySelector('#pemakaian_referensi');
                 if (searchInput) searchInput.focus();
             }
             
-            // Escape to close modals/toasts
             if (e.key === 'Escape') {
                 document.querySelectorAll('.toast').forEach(toast => {
                     this.removeToast(toast);
@@ -339,7 +318,6 @@ class TransactionRecapUX {
     }
 }
 
-// Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         new TransactionRecapUX();
@@ -348,5 +326,4 @@ if (document.readyState === 'loading') {
     new TransactionRecapUX();
 }
 
-// Export for use in other scripts
 window.TransactionRecapUX = TransactionRecapUX;

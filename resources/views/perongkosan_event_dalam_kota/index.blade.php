@@ -333,8 +333,10 @@
         }
     </style>
     @include('partials.mobile-assets')
+    @include('partials.transaction-actions-assets')
+    @include('partials.transaction-list-assets')
 </head>
-<body>
+<body class="transaction-list-page">
     @include('partials.application-time')
     <div class="page-header">
         <div class="container" style="max-width: 1200px;">
@@ -368,53 +370,61 @@
 
         <div class="card-modern">
             <div class="card-header-modern">
-                <h5>
-                    <i class="bi bi-list-check"></i> Daftar Transaksi Event Dalam Kota
+                <h5 class="transaction-list-heading">
+                    <i class="bi bi-list-check" aria-hidden="true"></i>
+                    <span class="transaction-list-heading-full">Daftar Transaksi Event Dalam Kota</span>
+                    <span class="transaction-list-heading-short">Daftar Transaksi</span>
                     <span class="count-badge">{{ $events->total() }} Transaksi</span>
                 </h5>
 
-                <form method="GET" action="{{ route('perongkosan_event_dalam_kota.export') }}" class="d-flex gap-2 align-items-center flex-wrap">
-                    <select name="periode" class="form-select filter-select">
+                <form method="GET" action="{{ route('perongkosan_event_dalam_kota.index') }}" class="transaction-list-filter d-flex gap-2 align-items-center flex-wrap">
+                    @include('partials.transaction-reported-filter')
+                    <label class="transaction-list-period-label" for="transaction-list-period">Periode transaksi</label>
+                    <select id="transaction-list-period" name="periode" class="form-select filter-select" aria-label="Periode transaksi">
                         <option value="">Semua Periode</option>
                         @foreach(\App\Models\Periode::orderBy('periode', 'desc')->get() as $p)
-                            <option value="{{ $p->periode }}">{{ $p->periode }}</option>
+                            <option value="{{ $p->periode }}" @selected(($periode ?? '') === $p->periode)>{{ $p->periode }}</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="btn btn-sm btn-success-modern btn-modern">
+                    <button type="submit" class="btn btn-sm btn-primary">Tampilkan</button>
+                    <button type="submit" formaction="{{ route('perongkosan_event_dalam_kota.export') }}" class="btn btn-sm btn-success-modern btn-modern">
                         <i class="bi bi-download"></i> Export
                     </button>
                 </form>
             </div>
 
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table-modern">
-                        <thead>
+                <div class="table-responsive" aria-label="Daftar transaksi event dalam kota">
+                    <table class="table-modern" data-transaction-list="edk" role="table">
+                        <thead role="rowgroup">
                             <tr>
                                 <th>ID Transaksi</th>
                                 <th>Tanggal</th>
                                 <th>User (Karyawan)</th>
                                 <th>Deskripsi</th>
-                                <th>Nominal (Rp)</th>
+                                <th class="text-end">Total Nominal</th>
                                 <th class="text-center">Foto Bukti</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody role="rowgroup">
                             @forelse($events as $event)
-                            <tr>
-                                <td><span class="code-badge">{{ $event->transaksi_id }}</span></td>
-                                <td><i class="bi bi-calendar3 me-2 text-muted"></i>{{ \Carbon\Carbon::parse($event->tanggal)->format('d M Y') }}</td>
-                                <td>
+                            <tr role="row">
+                                <td data-field="id" data-label="ID Transaksi" role="cell"><span class="code-badge">{{ $event->transaksi_id }}</span></td>
+                                <td data-field="date" data-label="Tanggal" role="cell"><i class="bi bi-calendar3 me-2 text-muted"></i>{{ \Carbon\Carbon::parse($event->tanggal)->format('d M Y') }}</td>
+                                <td data-field="user" data-label="Karyawan" role="cell">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="avatar">{{ strtoupper(substr($event->user->name ?? $event->user->nama ?? 'U', 0, 1)) }}</span>
                                         <span class="fw-medium">{{ $event->user->name ?? $event->user->nama ?? 'Unknown' }}</span>
                                     </div>
                                 </td>
-                                <td><div class="desc-cell" title="{{ $event->description }}">{{ $event->description }}</div></td>
-                                <td class="nominal-cell">Rp {{ number_format($event->nominal, 0, ',', '.') }}</td>
-                                <td class="text-center">
+                                <td data-field="description" data-label="Deskripsi" role="cell"><div class="desc-cell" title="{{ $event->description }}">{{ $event->description ?: '-' }}</div></td>
+                                <td data-field="total" data-label="Total nominal" role="cell" class="transaction-total nominal-cell text-end text-nowrap">Rp {{ number_format($event->nominal, 2, ',', '.') }}</td>
+                                <td data-field="photos" data-label="Foto bukti" role="cell" class="text-center">
                                     <div class="d-flex justify-content-center">
+                                        @unless($event->foto_event_1 || $event->foto_event_2 || $event->foto_event_3)
+                                            <span class="no-photo">Belum ada foto</span>
+                                        @endunless
                                         @if($event->foto_event_1)
                                             <a href="{{ asset('storage/' . $event->foto_event_1) }}" target="_blank" class="foto-chip" title="Lihat Foto 1">
                                                 <i class="bi bi-camera"></i> 1
@@ -432,18 +442,13 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="{{ route('perongkosan_event_dalam_kota.show', $event->id) }}" class="btn-action edit" style="background: var(--primary-color);">
-    <i class="bi bi-eye"></i> Lihat Detail
-</a>
-                                        <form action="{{ route('perongkosan_event_dalam_kota.destroy', $event->id) }}" method="POST" class="d-inline">
-                                            @csrf @method('DELETE')
-                                            <button class="btn-action hapus" onclick="return confirm('Yakin hapus data ini?')">
-                                                <i class="bi bi-trash"></i> Hapus
-                                            </button>
-                                        </form>
-                                    </div>
+                                <td data-field="actions" role="cell">
+                                    @include('partials.transaction-actions', [
+                                        'transaction' => $event,
+                                        'transactionType' => 'edk',
+                                        'detailUrl' => route('perongkosan_event_dalam_kota.show', $event->id),
+                                        'deleteUrl' => route('perongkosan_event_dalam_kota.destroy', $event->id),
+                                    ])
                                 </td>
                             </tr>
                             @empty

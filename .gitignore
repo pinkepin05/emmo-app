@@ -33,3 +33,6 @@ node_modules/
 /first()
 /docs/qwen-pengecekan-pemakaian-bs.zip
 /docs/qwen-pengecekan-pemakaian-bs.zip.sha256.json
+
+# Local MySQL verification database copies
+/emmo_bs_verify_*/

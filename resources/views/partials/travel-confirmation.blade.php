@@ -5,7 +5,7 @@
 <div class="alert {{ $transaksi->status === 'VALIDATED' ? 'alert-success' : ($transaksi->status === 'REJECTED_OWNER' ? 'alert-danger' : 'alert-warning') }}">
     <strong>{{ $transaksi->status_label }}</strong>
     @if($transaksi->status === 'DRAFT')
-        <p class="mb-0">Draft belum mengurangi saldo BS. {{ $transaksi->needsOwnerApproval() ? 'Konfirmasi anggota akan mengirim permintaan kepada pemohon. Saldo berkurang setelah pemohon menyetujui.' : 'Periksa rincian lalu Konfirmasi untuk membukukan pemakaian.' }}</p>
+        <p class="mb-0">Saldo BS baru berkurang setelah konfirmasi Finance. {{ $transaksi->needsOwnerApproval() ? 'Konfirmasi anggota mengirim permintaan kepada pemohon untuk disetujui sebelum pengecekan Finance.' : 'Periksa rincian lalu Konfirmasi untuk mengirim pengajuan ke Finance.' }}</p>
         @if($canEdit ?? false)
             <form class="mt-3" method="POST" action="{{ route('transaksi_perjalanan_dinas.validate', $transaksi->transaksi_id) }}" onsubmit="return confirm('{{ $transaksi->needsOwnerApproval() ? 'Kirim rincian ini kepada pemohon untuk persetujuan pemakaian BS?' : 'Konfirmasi transaksi ini? Pemakaian BS akan dibukukan dan transaksi tidak dapat diubah.' }}');">
                 @csrf

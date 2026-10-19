@@ -12,7 +12,13 @@
     .check-summary strong { display:block; font-size:1.25rem; margin-top:.25rem; }
 </style>
 @endpush
-@if(session('success'))<div class="alert alert-success" role="status">{{ session('success') }}</div>@endif
+@if(session('success'))
+    @if($compactFeedback ?? false)
+        <div class="check-result-feedback" role="status"><i class="bi bi-check-circle" aria-hidden="true"></i><span>{{ session('success') }}</span></div>
+    @else
+        <div class="alert alert-success" role="status">{{ session('success') }}</div>
+    @endif
+@endif
 @if($errors->any())
     <div class="alert alert-danger" role="alert"><strong>Data belum dapat diproses.</strong><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
 @endif

@@ -10,7 +10,7 @@
     @include('partials.application-time')
     <main class="container py-4">
         <div class="d-flex flex-wrap justify-content-between gap-3 mb-3"><h1 class="h3">Persetujuan Pemakaian BS</h1><a href="{{ route('dashboard.transaksi') }}" class="btn btn-outline-secondary">Kembali</a></div>
-        <p>Permintaan anggota grup dinas untuk memakai saldo BS Anda. Saldo berkurang setelah Anda menyetujui rincian biaya. Permintaan yang menunggu tidak menyisihkan saldo.</p>
+        <p>Permintaan anggota grup dinas untuk memakai saldo BS Anda. Setelah Anda menyetujui rincian, Finance memeriksa pengajuan. Saldo baru berkurang setelah konfirmasi Finance. Permintaan yang menunggu tidak menyisihkan saldo.</p>
         @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
         <form class="d-flex flex-wrap gap-2 mb-3" method="GET">
             <label for="status" class="col-form-label">Status</label>

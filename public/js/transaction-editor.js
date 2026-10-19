@@ -40,7 +40,7 @@
             if (deleted) {
                 deleted.checked = !deleted.checked;
                 row.classList.toggle('opacity-50', deleted.checked);
-                row.querySelectorAll('input:not([data-delete-expense]), select').forEach(input => { input.disabled = deleted.checked; });
+                row.querySelectorAll('input:not([data-delete-expense]), select, [data-clear-photo]').forEach(input => { input.disabled = deleted.checked; });
                 button.textContent = deleted.checked ? 'Batalkan Hapus' : 'Hapus';
                 button.classList.toggle('btn-outline-secondary', deleted.checked);
                 button.classList.toggle('btn-outline-danger', !deleted.checked);

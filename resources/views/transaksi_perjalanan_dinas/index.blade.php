@@ -198,6 +198,13 @@
             white-space: nowrap;
         }
 
+        .status-cell { min-width: 190px; }
+        .status-cell .transaction-status {
+            white-space: normal;
+            text-align: left;
+            line-height: 1.4;
+        }
+
         /* 🎯 Tombol aksi kecil */
         .btn-action {
             border: none;
@@ -288,8 +295,9 @@
     </style>
     @include('partials.mobile-assets')
     @include('partials.transaction-actions-assets')
+    @include('partials.transaction-list-assets')
 </head>
-<body>
+<body class="transaction-list-page">
     @include('partials.application-time')
     <!-- Page Header -->
     <div class="page-header">
@@ -324,56 +332,71 @@
 
         <div class="card-modern animate-slide-in">
             <div class="card-header-modern">
-                <h5>
-                    <i class="bi bi-list-check"></i> Daftar Transaksi Perjalanan Dinas
+                <h5 class="transaction-list-heading">
+                    <i class="bi bi-list-check" aria-hidden="true"></i>
+                    <span class="transaction-list-heading-full">Daftar Transaksi Perjalanan Dinas</span>
+                    <span class="transaction-list-heading-short">Daftar Transaksi</span>
                     <span class="count-badge">{{ $transaksis->total() }} Transaksi</span>
                 </h5>
                 
                 {{-- 🎯 EXPORT FORM --}}
-                <form method="GET" action="{{ route('transaksi_perjalanan_dinas.export') }}" class="d-inline-flex gap-2 align-items-center flex-wrap">
-                    <select name="periode" class="form-select form-select-sm filter-select">
+                <form method="GET" action="{{ route('transaksi_perjalanan_dinas.index') }}" class="transaction-list-filter d-inline-flex gap-2 align-items-center flex-wrap">
+                    @include('partials.transaction-reported-filter')
+                    <label class="transaction-list-period-label" for="transaction-list-period">Periode transaksi</label>
+                    <select id="transaction-list-period" name="periode" class="form-select form-select-sm filter-select" aria-label="Periode transaksi">
                         <option value="">Semua Periode</option>
                         @foreach(\App\Models\Periode::orderBy('periode', 'desc')->get() as $p)
-                            <option value="{{ $p->periode }}">{{ $p->periode }}</option>
+                            <option value="{{ $p->periode }}" @selected(($periode ?? '') === $p->periode)>{{ $p->periode }}</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="btn btn-sm btn-success-modern btn-modern">
+                    <button type="submit" class="btn btn-sm btn-primary">Tampilkan</button>
+                    <button type="submit" formaction="{{ route('transaksi_perjalanan_dinas.export') }}" class="btn btn-sm btn-success-modern btn-modern">
                         <i class="bi bi-download"></i> Export
                     </button>
                 </form>
             </div>
 
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table-modern">
-                        <thead>
+                <div class="table-responsive" aria-label="Daftar transaksi perjalanan dinas">
+                    <table class="table-modern" data-transaction-list="pd" role="table">
+                        <thead role="rowgroup">
                             <tr>
                                 <th><i class="bi bi-hash me-2"></i>ID Transaksi</th>
                                 <th><i class="bi bi-calendar-event me-2"></i>Tanggal</th>
                                 <th><i class="bi bi-person me-2"></i>User</th>
                                 <th><i class="bi bi-geo-alt me-2"></i>Tujuan</th>
                                 <th><i class="bi bi-file-text me-2"></i>Deskripsi</th>
+                                <th class="text-end"><i class="bi bi-cash-stack me-2"></i>Total Nominal</th>
+                                <th><i class="bi bi-info-circle me-2"></i>Status</th>
                                 <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody role="rowgroup">
                             @forelse($transaksis as $t)
-                            <tr>
-                                <td><span class="code-badge">{{ $t->transaksi_id }}</span><div class="small mt-1">{{ $t->status_label }}</div>
-                                    @include('partials.bs-finance-check-status', ['transaction' => $t, 'jenis' => 'PD'])
-                                </td>
-                                <td>
+                            <tr role="row">
+                                <td data-field="id" data-label="ID Transaksi" role="cell"><span class="code-badge">{{ $t->transaksi_id }}</span></td>
+                                <td data-field="date" data-label="Tanggal" role="cell">
                                     <i class="bi bi-calendar3 cell-icon"></i>{{ \Carbon\Carbon::parse($t->tanggal)->format('d M Y') }}
                                 </td>
-                                <td>
+                                <td data-field="user" data-label="Karyawan" role="cell">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="avatar">{{ strtoupper(substr($t->user->nama ?? '-', 0, 1)) }}</span>
                                         <span class="fw-semibold">{{ $t->user->nama ?? '-' }}</span>
                                     </div>
                                 </td>
-                                <td><i class="bi bi-geo-alt cell-icon"></i>{{ $t->tujuanDinas->nama ?? '-' }}</td>
-                                <td><div class="desc-cell" title="{{ $t->description }}">{{ $t->description }}</div></td>
-                                <td class="text-center">
+                                <td data-field="location" data-label="Tujuan" role="cell"><i class="bi bi-geo-alt cell-icon"></i>{{ $t->tujuanDinas->nama ?? '-' }}</td>
+                                <td data-field="description" data-label="Deskripsi" role="cell"><div class="desc-cell" title="{{ $t->description }}">{{ $t->description ?: '-' }}</div></td>
+                                <td data-field="total" data-label="Total nominal" role="cell" class="transaction-total text-end text-nowrap fw-semibold">Rp {{ number_format($t->total_nominal ?? 0, 2, ',', '.') }}</td>
+                                <td data-field="status" data-label="Status transaksi & pemeriksaan" role="cell" class="status-cell">
+                                    <span class="badge transaction-status {{ match ($t->status) {
+                                        'VALIDATED' => 'text-bg-success',
+                                        'PENDING_OWNER' => 'text-bg-warning',
+                                        'REJECTED_OWNER' => 'text-bg-danger',
+                                        default => 'text-bg-secondary',
+                                    } }}">{{ $t->status_label }}</span>
+                                    @include('partials.bs-finance-check-status', ['transaction' => $t, 'jenis' => 'PD'])
+                                </td>
+                                <td data-field="actions" role="cell" class="text-center">
                                     @include('partials.transaction-actions', [
                                         'transaction' => $t,
                                         'transactionType' => 'pd',
@@ -384,7 +407,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6">
+                                <td colspan="8">
                                     <div class="empty-state">
                                         <div class="icon-circle">
                                             <i class="bi bi-inbox"></i>

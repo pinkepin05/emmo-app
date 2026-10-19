@@ -165,6 +165,15 @@
                     <span>Stok Kas</span>
                 </a>
                 @endcan
+
+                @can('akses.approval-finance')
+<a href="{{ route('monitoring-finance.index') }}"
+   class="sidebar-link {{ request()->routeIs('monitoring-finance.*') ? 'active' : '' }}"
+   @if(request()->routeIs('monitoring-finance.*')) aria-current="page" @endif>
+    <i class="bi bi-building-check"></i>
+    <span>Monitoring Finance</span>
+</a>
+@endcan
             </div>
             @endif
 

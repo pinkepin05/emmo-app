@@ -57,6 +57,20 @@ class PengajuanBs extends Model
 
     /* ================= ACCESSORS ================= */
 
+    public function isRejectedBySystem(): bool
+    {
+        if ($this->status !== 'REJECTED_ATASAN') return false;
+
+        return $this->relationLoaded('logs')
+            ? $this->logs->contains('activity_code', 'REJECTED_SYSTEM')
+            : $this->logs()->where('activity_code', 'REJECTED_SYSTEM')->exists();
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->isRejectedBySystem() ? 'Ditolak Sistem' : str_replace('_', ' ', $this->status);
+    }
+
     /** Label tampilan tipe pengajuan */
     public function getTipeLabelAttribute(): string
     {

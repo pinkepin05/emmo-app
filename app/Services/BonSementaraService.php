@@ -6,24 +6,20 @@ use App\Models\Periode;
 
 class BonSementaraService
 {
-        /**
-     * 🎯 AUTO-ROLL: Periode aktif adalah periode OPEN terbaru.
-     * Jika bulan di dunia nyata belum ada di database, sistem otomatis membuatnya.
+    /**
+     * Periode berjalan mengikuti bulan kalender aplikasi.
+     * Buat bulan yang belum tersedia tanpa membuka kembali periode CLOSED.
      */
     public function getActivePeriode(): string
     {
-        $currentMonth = \App\Support\AppTime::now()->format('Y-m');
-        
-        // 1. Pastikan bulan saat ini (dunia nyata) PASTI ada di database dan berstatus OPEN
+        $currentMonth = app(PeriodService::class)->current();
+
         Periode::firstOrCreate(
-            ['periode' => $currentMonth], 
+            ['periode' => $currentMonth],
             ['status' => 'OPEN']
         );
 
-        // 2. Ambil periode OPEN paling baru (mendukung multiple OPEN untuk settlement periode lalu)
-        $latestOpen = Periode::where('status', 'OPEN')->orderBy('periode', 'desc')->first();
-        
-        return $latestOpen ? $latestOpen->periode : $currentMonth;
+        return $currentMonth;
     }
 
     public function getSaldoAwal($userId, $periode)

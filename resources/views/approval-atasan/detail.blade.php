@@ -99,7 +99,9 @@
             </div>
         @elseif($bs->status === 'REJECTED_ATASAN')
             <div class="alert alert-danger border-0 shadow-sm fw-semibold" style="border-radius: 12px;">
-                <i class="bi bi-x-circle me-2"></i> Anda menolak pengajuan ini. Alasan: {{ $bs->rejection_reason }}
+                <i class="bi bi-x-circle me-2"></i>
+                {{ $bs->isRejectedBySystem() ? 'Pengajuan ini ditolak oleh sistem.' : 'Anda menolak pengajuan ini.' }}
+                Alasan: {{ $bs->rejection_reason }}
             </div>
         @elseif($bs->status === 'REJECTED_FINANCE')
             <div class="alert alert-danger border-0 shadow-sm fw-semibold" style="border-radius: 12px;">
@@ -129,7 +131,7 @@
                             'SETTLED'          => 'bg-secondary text-white',
                         ];
                     @endphp
-                    <span class="badge-status {{ $colors[$bs->status] ?? 'bg-secondary text-white' }}">{{ str_replace('_', ' ', $bs->status) }}</span>
+                    <span class="badge-status {{ $colors[$bs->status] ?? 'bg-secondary text-white' }}">{{ $bs->status_label }}</span>
                 </div>
             </div>
 
@@ -164,6 +166,8 @@
             <div class="section-title">Deskripsi / Keperluan</div>
             <p class="mb-0" style="font-size: 0.92rem;">{{ $bs->description ?? 'Tidak ada deskripsi.' }}</p>
         </div>
+
+        @include('pengajuan-bs.partials.attachment', ['forApproval' => true])
 
         {{-- ================= ANGGOTA GRUP DINAS (dengan konteks cerdas) ================= --}}
         <div class="card-custom mb-4">

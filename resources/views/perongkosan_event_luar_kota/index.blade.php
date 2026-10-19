@@ -607,8 +607,10 @@
         }
     </style>
     @include('partials.mobile-assets')
+    @include('partials.transaction-actions-assets')
+    @include('partials.transaction-list-assets')
 </head>
-<body>
+<body class="transaction-list-page">
     @include('partials.application-time')
 
     <!-- Modern Clean Navbar -->
@@ -732,15 +734,18 @@
                 </div>
                 <div class="action-bar-right">
                     {{-- Export Form --}}
-                    <form method="GET" action="{{ route('perongkosan_event_luar_kota.export') }}" class="export-form">
+                    <form method="GET" action="{{ route('perongkosan_event_luar_kota.index') }}" class="transaction-list-filter export-form flex-wrap">
+                        @include('partials.transaction-reported-filter')
                         <i class="bi bi-file-earmark-spreadsheet" style="color: var(--accent-success);"></i>
-                        <select name="periode" class="form-select">
+                        <label class="transaction-list-period-label" for="transaction-list-period">Periode transaksi</label>
+                        <select id="transaction-list-period" name="periode" class="form-select" aria-label="Periode transaksi">
                             <option value="">Semua Periode</option>
                             @foreach(\App\Models\Periode::orderBy('periode', 'desc')->get() as $p)
-                                <option value="{{ $p->periode }}">{{ $p->periode }}</option>
+                                <option value="{{ $p->periode }}" @selected(($periode ?? '') === $p->periode)>{{ $p->periode }}</option>
                             @endforeach
                         </select>
-                        <button type="submit" class="btn-success-action">
+                        <button type="submit" class="btn btn-primary">Tampilkan</button>
+                        <button type="submit" formaction="{{ route('perongkosan_event_luar_kota.export') }}" class="btn-success-action">
                             <i class="bi bi-download"></i> Export
                         </button>
                     </form>
@@ -754,33 +759,33 @@
             </div>
 
             <!-- Table Content -->
-            <div class="table-wrapper">
-                <table class="modern-table">
-                    <thead>
+            <div class="table-wrapper" role="region" aria-label="Daftar transaksi event luar kota">
+                <table class="modern-table" data-transaction-list="elk" role="table">
+                    <thead role="rowgroup">
                         <tr>
                             <th>ID Transaksi</th>
                             <th>Tanggal</th>
                             <th>Karyawan</th>
                             <th>Lokasi</th>
                             <th>Deskripsi</th>
-                            <th>Nominal</th>
+                            <th class="text-end">Total Nominal</th>
                             <th style="text-align: center;">Foto Bukti</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                         @forelse($events as $event)
-                        <tr>
-                            <td>
+                        <tr role="row">
+                            <td data-field="id" data-label="ID Transaksi" role="cell">
                                 <span class="trx-id">{{ $event->transaksi_id }}</span>
                             </td>
-                            <td>
+                            <td data-field="date" data-label="Tanggal" role="cell">
                                 <span class="date-cell">
                                     <i class="bi bi-calendar-event" style="color: var(--accent-primary); margin-right: 0.35rem;"></i>
                                     {{ \Carbon\Carbon::parse($event->tanggal)->format('d M Y') }}
                                 </span>
                             </td>
-                            <td>
+                            <td data-field="user" data-label="Karyawan" role="cell">
                                 <div class="user-cell">
                                     @php
                                         $userName = $event->user->name ?? $event->user->nama ?? 'Unknown';
@@ -793,17 +798,17 @@
                                     <span class="user-name">{{ $userName }}</span>
                                 </div>
                             </td>
-                            <td>
+                            <td data-field="location" data-label="Lokasi" role="cell">
                                 <div class="location-cell">
                                     <i class="bi bi-geo-alt-fill"></i>
                                     <span>{{ $event->wilayah->nama ?? '-' }}</span>
                                 </div>
                             </td>
-                            <td>
-                                <div class="desc-cell" title="{{ $event->description }}">{{ $event->description }}</div>
+                            <td data-field="description" data-label="Deskripsi" role="cell">
+                                <div class="desc-cell" title="{{ $event->description }}">{{ $event->description ?: '-' }}</div>
                             </td>
-                            <td>
-                                <div class="nominal-cell">Rp {{ number_format($event->nominal, 0, ',', '.') }}</div>
+                            <td data-field="total" data-label="Total nominal" role="cell" class="text-end">
+                                <div class="transaction-total nominal-cell text-nowrap">Rp {{ number_format($event->nominal, 2, ',', '.') }}</div>
                                 @if($event->is_over_plafon)
                                     <div class="badge-over">
                                         <i class="bi bi-exclamation-triangle-fill"></i>
@@ -811,7 +816,7 @@
                                     </div>
                                 @endif
                             </td>
-                            <td style="text-align: center;">
+                            <td data-field="photos" data-label="Foto bukti" role="cell" style="text-align: center;">
                                 @if($event->foto_event_1 || $event->foto_event_2 || $event->foto_event_3)
                                     <div class="photo-pills">
                                         @if($event->foto_event_1)
@@ -834,19 +839,13 @@
                                     <span class="no-photo">—</span>
                                 @endif
                             </td>
-                            <td>
-                                <div class="action-btns">
-                                    <a href="{{ route('perongkosan_event_luar_kota.show', $event->id) }}" class="btn-icon-action btn-edit" title="Rincian dan Konfirmasi Pengajuan"><i class="bi bi-eye"></i><span class="visually-hidden">Rincian dan Konfirmasi Pengajuan</span></a>
-                                    <a href="{{ route('perongkosan_event_luar_kota.edit', $event->id) }}" class="btn-icon-action btn-edit" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form action="{{ route('perongkosan_event_luar_kota.destroy', $event->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus transaksi {{ $event->transaksi_id }}?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn-icon-action btn-delete" title="Hapus">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
+                            <td data-field="actions" role="cell">
+                                @include('partials.transaction-actions', [
+                                    'transaction' => $event,
+                                    'transactionType' => 'elk',
+                                    'detailUrl' => route('perongkosan_event_luar_kota.show', $event->id),
+                                    'deleteUrl' => route('perongkosan_event_luar_kota.destroy', $event->id),
+                                ])
                             </td>
                         </tr>
                         @empty

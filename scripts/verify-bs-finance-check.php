@@ -80,6 +80,7 @@ try {
             'tanggal_pengecekan' => \App\Support\AppTime::now()->toDateString(),
             'source_token' => $service->token($type, $source->id, $snapshot['fingerprint']),
             'details' => $snapshot['items']->map(fn ($item) => [
+                'source_detail_id' => $item['source_detail_id'],
                 'cost_category_id' => $item['cost_category_id'], 'nominal_disetujui' => '0', 'catatan' => 'Verification rolled back',
             ])->all(),
         ];

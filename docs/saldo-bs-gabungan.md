@@ -1,5 +1,7 @@
 # Saldo BS gabungan
 
+Pembaruan 7 Oktober 2026: [sinkronisasi Stok Kas dan saldo BS](sinkronisasi-stok-kas-finance.md). Saldo kini berkurang setelah konfirmasi Finance, termasuk pengeluaran event; ketentuan waktu pembukuan di bawah merupakan dokumentasi sebelumnya.
+
 Mulai 24 September 2026, pencairan BS Operasional Sales dan Perjalanan Dinas masuk ke satu saldo per pemilik. Jenis pengajuan tetap dicatat untuk informasi dan laporan. Jenis tersebut tidak membatasi kategori realisasi atau membentuk saldo terpisah.
 
 ## Pengajuan dan pencairan

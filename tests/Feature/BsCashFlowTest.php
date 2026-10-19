@@ -27,12 +27,27 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
+use \Tests\Concerns\FinanceMonitoringScenarios;
 
 class BsCashFlowTest extends TestCase
 {
+    use \Tests\Concerns\CostCategoryStatusScenarios;
     use \Tests\Concerns\TransactionRecapScenarios;
+    use \Tests\Concerns\UnifiedTransactionScenarios;
+    use \Tests\Concerns\PeriodClosingReviewScenarios;
+    use \Tests\Concerns\PeriodClosingExclusionScenarios;
+    use \Tests\Concerns\BsFundingRecapScenarios;
+    use \Tests\Concerns\DashboardPeriodScenarios;
+    use \Tests\Concerns\TransactionActionScenarios;
+    use \Tests\Concerns\SharedBsUsageScenarios;
     use \Tests\Concerns\LegacyFinanceFixtures;
     use \Tests\Concerns\FinanceRejectionScenarios;
+    use \Tests\Concerns\BsAttachmentScenarios;
+    use \Tests\Concerns\TransactionDetailPhotoScenarios;
+    use \Tests\Concerns\FinanceCashPostingScenarios;
+    use \Tests\Concerns\BsApprovalPeriodScenarios;
+    use \Tests\Concerns\ApprovalAtasanBatchScenarios;
+    use FinanceMonitoringScenarios;
 
     protected function setUp(): void
     {
@@ -55,6 +70,13 @@ class BsCashFlowTest extends TestCase
         (require database_path('migrations/2026_09_28_100000_extend_finance_checks_to_transaction_modules.php'))->up();
         (require database_path('migrations/2026_09_30_160000_add_finance_check_drafts.php'))->up();
         (require database_path('migrations/2026_10_05_090000_track_finance_resubmissions.php'))->up();
+        (require database_path('migrations/2026_10_07_030313_add_attachment_path_to_pengajuan_bs_table.php'))->up();
+        (require database_path('migrations/2026_10_07_120000_mark_finance_based_cash_snapshots.php'))->up();
+        (require database_path('migrations/2026_10_07_160000_track_finance_approval_per_source_detail.php'))->up();
+        (require database_path('migrations/2026_10_08_100000_add_photos_to_transaction_details.php'))->up();
+        (require database_path('migrations/2026_10_09_025352_add_operasional_and_perjalanan_dinas_columns_to_stock_cash_flow_snapshots_table.php'))->up();
+        (require database_path('migrations/2026_10_09_032839_fix_operasional_perjalanan_dinas_nullable.php'))->up();
+        (require database_path('migrations/2026_10_12_100000_create_period_closing_logs_table.php'))->up();
         DB::table('user')->insert([
             ['id' => 1, 'nama' => 'Pemilik', 'roles_id' => null, 'atasan_user_id' => 2],
             ['id' => 2, 'nama' => 'Atasan / Finance', 'roles_id' => null, 'atasan_user_id' => null],
@@ -73,7 +95,9 @@ class BsCashFlowTest extends TestCase
 
     private function createSchema(): void
     {
-        Schema::create('user', function (Blueprint $t) { $t->increments('id'); $t->string('nama'); $t->integer('roles_id')->nullable(); $t->integer('atasan_user_id')->nullable(); $t->boolean('is_active')->default(true); });
+      Schema::create('user', function (Blueprint $t) { 
+    $t->increments('id'); $t->string('nama'); $t->integer('roles_id')->nullable(); $t->integer('company_id')->nullable(); $t->integer('atasan_user_id')->nullable(); $t->boolean('is_active')->default(true); 
+});
         Schema::create('roles', function (Blueprint $t) { $t->increments('id'); $t->string('code'); });
         Schema::create('periode', function (Blueprint $t) {
             $t->increments('id'); $t->string('periode', 7)->unique(); $t->string('status');
@@ -123,13 +147,17 @@ class BsCashFlowTest extends TestCase
         Schema::create('bs_activity_logs', function (Blueprint $t) {
             $t->increments('id'); $t->integer('pengajuan_bs_id'); $t->string('activity_code'); $t->string('activity_name'); $t->text('description')->nullable(); $t->decimal('nominal', 15, 2)->nullable(); $t->integer('actor_user_id')->nullable(); $t->timestamps();
         });
-        Schema::create('cost_category', function (Blueprint $t) { $t->increments('id'); $t->string('nama'); $t->string('name')->nullable(); $t->string('description')->nullable(); $t->string('code')->nullable(); });
+        Schema::create('cost_category', function (Blueprint $t) { $t->increments('id'); $t->string('nama'); $t->string('name')->nullable(); $t->string('description')->nullable(); $t->string('code')->nullable(); $t->boolean('is_active')->default(true); });
         DB::table('cost_category')->insert(['id' => 1, 'nama' => 'Transport']);
         Schema::create('wilayah', function (Blueprint $t) { $t->increments('id'); $t->string('nama'); $t->string('teritory'); $t->integer('parent_id')->nullable(); });
         DB::table('wilayah')->insert(['id' => 1, 'nama' => 'Semarang', 'teritory' => 'Jawa']);
+        
+        Schema::create('company', function (Blueprint $t) {
+    $t->increments('id'); $t->string('code')->nullable()->unique(); $t->string('nama'); $t->boolean('is_active')->default(true);
+});
     }
 
-    public function test_finance_checks_and_rechecks_do_not_change_balances_or_financial_transactions(): void
+    public function test_finance_checks_replace_posted_balances_without_changing_source_transactions(): void
     {
         $bs = $this->bs();
         $opr = $this->expense($bs, status: 'VALIDATED', amount: '100000');
@@ -137,7 +165,7 @@ class BsCashFlowTest extends TestCase
         $balance = app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609');
         app(BsCashFlowService::class)->recalculateSnapshot(1, '202609');
         app(StockCashFlowService::class)->recalculateSnapshot(1, '202609');
-        $tables = ['pengajuan_bs', 'approval_bs_finance', 'bs_cash_flow_snapshots', 'stock_cash_flow_snapshots', 'bs_usage_logs', 'bs_usage_approval_logs', 'reimbursement_claims', 'periode'];
+        $tables = ['pengajuan_bs', 'approval_bs_finance', 'bs_usage_logs', 'bs_usage_approval_logs', 'reimbursement_claims', 'periode'];
         $before = [];
         foreach ($tables as $table) $before[$table] = DB::table($table)->get()->toJson();
         $this->actingAs(User::findOrFail(2));
@@ -148,7 +176,7 @@ class BsCashFlowTest extends TestCase
             $data = [
                 'tanggal_pengecekan' => '2026-10-01',
                 'source_token' => $service->token($type, $source->id, $snapshot['fingerprint']),
-                'details' => [['cost_category_id' => 1, 'nominal_disetujui' => '1.25', 'catatan' => 'Verifikasi saja']],
+                'details' => [['source_detail_id' => $source->details()->first()->id, 'cost_category_id' => 1, 'nominal_disetujui' => '1.25', 'catatan' => 'Verifikasi saja']],
             ];
             for ($i = 0; $i < 2; $i++) {
                 $this->post(route('bs-usage-checks.store', [$type, $source->id]), $data)->assertSessionHasNoErrors()->assertRedirect();
@@ -157,7 +185,8 @@ class BsCashFlowTest extends TestCase
             $this->assertDatabaseHas('bs_usage_checks', ['jenis_transaksi' => $type, 'user_id' => $source->user_id, 'user_checker_id' => 2, 'periode' => '2026-10']);
         }
         foreach ($before as $table => $rows) $this->assertSame($rows, DB::table($table)->get()->toJson(), $table.' changed after Finance checks');
-        $this->assertSame($balance, app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('1000000.00', $balance);
+        $this->assertFinanceCash('2.50', '999997.50');
         $this->assertDatabaseCount('bs_usage_checks', 4);
         $this->actingAs(User::findOrFail(1));
         $this->get(route('transaksi_operasional.show', $opr->id))->assertOk()->assertSee('Sudah Dicek Finance');
@@ -174,6 +203,7 @@ class BsCashFlowTest extends TestCase
             'tanggal_pengecekan' => $date,
             'source_token' => $service->token($type, $source->id, $snapshot['fingerprint']),
             'details' => $snapshot['items']->map(fn ($item) => [
+                'source_detail_id' => $item['source_detail_id'],
                 'cost_category_id' => $item['cost_category_id'],
                 'nominal_disetujui' => $approved[$item['cost_category_id']] ?? $item['nominal_asal'],
                 'catatan' => 'Catatan privat Finance',
@@ -189,7 +219,10 @@ class BsCashFlowTest extends TestCase
         $draft = $this->expense($bs, amount: '999');
         $pending = $this->expense($bs, status: 'PENDING_OWNER', amount: '777', travel: true);
         $rejected = $this->expense($bs, status: 'REJECTED_OWNER', amount: '666', travel: true);
+        // A historical check on a source now in draft must not count.
+        $draft->update(['status' => 'VALIDATED']);
         $this->dashboardFinanceCheck($draft);
+        $draft->update(['status' => 'DRAFT']);
         $this->dashboardFinanceCheck($opr, approved: [1 => '90']);
         $last = $this->dashboardFinanceCheck($opr, approved: [1 => '95'], date: '2026-10-01');
         $response = $this->get(route('dashboard.transaksi'))->assertOk()->assertSee('Rekap Pengajuan dan Hasil Finance')
@@ -228,7 +261,9 @@ class BsCashFlowTest extends TestCase
             ->assertSee('Rp 150,00')->assertSee('Oleh Pemilik')->assertDontSee('href="'.route('bs-usage-checks.show', $check).'"', false);
         $this->actingAs(User::findOrFail(2));
         $this->get(route('transaction-recap.module', ['jenis' => 'PD']))->assertOk()->assertSee($member->transaksi_id)
-            ->assertSee('href="'.route('bs-usage-checks.show', $check).'"', false);
+            ->assertSee('Detail Transaksi')
+            ->assertSee(route('transaction-recap.show', ['jenis' => 'PD', 'source' => $member->id, 'pemakaian_periode' => '2026-09', 'pemakaian_page' => 1, 'dari' => 'laporan']))
+            ->assertDontSee('href="'.route('bs-usage-checks.show', $check).'"', false);
         $this->get(route('dashboard.transaksi'))->assertOk()
             ->assertViewHas('bsUsageDashboard', fn ($data) => $data['summary']->confirmed_count == 2 && $data['summary']->nominal_user == 300);
     }
@@ -258,15 +293,18 @@ class BsCashFlowTest extends TestCase
             ->assertViewHas('rows', fn ($rows) => $rows->total() === 1 && $rows->firstWhere('jenis', 'PD')->nominal_pending == 0);
     }
 
-    public function test_dashboard_marks_changed_categories_for_recheck_even_with_unchanged_total(): void
+    public function test_dashboard_returns_changed_categories_to_pending_even_with_unchanged_total(): void
     {
         DB::table('cost_category')->insert(['id' => 2, 'nama' => 'Makan']);
-        $source = $this->expense($this->bs(), amount: '100', travel: true);
+        $source = $this->expense($this->bs(), status: 'VALIDATED', amount: '100', travel: true);
         $this->dashboardFinanceCheck($source, 'PD', [1 => '90']);
         $source->details()->first()->update(['cost_category_id' => 2]);
         $source->update(['status' => 'VALIDATED']);
-        $data = $this->get(route('dashboard.transaksi'))->assertOk()->assertSee('Perlu Cek Ulang')->viewData('bsUsageDashboard');
-        $this->assertEquals(1, $data['summary']->recheck_count);
+        $data = $this->get(route('dashboard.transaksi'))->assertOk()
+            ->assertSee('Pending / Belum Dicek')->assertDontSee('Perlu Cek Ulang')->viewData('bsUsageDashboard');
+        $this->assertEquals(1, $data['summary']->unchecked_count);
+        $this->assertEquals(100, $data['summary']->nominal_unchecked);
+        $this->assertSame('PENDING', $data['rows']->first()->finance_status);
         $this->assertEquals(0, $data['summary']->checked_count);
         $this->assertEquals(100, $data['summary']->nominal_pending);
         $this->assertEquals(0, $data['summary']->nominal_finance);
@@ -275,7 +313,7 @@ class BsCashFlowTest extends TestCase
         $deleted = $source->details()->create(['cost_category_id' => 1, 'nominal' => 500, 'remark' => 'Sudah dihapus']);
         $deleted->delete();
         $data = $this->get(route('dashboard.transaksi'))->assertOk()->viewData('bsUsageDashboard');
-        $this->assertEquals(0, $data['summary']->recheck_count);
+        $this->assertEquals(0, $data['summary']->unchecked_count);
         $this->assertEquals(1, $data['summary']->checked_count);
         $this->assertEquals(95, $data['summary']->nominal_finance);
         $this->assertEquals(5, $data['summary']->selisih);
@@ -354,8 +392,8 @@ class BsCashFlowTest extends TestCase
         $this->get(route('bs-usage-approvals.index'))->assertOk()->assertSee($document->transaksi_id)->assertSee('Anggota');
         $this->get(route('bs-usage-approvals.show', $document->id))->assertOk()
             ->assertSee('Biaya uji')->assertSee('Rp 600.000,00')->assertSee('Setujui &amp; Konfirmasi', false);
-        $this->get(route('dashboard.transaksi'))->assertOk()->assertSee('1 menunggu');
-        $this->get(route('bs-balance.show'))->assertOk()->assertDontSee($document->transaksi_id);
+        $this->get(route('dashboard.transaksi'))->assertOk()->assertDontSee('Persetujuan Pemakaian BS');
+        $this->assertEmpty(app(BsCashFlowService::class)->details(1, '2026-09')['keluar']);
     }
 
     public function test_only_actual_owner_can_review_and_approve_even_without_travel_module_permission(): void
@@ -381,7 +419,7 @@ class BsCashFlowTest extends TestCase
         $this->assertEquals(1, $document->fresh()->validated_by);
         $this->assertEquals(1, $document->fresh()->owner_reviewed_by);
         $this->assertDatabaseHas('bs_usage_logs', ['inputter_id' => 3, 'actor_id' => 1, 'bs_owner_id' => 1]);
-        $this->assertSame('400000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
         Notification::assertSentTo(User::findOrFail(3), \App\Notifications\BsUsageApprovalUpdated::class,
             fn ($notification) => $notification->action === 'APPROVED');
         $this->postJson(route('bs-usage-approvals.approve', $document->id), ['approval_version' => 1])->assertUnprocessable();
@@ -418,7 +456,7 @@ class BsCashFlowTest extends TestCase
         $this->postJson(route('bs-usage-approvals.approve', $document->id), ['approval_version' => 1])->assertUnprocessable();
         $this->assertDatabaseCount('bs_usage_logs', 0);
         $this->post(route('bs-usage-approvals.approve', $document->id), ['approval_version' => 2])->assertSessionHasNoErrors();
-        $this->assertSame('300000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
         $this->assertDatabaseHas('bs_usage_approval_logs', ['action' => 'WITHDRAWN', 'approval_version' => 1, 'nominal' => '600000.00']);
         $this->assertDatabaseHas('bs_usage_approval_logs', ['action' => 'APPROVED', 'approval_version' => 2, 'nominal' => '700000.00']);
     }
@@ -455,6 +493,7 @@ class BsCashFlowTest extends TestCase
         $ownExpense = $this->expense($document->bonSementara, amount: '500000.00');
         $this->actingAs(User::findOrFail(1));
         $this->post('/transaksi-operasional/'.$ownExpense->id.'/validate')->assertSessionHasNoErrors();
+        $this->confirmUsageFinance($ownExpense);
         $this->postJson(route('bs-usage-approvals.approve', $document->id), ['approval_version' => 1])
             ->assertUnprocessable()->assertJsonValidationErrors('bs_balance');
         $this->assertSame('PENDING_OWNER', $document->fresh()->status);
@@ -465,7 +504,9 @@ class BsCashFlowTest extends TestCase
         $this->assertSame('500000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
         $this->bs(['nominal_approved' => '100000.00']);
         $this->post(route('bs-usage-approvals.approve', $document->id), ['approval_version' => 1])->assertSessionHasNoErrors();
-        $this->assertSame('0.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('600000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->confirmUsageFinance($document);
+        $this->assertFinanceCash('1100000.00', '0.00');
     }
 
     public function test_revoked_member_cannot_be_approved_but_owner_can_reject_and_member_can_withdraw(): void
@@ -518,7 +559,7 @@ class BsCashFlowTest extends TestCase
             $this->assertStringContainsString('menunggu persetujuan', $e->errors()['error'][0]);
         }
         $this->assertSame('OPEN', $period->fresh()->status);
-        $this->get(route('dashboard.transaksi'))->assertOk()->assertSee('1 menunggu');
+        $this->get(route('dashboard.transaksi'))->assertOk()->assertDontSee('Persetujuan Pemakaian BS');
         $this->post(route('bs-usage-approvals.reject', $document->id), ['approval_version' => 1, 'reason' => 'Tidak jadi dipakai'])->assertSessionHasNoErrors();
         app(BsPeriodClosingService::class)->close($period->id);
         $this->assertSame('CLOSED', $period->fresh()->status);
@@ -560,6 +601,120 @@ class BsCashFlowTest extends TestCase
             \PhpOffice\PhpSpreadsheet\Cell\Cell::setValueBinder($binder);
             unlink($path);
         }
+    }
+
+    public function test_operational_calendar_blocks_only_the_current_users_transaction_dates(): void
+    {
+        $bs = $this->bs();
+        $this->expense($bs, attributes: ['tanggal' => '2026-09-16']);
+        $this->expense($bs, status: 'VALIDATED', attributes: ['tanggal' => '2026-09-14']);
+        $this->expense($bs, attributes: ['user_id' => 3, 'tanggal' => '2026-09-15']);
+        $this->expense($bs, travel: true, attributes: ['tanggal' => '2026-09-13']);
+
+        $this->get(route('transaksi_operasional.create'))->assertOk()
+            ->assertViewHas('usedDates', ['2026-09-14', '2026-09-16'])
+            ->assertSee('name="tanggal" class="form-control" value=""', false);
+
+        $this->actingAs(User::findOrFail(3));
+        $this->get(route('transaksi_operasional.create'))->assertOk()
+            ->assertViewHas('usedDates', ['2026-09-15'])
+            ->assertSee('name="tanggal" class="form-control" value="2026-09-16"', false);
+    }
+
+    public function test_operational_calendar_restores_only_an_unused_old_date(): void
+    {
+        $this->expense($this->bs(), attributes: ['tanggal' => '2026-09-14']);
+
+        $this->withSession(['_old_input' => ['tanggal' => '2026-09-14', 'description' => 'Kunjungan tersimpan']])
+            ->get(route('transaksi_operasional.create'))->assertOk()
+            ->assertSee('name="tanggal" class="form-control" value=""', false)
+            ->assertSee('Kunjungan tersimpan');
+
+        $this->withSession(['_old_input' => ['tanggal' => '2026-09-15']])
+            ->get(route('transaksi_operasional.create'))->assertOk()
+            ->assertSee('name="tanggal" class="form-control" value="2026-09-15"', false);
+    }
+
+    public function test_operational_calendar_tracks_saved_and_deleted_drafts_and_rejects_duplicate_submissions(): void
+    {
+        $this->bs();
+        $createUrl = route('transaksi_operasional.create');
+        $storeUrl = route('transaksi_operasional.store');
+        $this->post($storeUrl, $this->transactionPayload())->assertSessionHasNoErrors();
+        $this->get($createUrl)->assertOk()->assertViewHas('usedDates', ['2026-09-16']);
+
+        $this->from($createUrl)->post($storeUrl, $this->transactionPayload())
+            ->assertRedirect($createUrl)->assertSessionHasErrors('tanggal');
+        $this->assertDatabaseCount('transaksi_operasional_area_sales_header', 1);
+        $this->assertDatabaseCount('transaksi_operasional_area_sales_detail', 1);
+
+        $header = TransaksiOperasionalHeader::firstOrFail();
+        $this->actingAs($this->transactionActionUser())->delete(route('transaksi_operasional.destroy', $header->id))->assertRedirect()->assertSessionHasNoErrors();
+        $this->actingAs(User::findOrFail(1));
+        $this->get($createUrl)->assertOk()->assertViewHas('usedDates', []);
+        $this->post($storeUrl, $this->transactionPayload())->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('transaksi_operasional_area_sales_header', 1);
+    }
+
+    public function test_travel_calendar_blocks_only_the_current_users_transaction_dates(): void
+    {
+        $bs = $this->bs(['tipe_pengajuan' => 'perjalanan_dinas']);
+        $bs->members()->attach(3);
+        $this->expense($bs, travel: true, attributes: ['tanggal' => '2026-09-16']);
+        $this->expense($bs, status: 'VALIDATED', travel: true, attributes: ['tanggal' => '2026-09-14']);
+        $this->expense($bs, status: 'PENDING_OWNER', travel: true, attributes: ['tanggal' => '2026-09-12']);
+        $this->expense($bs, status: 'REJECTED_OWNER', travel: true, attributes: ['tanggal' => '2026-09-11']);
+        $this->expense($bs, travel: true, attributes: ['user_id' => 3, 'bs_owner_id' => 1, 'tanggal' => '2026-09-15']);
+        $this->expense($bs, attributes: ['tanggal' => '2026-09-13']);
+
+        $this->get(route('transaksi_perjalanan_dinas.create'))->assertOk()
+            ->assertViewHas('usedDates', ['2026-09-11', '2026-09-12', '2026-09-14', '2026-09-16'])
+            ->assertSee('name="tanggal" class="form-control" value=""', false);
+
+        $this->actingAs(User::findOrFail(3));
+        $this->get(route('transaksi_perjalanan_dinas.create'))->assertOk()
+            ->assertViewHas('usedDates', ['2026-09-15'])
+            ->assertSee('name="tanggal" class="form-control" value="2026-09-16"', false);
+    }
+
+    public function test_travel_calendar_restores_only_an_unused_old_date(): void
+    {
+        $this->expense($this->bs(['tipe_pengajuan' => 'perjalanan_dinas']), travel: true, attributes: ['tanggal' => '2026-09-14']);
+
+        $this->withSession(['_old_input' => ['tanggal' => '2026-09-14', 'description' => 'Kunjungan tersimpan']])
+            ->get(route('transaksi_perjalanan_dinas.create'))->assertOk()
+            ->assertSee('name="tanggal" class="form-control" value=""', false)
+            ->assertSee('Kunjungan tersimpan');
+
+        $this->withSession(['_old_input' => ['tanggal' => '2026-09-15']])
+            ->get(route('transaksi_perjalanan_dinas.create'))->assertOk()
+            ->assertSee('name="tanggal" class="form-control" value="2026-09-15"', false);
+    }
+
+    public function test_travel_calendar_tracks_saved_and_deleted_drafts_and_rejects_duplicate_submissions(): void
+    {
+        $bs = $this->bs(['tipe_pengajuan' => 'perjalanan_dinas']);
+        $bs->members()->attach(3);
+        $createUrl = route('transaksi_perjalanan_dinas.create');
+        $storeUrl = route('transaksi_perjalanan_dinas.store');
+        $this->post($storeUrl, $this->transactionPayload(true))->assertSessionHasNoErrors();
+        $this->get($createUrl)->assertOk()->assertViewHas('usedDates', ['2026-09-16']);
+
+        $this->from($createUrl)->post($storeUrl, $this->transactionPayload(true))
+            ->assertRedirect($createUrl)->assertSessionHasErrors('tanggal');
+        $this->assertDatabaseCount('transaksi_perjalanan_dinas_header', 1);
+        $this->assertDatabaseCount('transaksi_perjalanan_dinas_detail', 1);
+
+        $header = TransaksiPerjalananDinasHeader::firstOrFail();
+        $this->actingAs($this->transactionActionUser())->delete(route('transaksi_perjalanan_dinas.destroy', $header->transaksi_id))->assertRedirect()->assertSessionHasNoErrors();
+        $this->actingAs(User::findOrFail(1));
+        $this->get($createUrl)->assertOk()->assertViewHas('usedDates', []);
+        $this->post($storeUrl, $this->transactionPayload(true))->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('transaksi_perjalanan_dinas_header', 1);
+
+        $this->actingAs(User::findOrFail(3));
+        $this->post($storeUrl, $this->transactionPayload(true) + ['bs_owner_id' => 1])->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('transaksi_perjalanan_dinas_header', 2);
     }
 
     private function transactionPayload(bool $travel = false): array
@@ -634,7 +789,7 @@ class BsCashFlowTest extends TestCase
             $this->post($url.'/validate')->assertSessionHasNoErrors();
             $this->assertSame('VALIDATED', $header->fresh()->status);
             $this->assertEquals($owner, $header->fresh()->bs_owner_id);
-            $this->assertSame('250000.00', app(BsCashFlowService::class)->calculate($owner, '2026-09')['total_keluar']);
+            $this->assertSame('0.00', app(BsCashFlowService::class)->calculate($owner, '2026-09')['total_keluar']);
             $this->assertNull($archive->fresh()->bs_owner_id);
         }
         $this->assertDatabaseCount('reimbursement_claims', 0);
@@ -704,6 +859,7 @@ class BsCashFlowTest extends TestCase
             'total_keluar' => 1720000, 'total_keluar_pribadi' => 250000,
             'total_masuk_reimbursement' => 250000, 'includes_personal_funds' => true,
         ]);
+        $this->seedFinanceApprovals();
         foreach (['/dashboard/transaksi', '/cash-flow', '/cash-flow/202609'] as $page) {
             $this->get($page)->assertOk()->assertDontSee('Uang Pribadi')->assertDontSee('uang pribadi')
                 ->assertDontSee('Reimbursement')->assertDontSee('/reimbursements');
@@ -716,7 +872,7 @@ class BsCashFlowTest extends TestCase
         $this->assertSame('0.00', $stock->total_masuk_reimbursement);
         $this->assertFalse($stock->includes_personal_funds);
         $this->assertNull($stock->saldo_akhir);
-        $this->assertSame('29030000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '2026-09'));
+        $this->assertSame('26880000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '2026-09'));
         $this->assertSame($closedBefore, StockCashFlowSnapshot::where('periode', '2026-08')->firstOrFail()->getAttributes());
 
         $details = app(StockCashFlowService::class)->details(1, '2026-09');
@@ -794,6 +950,7 @@ class BsCashFlowTest extends TestCase
             'transaksi_id' => 'EV-LUAR', 'description' => 'Kegiatan luar kota', 'lokasi_event_id' => 1,
             'jam_kerja_event_id' => 1, 'foto_event_1' => 'events_luar_kota/bukti.png',
         ]);
+        $this->seedFinanceApprovals();
         $response = $this->get('/cash-flow/202609')->assertOk();
         $dom = new \DOMDocument();
         @$dom->loadHTML($response->getContent());
@@ -856,8 +1013,9 @@ class BsCashFlowTest extends TestCase
             'transaksi_id' => 'EV-LKR-260901-001', 'description' => 'Event luar kota uji',
         ]);
 
+        $this->seedFinanceApprovals();
         $workbook = $this->cashFlowWorkbook('/cash-flow/202609/export?user_id=3', 'stok-kas-202609.xlsx');
-        $this->assertSame(['Ringkasan Stok Kas', 'Uang Masuk', 'Uang Keluar', 'Penyesuaian BS'], $workbook->getSheetNames());
+        $this->assertSame(['Ringkasan Stok Kas', 'Uang Masuk', 'Uang Keluar', 'Penyesuaian BS', 'Pemakaian BS Bersama'], $workbook->getSheetNames());
         $summary = $workbook->getSheet(0);
         $this->assertEquals([
             '202609', 'OPEN', 0, 1000000, 700000.25, 250000.25, 249999.75,
@@ -876,7 +1034,7 @@ class BsCashFlowTest extends TestCase
         $outgoing = $workbook->getSheetByName('Uang Keluar');
         $this->assertSame(5, $outgoing->getHighestDataRow());
         $this->assertEquals(1200000.25, array_sum(array_column($outgoing->rangeToArray('A2:D5', null, false, false), 3)));
-        $this->assertSame('=1+1', $outgoing->getCell('C5')->getValue());
+        $this->assertStringStartsWith('=1+1', $outgoing->getCell('C5')->getValue());
         $this->assertSame(\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING, $outgoing->getCell('C5')->getDataType());
         $outgoingText = json_encode($outgoing->toArray(null, false, false));
         $this->assertStringContainsString('Anggota', $outgoingText);
@@ -893,6 +1051,7 @@ class BsCashFlowTest extends TestCase
             'user_id' => 1, 'tanggal' => '2026-09-10', 'periode' => '2026-09', 'nominal' => '1234.56',
         ]);
         $this->bs(['user_id' => 3]);
+        $this->seedFinanceApprovals();
         $this->travelTo(now()->setDate(2026, 10, 16));
         app(BsPeriodClosingService::class)->close(Periode::where('periode', '2026-09')->value('id'));
         $snapshot = StockCashFlowSnapshot::where('user_id', 1)->where('periode', '2026-09')->firstOrFail();
@@ -959,11 +1118,11 @@ class BsCashFlowTest extends TestCase
         $this->post('/transaksi-operasional/'.$header->id.'/validate')->assertSessionHasNoErrors();
         $this->assertSame('VALIDATED', $header->fresh()->status);
         $this->assertNull(BsCashFlowSnapshot::first()->saldo_akhir);
-        $this->assertSame('400000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
         $this->post('/transaksi-operasional/'.$header->id.'/validate')->assertSessionHasErrors('error');
         $this->assertSame(1, DB::table('bs_usage_logs')->count());
         $this->assertNull(BsCashFlowSnapshot::first()->saldo_akhir);
-        $this->assertSame('400000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
     }
 
     public function test_travel_uses_same_finalization_and_member_spending_belongs_to_owner(): void
@@ -977,7 +1136,7 @@ class BsCashFlowTest extends TestCase
         $this->actingAs(User::findOrFail(1));
         $this->post(route('bs-usage-approvals.approve', $header->id), ['approval_version' => 1])->assertSessionHasNoErrors();
         $this->assertSame('VALIDATED', $header->fresh()->status);
-        $this->assertSame('600000.00', app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
+        $this->assertSame('0.00', app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
         $this->assertSame('0.00', app(BsCashFlowService::class)->calculate(3, '2026-09')['total_keluar']);
     }
 
@@ -988,7 +1147,7 @@ class BsCashFlowTest extends TestCase
         $header = $this->expense($small, amount: '500000.00');
         $this->post('/transaksi-operasional/'.$header->id.'/validate')->assertSessionHasNoErrors();
         $this->assertSame('VALIDATED', $header->fresh()->status);
-        $this->assertSame('500000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
     }
 
     public function test_submission_detail_shows_application_and_disbursement_without_per_document_spending(): void
@@ -998,6 +1157,7 @@ class BsCashFlowTest extends TestCase
         $draft = $this->expense($bs, 'DRAFT', '300000.00');
         $other = $this->expense($this->bs(), 'VALIDATED', '100000.00');
 
+        $this->seedFinanceApprovals();
         $this->get(route('pengajuan-bs.show', $bs))
             ->assertOk()
             ->assertSee($bs->document_no)
@@ -1101,6 +1261,7 @@ class BsCashFlowTest extends TestCase
         Periode::create(['periode' => '2026-08', 'status' => 'OPEN']);
         $bs = $this->bs(['periode' => '2026-08', 'tanggal' => '2026-08-10']);
         $this->expense($bs, 'VALIDATED');
+        $this->seedFinanceApprovals('2026-08');
         $cash = app(BsCashFlowService::class);
         $this->assertSame('0.00', $cash->calculate(1, '202609')['saldo_awal']);
         app(BsPeriodClosingService::class)->close(Periode::where('periode', '2026-08')->value('id'));
@@ -1146,6 +1307,7 @@ class BsCashFlowTest extends TestCase
     {
         $bs = $this->bs(['status' => 'SETTLED', 'settled_periode' => '2026-09', 'nominal_pengembalian' => '400000.00']);
         $this->expense($bs, 'VALIDATED');
+        $this->seedFinanceApprovals();
         $result = app(BsCashFlowService::class)->calculate(1, '202609');
         $this->assertSame('600000.00', $result['total_keluar']);
         $this->assertSame('-400000.00', $result['penyesuaian']);
@@ -1161,6 +1323,7 @@ class BsCashFlowTest extends TestCase
         $this->actingAs(User::findOrFail(2));
         $bs = $this->bs();
         $this->expense($bs, 'VALIDATED');
+        $this->seedFinanceApprovals();
         $before = $bs->fresh()->getAttributes();
         $cash = app(BsCashFlowService::class);
         $snapshot = $cash->recalculateSnapshot(1, '202609')->fresh()->getAttributes();
@@ -1188,6 +1351,7 @@ class BsCashFlowTest extends TestCase
         $reimbursed = $this->bs(['user_id' => 3, 'status' => 'SETTLED', 'settled_periode' => '2026-09', 'nominal_reimburse' => '200000.00']);
         $this->expense($reimbursed, 'VALIDATED', '1200000.00');
 
+        $this->seedFinanceApprovals();
         $this->get(route('laporan-bs.index'))->assertOk()
             ->assertSee('Semua pencairan masuk ke saldo BS gabungan.')
             ->assertSee('Dana masuk ke saldo BS gabungan')->assertDontSee('Total Realisasi')->assertDontSee('Sisa Akhir')->assertSee('User setor')->assertSee('Reimburse')
@@ -1234,6 +1398,8 @@ class BsCashFlowTest extends TestCase
         $this->assertNull(app(BsCashFlowService::class)->calculate(1, '202609')['saldo_akhir']);
         $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
         $this->post('/transaksi-operasional/'.$header->id.'/validate')->assertSessionHasNoErrors();
+        $this->assertFinanceCash('0.00', '1000000.00');
+        $this->confirmUsageFinance($header);
         $this->assertNull(BsCashFlowSnapshot::firstOrFail()->saldo_akhir);
         $this->assertSame('400000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
     }
@@ -1280,8 +1446,8 @@ class BsCashFlowTest extends TestCase
         $this->assertSame('VALIDATED', $header->status);
         $this->assertTrue($header->validated_at->equalTo(now()));
         $this->assertEquals(1, $header->validated_by);
-        $this->assertSame('150000.25', (string) BsCashFlowSnapshot::firstOrFail()->total_keluar);
-        $this->assertSame('150000.25', (string) StockCashFlowSnapshot::firstOrFail()->total_keluar);
+        $this->assertSame('0.00', (string) BsCashFlowSnapshot::firstOrFail()->total_keluar);
+        $this->assertSame('0.00', (string) StockCashFlowSnapshot::firstOrFail()->total_keluar);
         $this->get($detailUrl)->assertOk()->assertSee('Dikonfirmasi')->assertSee('Waktu Konfirmasi')
             ->assertDontSee('action="'.url($detailUrl.'/validate').'"', false);
         $this->get($url)->assertOk()->assertSee('Dikonfirmasi');
@@ -1293,7 +1459,7 @@ class BsCashFlowTest extends TestCase
         $this->assertSame(1, $model::count());
         $this->assertSame(1, $header->details()->count());
         $this->assertSame(1, DB::table('bs_usage_logs')->count());
-        $this->assertSame('849999.75', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '2026-09'));
+        $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '2026-09'));
         $this->assertSame(0, DB::transactionLevel());
     }
 
@@ -1410,7 +1576,7 @@ class BsCashFlowTest extends TestCase
         $this->post(route('bs-usage-approvals.approve', $header->id), ['approval_version' => 1])->assertSessionHasNoErrors();
         $this->assertSame('VALIDATED', $header->fresh()->status);
         $this->assertEquals(1, $header->fresh()->validated_by);
-        $this->assertSame('150000.25', app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
+        $this->assertSame('0.00', app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
         $this->assertSame('0.00', app(BsCashFlowService::class)->calculate(3, '2026-09')['total_keluar']);
     }
 
@@ -1450,19 +1616,20 @@ class BsCashFlowTest extends TestCase
         ]);
         BsCashFlowSnapshot::create(['user_id' => 1, 'periode' => '2026-09', 'saldo_akhir' => '123.00']);
 
+        $this->seedFinanceApprovals();
         $this->get('/dashboard/transaksi')->assertOk()
             ->assertSee('+Rp 6.700.000')->assertSee('-Rp 4.070.000')
-            ->assertSeeInOrder(['Stok Kas', '202609', 'Total Masuk', '+Rp 6.700.000'])
+            ->assertSeeInOrder(['Stok Kas', '202609', 'Saldo Awal', 'Rp 21.100.000', 'Total Masuk', '+Rp 6.700.000'])
             ->assertDontSee('Saldo Akhir')
             ->assertDontSee('Rp 23.475.000')->assertDontSee('menunggu penutupan');
         $dashboardSnapshot = StockCashFlowSnapshot::where('user_id', 1)->where('periode', '2026-09')->firstOrFail();
         $this->assertNull($dashboardSnapshot->saldo_akhir);
-        $this->assertSame('27230000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
+        $this->assertSame('23730000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202609'));
         $this->assertSame('21100000.00', $dashboardSnapshot->saldo_awal);
         $this->assertSame('570000.00', $dashboardSnapshot->total_keluar_bs);
         $this->assertSame('3500000.00', $dashboardSnapshot->total_event_dalam);
         $this->assertSame('4070000.00', $dashboardSnapshot->total_keluar);
-        $this->assertSame('570000.00', BsCashFlowSnapshot::where('periode', '2026-09')->firstOrFail()->total_keluar);
+        $this->assertSame('4070000.00', BsCashFlowSnapshot::where('periode', '2026-09')->firstOrFail()->total_keluar);
         $this->get('/cash-flow')->assertOk()->assertViewHas('currentSnapshot',
             fn ($snapshot) => $snapshot->only(['saldo_awal', 'total_masuk', 'total_keluar', 'saldo_akhir'])
                 === $dashboardSnapshot->only(['saldo_awal', 'total_masuk', 'total_keluar', 'saldo_akhir'])
@@ -1473,6 +1640,7 @@ class BsCashFlowTest extends TestCase
         ]);
 
         $this->expense($bs, 'VALIDATED', '30000.00');
+        $this->seedFinanceApprovals();
         $this->get('/dashboard/transaksi')->assertOk()
             ->assertSee('-Rp 4.100.000')->assertDontSee('Saldo Akhir');
     }
@@ -1500,7 +1668,7 @@ class BsCashFlowTest extends TestCase
         DB::table('approval_bs_finance')->where('pengajuan_bs_id', $bs->id)->update(['nominal_approved' => 2000000]);
 
         $this->get('/dashboard/transaksi')->assertOk()
-            ->assertSeeInOrder(['Stok Kas', 'Saldo Akhir', 'Rp 1.000.000', 'Total Masuk', '+Rp 1.000.000']);
+            ->assertSeeInOrder(['Stok Kas', 'Saldo Awal', 'Rp 0', 'Total Masuk', '+Rp 1.000.000']);
         $this->assertSame($snapshot->getAttributes(), $snapshot->fresh()->getAttributes());
         $this->get('/cash-flow')->assertOk()->assertViewHas('currentSnapshot',
             fn ($current) => $current->saldo_akhir === $snapshot->saldo_akhir
@@ -1573,6 +1741,7 @@ class BsCashFlowTest extends TestCase
         $one = $this->expense($bs);
         $two = $this->expense($bs);
         $this->post('/transaksi-operasional/'.$one->id.'/validate')->assertSessionHasNoErrors();
+        $this->confirmUsageFinance($one);
         $this->post('/transaksi-operasional/'.$two->id.'/validate')->assertSessionHasErrors('bs_balance');
         $this->assertSame('DRAFT', $two->fresh()->status);
         $this->assertNull(BsCashFlowSnapshot::firstOrFail()->saldo_akhir);
@@ -1584,6 +1753,7 @@ class BsCashFlowTest extends TestCase
         $this->travelTo(now()->setDate(2026, 11, 16));
         $bs = $this->bs();
         $this->expense($bs, 'VALIDATED');
+        $this->seedFinanceApprovals();
         $cash = app(BsCashFlowService::class);
         $snapshot = $cash->recalculateSnapshot(1, '202609');
         app(\App\Services\CashFlowService::class)->recalculateSnapshot(1, '202609');
@@ -1620,6 +1790,7 @@ class BsCashFlowTest extends TestCase
         $this->get('/cash-flow')->assertOk()->assertDontSeeText('Saldo Akhir');
         $header = $this->expense($bs, amount: '150000.25');
         $this->post('/transaksi-operasional/'.$header->id.'/validate')->assertSessionHasNoErrors();
+        $this->confirmUsageFinance($header);
         $this->assertNull($snapshot->fresh()->saldo_akhir);
 
         $this->actingAs(User::findOrFail(2));
@@ -1634,6 +1805,7 @@ class BsCashFlowTest extends TestCase
     public function test_open_balances_stay_null_when_pages_are_refreshed_even_with_a_final_opening(): void
     {
         $this->expense($this->bs(), 'VALIDATED');
+        $this->seedFinanceApprovals();
         for ($refresh = 0; $refresh < 2; $refresh++) {
             foreach (['/dashboard/transaksi', '/cash-flow', '/cash-flow/202609'] as $url) {
                 $this->get($url)->assertOk()->assertDontSeeText('Saldo Akhir');
@@ -1659,6 +1831,7 @@ class BsCashFlowTest extends TestCase
     public function test_zero_closing_balance_is_shown_after_close_and_rolls_through_empty_months(): void
     {
         $this->expense($this->bs(), 'VALIDATED', '1000000.00');
+        $this->seedFinanceApprovals();
         $this->travelTo(now()->setDate(2026, 11, 16));
         $cash = app(BsCashFlowService::class);
         app(BsPeriodClosingService::class)->close(Periode::where('periode', '2026-09')->value('id'));
@@ -1716,7 +1889,7 @@ class BsCashFlowTest extends TestCase
         }
     }
 
-    public function test_stock_cash_counts_both_event_types_by_owner_and_date_without_spending_bs_funds(): void
+    public function test_stock_cash_counts_approved_events_by_owner_and_date_in_bs_funds(): void
     {
         $bs = $this->bs();
         $this->expense($bs, 'VALIDATED');
@@ -1731,6 +1904,7 @@ class BsCashFlowTest extends TestCase
             'user_id' => 1, 'tanggal' => '2026-09-01', 'periode' => '2026-09', 'nominal' => '249999.75',
             'transaksi_id' => 'EV-LKR-260901-001', 'description' => 'Event luar kota uji',
         ]);
+        $this->seedFinanceApprovals();
         $stock = app(StockCashFlowService::class)->recalculateSnapshot(1, '202609');
         $this->assertSame('1000000.00', $stock->total_masuk);
         $this->assertSame('600000.00', $stock->total_keluar_bs);
@@ -1739,7 +1913,7 @@ class BsCashFlowTest extends TestCase
         $this->assertSame('0.00', $stock->total_keluar_pribadi);
         $this->assertSame('1100000.00', $stock->total_keluar);
         $this->assertNull($stock->saldo_akhir);
-        $this->assertSame('400000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo((int) $bs->user_id, '202609'));
+        $this->assertSame('-100000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo((int) $bs->user_id, '202609'));
         $this->get('/cash-flow/202609')->assertOk()
             ->assertSee('Event Dalam Kota')->assertSee('Event Luar Kota')->assertSee('EV-LKR-260901-001')
             ->assertSee('Event luar kota uji')->assertSee('Rp 1.100.000')->assertDontSee('Rp 999.000')
@@ -1748,12 +1922,12 @@ class BsCashFlowTest extends TestCase
         $this->assertCount(3, $details['keluar']);
         $this->assertSame(110000000, array_sum(array_map(fn ($row) => Money::minor($row['nominal']), $details['keluar'])));
 
-        // Event spending exceeds the combined cash, but BS still has its own funds.
+        // Imported approved expenses exceed the pool; a new submission cannot spend it again.
         $header = $this->expense($bs, amount: '400000.00');
-        $this->post('/transaksi-operasional/'.$header->id.'/validate')->assertSessionHasNoErrors();
-        $this->assertSame('VALIDATED', $header->fresh()->status);
-        $this->assertSame('0.00', app(BonSementaraService::class)->getRealtimeSisaSaldo((int) $bs->user_id, '202609'));
-        $this->assertSame('1500000.00', $stock->fresh()->total_keluar);
+        $this->post('/transaksi-operasional/'.$header->id.'/validate')->assertSessionHasErrors('bs_balance');
+        $this->assertSame('DRAFT', $header->fresh()->status);
+        $this->assertSame('-100000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo((int) $bs->user_id, '202609'));
+        $this->assertSame('1100000.00', $stock->fresh()->total_keluar);
         $this->assertNull($stock->fresh()->saldo_akhir);
     }
 
@@ -1767,6 +1941,7 @@ class BsCashFlowTest extends TestCase
         DB::table('perongkosan_event_luar_kota')->insert([
             'user_id' => 1, 'tanggal' => '2026-09-15', 'periode' => '2026-09', 'nominal' => 50000,
         ]);
+        $this->seedFinanceApprovals();
         $stock = app(StockCashFlowService::class);
         $this->assertNull($stock->recalculateSnapshot(1, '202609')->saldo_akhir);
         $this->travelTo(now()->setDate(2026, 11, 16));
@@ -1775,7 +1950,7 @@ class BsCashFlowTest extends TestCase
         $closing->close($september->id);
         $snapshot = $stock->recalculateSnapshot(1, '202609');
         $this->assertSame('250000.00', $snapshot->saldo_akhir);
-        $this->assertSame('400000.00', app(BsCashFlowService::class)->recalculateSnapshot(1, '202609')->saldo_akhir);
+        $this->assertSame('250000.00', app(BsCashFlowService::class)->recalculateSnapshot(1, '202609')->saldo_akhir);
         $this->assertSame('250000.00', $stock->recalculateSnapshot(1, '202610')->saldo_awal);
         $this->assertNull($stock->recalculateSnapshot(1, '202610')->saldo_akhir);
         $this->get('/cash-flow/202609')->assertOk()->assertSeeInOrder(['Saldo Akhir', 'Rp 250.000']);
@@ -1792,24 +1967,26 @@ class BsCashFlowTest extends TestCase
         $this->assertSame('0.00', $stock->recalculateSnapshot(1, '202610')->saldo_awal);
         $this->assertFalse($stock->recalculateSnapshot(1, '202610')->opening_final);
         DB::table('perongkosan_event_dalam_kota')->where('id', $eventId)->update(['nominal' => 200000]);
+        $this->seedFinanceApprovals();
         $closing->close($september->id);
         $this->assertSame('150000.00', $snapshot->fresh()->saldo_akhir);
         $this->assertSame('150000.00', $stock->recalculateSnapshot(1, '202610')->saldo_awal);
-        $this->assertSame('400000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202610'));
+        $this->assertSame('150000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202610'));
     }
 
-    public function test_event_only_user_gets_a_negative_closing_balance_and_keeps_bs_at_zero(): void
+    public function test_imported_approved_event_only_deficit_is_shared_by_stock_and_bs(): void
     {
         DB::table('perongkosan_event_luar_kota')->insert([
             'user_id' => 3, 'tanggal' => '2026-09-10', 'periode' => '2026-09', 'nominal' => '200000.25',
         ]);
+        $this->seedFinanceApprovals();
         $this->travelTo(now()->setDate(2026, 10, 16));
         app(BsPeriodClosingService::class)->close(Periode::where('periode', '2026-09')->value('id'));
         $snapshot = StockCashFlowSnapshot::where('user_id', 3)->where('periode', '2026-09')->firstOrFail();
         $this->assertSame('-200000.25', $snapshot->saldo_akhir);
         $this->assertSame('0.00', $snapshot->total_masuk);
         $this->assertSame('-200000.25', app(StockCashFlowService::class)->recalculateSnapshot(3, '202610')->saldo_awal);
-        $this->assertSame('0.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(3, '202610'));
+        $this->assertSame('-200000.25', app(BonSementaraService::class)->getRealtimeSisaSaldo(3, '202610'));
         $this->assertDatabaseCount('pengajuan_bs', 0);
     }
 
@@ -1829,7 +2006,7 @@ class BsCashFlowTest extends TestCase
             $this->post('/event-'.$type.'-kota', $payload + ['foto_event_1' => $photo])->assertSessionHasNoErrors()->assertRedirect();
             $event = DB::table($table)->first();
             $this->assertSame('2026-09', $event->periode);
-            $this->assertSame('100000.00', StockCashFlowSnapshot::where('user_id', 1)->where('periode', '2026-09')->firstOrFail()->total_keluar);
+            $this->assertSame('0.00', StockCashFlowSnapshot::where('user_id', 1)->where('periode', '2026-09')->firstOrFail()->total_keluar);
             $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo((int) $bs->user_id, '202609'));
 
             $this->put('/event-'.$type.'-kota/'.$event->id, array_replace($payload, ['tanggal' => '2026-10-01', 'nominal' => 150000, 'user_id' => 3]))
@@ -1837,10 +2014,11 @@ class BsCashFlowTest extends TestCase
             $this->assertDatabaseHas($table, ['id' => $event->id, 'periode' => '2026-10', 'user_id' => 1]);
             $this->assertSame('0.00', StockCashFlowSnapshot::where('user_id', 1)->where('periode', '2026-09')->firstOrFail()->total_keluar);
             $october = StockCashFlowSnapshot::where('user_id', 1)->where('periode', '2026-10')->firstOrFail();
-            $this->assertSame('150000.00', $october->total_keluar);
+            $this->assertSame('0.00', $october->total_keluar);
             $this->assertNull($october->saldo_akhir);
             $this->assertFalse($october->opening_final);
-            $this->delete('/event-'.$type.'-kota/'.$event->id)->assertSessionHasNoErrors()->assertRedirect();
+            $this->actingAs($this->transactionActionUser())->delete('/event-'.$type.'-kota/'.$event->id)->assertSessionHasNoErrors()->assertRedirect();
+            $this->actingAs(User::findOrFail(1));
             $this->assertDatabaseCount($table, 0);
             $this->assertSame('0.00', $october->fresh()->total_keluar);
         }
@@ -1853,6 +2031,7 @@ class BsCashFlowTest extends TestCase
             $table = 'perongkosan_event_'.$type.'_kota';
             DB::table($table)->insert(['user_id' => 1, 'tanggal' => '2026-09-10', 'periode' => '2026-10', 'nominal' => 100000]);
         }
+        $this->seedFinanceApprovals();
         $this->travelTo(now()->setDate(2026, 10, 16));
         app(BsPeriodClosingService::class)->close(Periode::where('periode', '2026-09')->value('id'));
         $stock = StockCashFlowSnapshot::where('user_id', 1)->where('periode', '2026-09')->firstOrFail();
@@ -1880,7 +2059,7 @@ class BsCashFlowTest extends TestCase
         $mock = \Mockery::mock(StockCashFlowService::class);
         $mock->shouldReceive('recalculateSnapshot')->once()->andThrow(new \RuntimeException('Simulated stock write failure'));
         $this->app->instance(StockCashFlowService::class, $mock);
-        $this->delete('/event-dalam-kota/'.$id)->assertStatus(500);
+        $this->actingAs($this->transactionActionUser())->delete('/event-dalam-kota/'.$id)->assertStatus(500);
         $this->assertDatabaseHas('perongkosan_event_dalam_kota', ['id' => $id, 'nominal' => 100000]);
         Storage::disk('public')->assertExists('events/rollback.png');
         $this->assertDatabaseCount('stock_cash_flow_snapshots', 0);
@@ -2154,11 +2333,11 @@ class BsCashFlowTest extends TestCase
         $travel = TransaksiPerjalananDinasHeader::firstOrFail();
         $this->assertNull($operational->bs_id);
         $this->assertNull($travel->bs_id);
+        $this->confirmUsageFinance($operational);
+        $this->confirmUsageFinance($travel);
         $this->assertSame('1000000.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '2026-09'));
         $this->assertDatabaseCount('bs_usage_logs', 2);
-        $this->get(route('bs-balance.show'))->assertOk()->assertSee('Rp 1.000.000,00')
-            ->assertSee($operational->transaksi_id)->assertSee($travel->transaksi_id)
-            ->assertSee('Operasional Area Sales')->assertSee('Perjalanan Dinas');
+        $this->assertCount(2, app(BsCashFlowService::class)->details(1, '2026-09')['keluar']);
         $this->getJson(route('bs-balance.balances', ['module' => 'operasional_sales', 'periode' => '202609']))
             ->assertOk()->assertJsonCount(1, 'owners')->assertJsonPath('owners.0.balance', '1000000.00');
         $this->get('/cash-flow/202609')->assertOk()->assertSee($operational->transaksi_id)->assertSee($travel->transaksi_id);
@@ -2183,6 +2362,7 @@ class BsCashFlowTest extends TestCase
         $posted = TransaksiPerjalananDinasHeader::firstOrFail();
         $this->actingAs(User::findOrFail(1));
         $this->post(route('bs-usage-approvals.approve', $posted->id), ['approval_version' => 1])->assertSessionHasNoErrors();
+        $this->confirmUsageFinance($posted);
         $this->actingAs(User::findOrFail(3));
         $this->assertNull($posted->bs_id);
         $this->assertEquals(1, $posted->bs_owner_id);
@@ -2202,10 +2382,24 @@ class BsCashFlowTest extends TestCase
             ->assertOk()->assertJsonCount(1, 'owners')->assertJsonPath('owners.0.id', 3);
         $this->actingAs(User::findOrFail(1));
         $this->get('/transaksi-perjalanan-dinas/'.$posted->transaksi_id)->assertOk();
-        $this->get('/transaksi-perjalanan-dinas')->assertOk()->assertSee($posted->transaksi_id);
-        $this->get(route('bs-balance.show'))->assertOk()->assertSee($posted->transaksi_id);
+        $this->get('/transaksi-perjalanan-dinas')->assertOk()->assertDontSee($posted->transaksi_id);
+        $this->assertStringContainsString($posted->transaksi_id,
+            json_encode(app(BsCashFlowService::class)->details(1, '2026-09')['keluar']));
         $this->putJson('/transaksi-perjalanan-dinas/'.$draft->transaksi_id, $data)->assertForbidden();
         $this->assertDatabaseHas('bs_usage_logs', ['bs_owner_id' => 1, 'inputter_id' => 3, 'actor_id' => 1, 'nominal' => '600000.00']);
+    }
+
+    public function test_removed_bs_balance_page_is_unavailable_and_has_no_navigation_links(): void
+    {
+        $this->bs();
+        $this->get('/saldo-bs?periode=2026-09')->assertNotFound();
+        foreach ([route('dashboard.transaksi'), route('cash-flow.index'), '/cash-flow/202609'] as $url) {
+            $this->get($url)->assertOk()->assertDontSee('Rincian Saldo BS')->assertDontSee('/saldo-bs');
+        }
+        DB::table('roles')->insert(['id' => 1, 'code' => 'FINANCE']);
+        User::findOrFail(2)->update(['roles_id' => 1]);
+        $this->actingAs(User::findOrFail(2));
+        $this->get(route('laporan-bs.index'))->assertOk()->assertDontSee('Rincian Saldo BS')->assertDontSee('/saldo-bs');
     }
 
     public function test_balance_endpoints_do_not_expose_unrelated_owners_or_other_users_documents(): void
@@ -2216,12 +2410,10 @@ class BsCashFlowTest extends TestCase
         $this->getJson(route('bs-balance.balances', ['module' => 'perjalanan_dinas', 'periode' => '202609', 'bs_owner_id' => 3]))
             ->assertOk()->assertJsonCount(1, 'owners')->assertJsonPath('owners.0.id', 1);
         $this->getJson(route('bs-balance.balances', ['module' => 'perjalanan_dinas', 'periode' => '202609', 'transaction_id' => $otherDocument->id]))->assertForbidden();
-        $this->get(route('bs-balance.show', ['bs_owner_id' => 3]))->assertOk()->assertDontSee('9.000.000');
         $this->getJson(route('bs-balance.balances', ['module' => 'invalid', 'periode' => '202609']))->assertUnprocessable();
         $this->getJson(route('bs-balance.balances', ['module' => 'operasional_sales', 'periode' => '202613']))->assertUnprocessable();
         User::findOrFail(1)->revokePermissionTo(['akses.cash-flow', 'akses.transaksi-perjalanan-dinas']);
         $this->actingAs(User::findOrFail(1));
-        $this->get(route('bs-balance.show'))->assertForbidden();
         $this->getJson(route('bs-balance.balances', ['module' => 'perjalanan_dinas', 'periode' => '202609']))->assertForbidden();
     }
 
@@ -2236,6 +2428,7 @@ class BsCashFlowTest extends TestCase
         $one = TransaksiOperasionalHeader::firstOrFail();
         $two = TransaksiPerjalananDinasHeader::firstOrFail();
         $this->post('/transaksi-operasional/'.$one->id.'/validate')->assertSessionHasNoErrors();
+        $this->confirmUsageFinance($one);
         $this->post('/transaksi-perjalanan-dinas/'.$two->transaksi_id.'/validate')->assertSessionHasErrors('bs_balance');
         $this->assertSame('DRAFT', $two->fresh()->status);
         $this->assertDatabaseCount('bs_usage_logs', 1);
@@ -2254,6 +2447,7 @@ class BsCashFlowTest extends TestCase
     {
         $this->bs();
         $this->post('/transaksi-operasional', $this->transactionPayload() + ['save_action' => 'confirm'])->assertSessionHasNoErrors();
+        $this->confirmUsageFinance(TransaksiOperasionalHeader::firstOrFail());
         $this->travelTo(now()->setDate(2026, 10, 2));
         $this->assertSame('0.00', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202610'));
         app(BsPeriodClosingService::class)->close(Periode::where('periode', '2026-09')->value('id'));
@@ -2261,6 +2455,7 @@ class BsCashFlowTest extends TestCase
         $data = $this->transactionPayload(true);
         $data['tanggal'] = '2026-10-02';
         $this->post('/transaksi-perjalanan-dinas', $data + ['save_action' => 'confirm'])->assertSessionHasNoErrors();
+        $this->confirmUsageFinance(TransaksiPerjalananDinasHeader::firstOrFail());
         $this->assertSame('699999.50', app(BonSementaraService::class)->getRealtimeSisaSaldo(1, '202610'));
         $snapshot = app(StockCashFlowService::class)->recalculateSnapshot(1, '202610');
         $this->assertSame('849999.75', $snapshot->saldo_awal);

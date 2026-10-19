@@ -1,40 +1,33 @@
-.transaction-actions { display: inline-block; }
-.transaction-actions [data-action-toggle] { min-height: 44px; white-space: nowrap; }
-.transaction-actions-menu {
-    position: fixed;
-    z-index: 1060;
-    width: 184px;
-    max-width: calc(100vw - 16px);
-    overflow-y: auto;
-    padding: 6px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(30, 41, 59, .16);
-    text-align: left;
-}
-.transaction-actions-menu[hidden] { display: none; }
-.transaction-actions-menu form { margin: 0; }
-.transaction-actions-item {
-    display: flex;
+.transaction-actions {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.transaction-actions form { margin: 0; }
+.transaction-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-height: 44px;
-    padding: 10px 12px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: #334155;
+    padding: 10px 14px;
+    border: 1px solid transparent;
+    border-radius: 9px;
     font: inherit;
-    font-size: .875rem;
+    font-size: .8rem;
     font-weight: 600;
-    text-align: left;
+    line-height: 1.25;
     text-decoration: none;
     white-space: nowrap;
+    cursor: pointer;
 }
-.transaction-actions-item:hover, .transaction-actions-item:focus-visible { background: #f1f5f9; color: #1e293b; }
-.transaction-actions-item:focus-visible, .transaction-actions [data-action-toggle]:focus-visible {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
+.transaction-action-detail {
+    background: linear-gradient(135deg, #00c6fb, #005bea);
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(0, 91, 234, .2);
 }
+.transaction-action-detail:hover { background: #005bea; color: #fff; }
+.transaction-action-delete { background: #fff5f5; border-color: #fecaca; color: #b91c1c; }
+.transaction-action-delete:hover { background: #fee2e2; color: #991b1b; }
+.transaction-action:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }

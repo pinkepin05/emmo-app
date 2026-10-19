@@ -35,7 +35,7 @@
     @if($errors->any())<div class="alert alert-danger border-0 shadow-sm" style="border-radius:12px;"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
         <div class="alert alert-info">
-            Semua pencairan masuk ke saldo BS gabungan. Pemakaian dicatat pada Rincian Saldo BS. Riwayat penyelesaian lama tetap ditampilkan.
+            Semua pencairan masuk ke saldo BS gabungan. Pemakaian Operasional Sales, Perjalanan Dinas, dan event mengurangi saldo setelah dikonfirmasi Finance. Riwayat penyelesaian lama tetap ditampilkan.
         </div>
 
     {{-- Filter + Export --}}

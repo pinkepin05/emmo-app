@@ -14,9 +14,6 @@
                 Coba ubah periode, hapus filter, atau periksa pengajuan baru.
             </p>
             <div class="empty-actions">
-                <a class="btn btn-primary" href="{{ route($pageRoute, $pageParams + ['pemakaian_periode' => '']) }}#pemakaian-bs">
-                    <i class="bi bi-arrow-clockwise"></i> Lihat Semua Periode
-                </a>
                 <a class="btn btn-outline-secondary" href="{{ route($pageRoute, $pageParams) }}#pemakaian-bs">
                     <i class="bi bi-x-circle"></i> Reset Filter
                 </a>
@@ -35,7 +32,7 @@
                         <th scope="col">User & konfirmasi</th>
                         <th scope="col" class="money">Nominal pengajuan</th>
                         <th scope="col" class="money">Disetujui Finance</th>
-                        <th scope="col" class="money">Selisih Persetujuan Finance</th>
+                        <th scope="col" class="money">{{ $currentStatus === 'NOT_APPROVED' ? 'Nominal Ditolak' : 'Selisih Persetujuan Finance' }}</th>
                         <th scope="col">Status Finance</th>
                         <th scope="col">Tindakan</th>
                     </tr>
@@ -50,11 +47,16 @@
                             'dari' => $isDashboard ? 'dashboard' : 'laporan'
                         ]);
                         $detailUrl = route('transaction-recap.show', $detailParams);
-                        $needsAction = (bool) $row->in_pending_group;
+                        $transactionDetailUrl = match ($row->jenis) {
+                            'OPR' => route('transaksi_operasional.show', $row->source_id),
+                            'PD' => route('transaksi_perjalanan_dinas.show', $row->no_referensi),
+                            'EDK' => route('perongkosan_event_dalam_kota.show', $row->source_id),
+                            'ELK' => route('perongkosan_event_luar_kota.show', $row->source_id),
+                        };
                     @endphp
                     <tr role="row" tabindex="0">
                         <td role="cell">
-                            <a class="recap-reference" href="{{ $detailUrl }}">
+                            <a class="recap-reference" href="{{ $transactionDetailUrl }}">
                                 {{ $row->no_referensi ?: $row->jenis.' #'.$row->source_id }}
                             </a>
                             <div class="recap-meta">
@@ -75,8 +77,8 @@
                         <td role="cell" class="money recap-number-cell" data-label="Disetujui Finance">
                             {{ in_array($row->finance_status, ['APPROVED', 'REJECTED']) ? $money($row->nominal_finance) : '—' }}
                         </td>
-                        <td role="cell" class="money recap-number-cell" data-label="Selisih Persetujuan Finance">
-                            {{ $row->finance_status === 'APPROVED' ? $money($row->selisih) : '—' }}
+                        <td role="cell" class="money recap-number-cell" data-label="{{ $currentStatus === 'NOT_APPROVED' ? 'Nominal Ditolak' : 'Selisih Persetujuan Finance' }}">
+                            {{ $currentStatus === 'NOT_APPROVED' ? $money($row->nominal_not_approved) : ($row->finance_status === 'APPROVED' ? $money($row->selisih) : '—') }}
                         </td>
                         <td role="cell">
                             @include('transaction-recap.status')
@@ -90,20 +92,8 @@
                         <td role="cell">
                             <div class="recap-actions">
                                 <a class="btn btn-sm btn-outline-primary" href="{{ $detailUrl }}">
-                                    <i class="bi bi-eye"></i> Rincian
+                                    <i class="bi bi-eye" aria-hidden="true"></i> Detail Transaksi
                                 </a>
-                                @can('akses.approval-finance')
-                                    <a class="btn btn-sm {{ $needsAction ? 'btn-primary' : 'btn-light' }}" 
-                                       href="{{ route('bs-usage-checks.create', [$row->jenis, $row->source_id]) }}">
-                                        {{ $row->check_id ? 'Cek Ulang' : 'Periksa' }}
-                                    </a>
-                                    @if($row->check_id)
-                                        <a class="btn btn-sm btn-outline-secondary" 
-                                           href="{{ route('bs-usage-checks.show', $row->check_id) }}">
-                                            Hasil
-                                        </a>
-                                    @endif
-                                @endcan
                             </div>
                         </td>
                     </tr>
@@ -116,11 +106,9 @@
             <div class="recap-footer-totals">
                 <span>Pengajuan <strong>{{ $money($summary->nominal_user) }}</strong></span>
                 <span>Disetujui <strong>{{ $money($summary->nominal_finance) }}</strong></span>
-                <span>Ditolak <strong>{{ $money($summary->nominal_rejected) }}</strong></span>
+                <span>Total Ditolak <strong>{{ $money($summary->nominal_not_approved) }}</strong></span>
                 <span>Pending / Belum Dicek <strong>{{ $money($summary->nominal_unchecked) }}</strong></span>
-                <span>Selisih Persetujuan Finance <strong>{{ $money($summary->selisih) }}</strong></span>
                 @if($summary->revision_count)<span>Perlu Revisi (keputusan lama) <strong>{{ $money($summary->nominal_revision) }}</strong></span>@endif
-                <span>Perlu Cek Ulang <strong>{{ $money($summary->nominal_recheck) }}</strong></span>
             </div>
         </div>
     @endif

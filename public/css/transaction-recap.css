@@ -1,5 +1,32 @@
 .recap-workspace{--recap-border:#e2e8f0;--recap-muted:#64748b;--recap-accent:#4338ca;color:#172033;margin-bottom:1.5rem;min-width:0;}
 .recap-workspace [hidden]{display:none!important;}
+/* Rincian biaya dan hasil Finance dalam satu tabel. */
+.recap-cost-table{width:100%;margin-bottom:0;table-layout:fixed;font-size:.875rem;}
+.recap-cost-table>:not(caption)>*>*{padding:1rem .75rem;vertical-align:top;border-color:#e2e8f0;overflow-wrap:anywhere;}
+.recap-cost-table thead th{background:#f8fafc;color:#475569;font-size:.75rem;line-height:1.5;}
+.recap-cost-table thead th:nth-child(1){width:18%;}
+.recap-cost-table thead th:nth-child(2){width:24%;}
+.recap-cost-table thead th:nth-child(3){width:13%;}
+.recap-cost-table thead th:nth-child(n+4){width:15%;}
+.recap-cost-table .recap-cost-money{text-align:right;font-variant-numeric:tabular-nums;}
+.recap-cost-table tbody .recap-cost-money{white-space:nowrap;}
+.recap-cost-table tfoot>* >*{background:#f1f5ff;font-weight:700;border-top:2px solid #dbe3f3;}
+.recap-cost-photos{display:flex;flex-wrap:wrap;gap:.65rem;}
+.recap-cost-photos .expense-photo-link{flex-direction:column;align-items:flex-start;gap:.35rem;font-size:.75rem;}
+.recap-cost-note{margin-top:.65rem;padding-top:.5rem;border-top:1px dashed #e2e8f0;font-size:.75rem;color:#64748b;}
+@media(min-width:576px) and (max-width:1100px){.recap-cost-table{min-width:780px;}}
+@media(max-width:575px){
+    .recap-cost-table,.recap-cost-table tbody,.recap-cost-table tfoot,.recap-cost-table tr{display:block;width:100%;}
+    .recap-cost-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+    .recap-cost-table tbody tr{padding:.75rem 0;border-bottom:1px solid #e2e8f0;}
+    .recap-cost-table>:not(caption)>*>*{display:block;border:0;padding:.4rem .5rem;}
+    .recap-cost-table td[data-label]{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:.75rem;}
+    .recap-cost-table td[data-label]::before{content:attr(data-label);color:#64748b;font-size:.75rem;font-weight:500;text-align:left;}
+    .recap-cost-table td[data-label]>div{min-width:0;}
+    .recap-cost-table .recap-cost-note{grid-column:2;}
+    .recap-cost-table tbody .recap-cost-money{white-space:normal;}
+    .recap-cost-table tfoot{margin-top:.75rem;background:#f1f5ff;border-radius:.5rem;padding:.5rem 0;}
+}
 .recap-workspace a:focus-visible,.recap-workspace button:focus-visible,.recap-workspace summary:focus-visible,.check-form a:focus-visible{outline:3px solid #818cf8;outline-offset:3px;}
 .recap-head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1.15rem;}
 .recap-eyebrow{font-size:.69rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--recap-accent);margin-bottom:.4rem;}
@@ -17,6 +44,16 @@
 .recap-filter-actions .btn{min-height:40px;white-space:nowrap;}
 .recap-filter-note{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;color:#64748b;font-size:.73rem;margin-top:.7rem;}
 .recap-filter-note a{color:#4338ca;}
+.recap-filter-note .recap-applied-period{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .65rem;border-radius:8px;background:#f1f5f9;color:#475569;line-height:1.5;}
+.recap-applied-period strong{color:#172033;font-weight:650;}
+.recap-period-shortcuts{display:inline-flex;gap:.3rem;flex-wrap:wrap;}
+.recap-period-shortcuts a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:.4rem .7rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#475569;text-decoration:none;font-weight:600;transition:background .15s,border-color .15s;}
+.recap-period-shortcuts a:hover{background:#f5f3ff;border-color:#a5b4fc;color:#4338ca;}
+.recap-period-shortcuts a[aria-current=true]{background:#eef2ff;border-color:#c7d2fe;color:#4338ca;}
+.recap-period-shortcuts a:focus-visible{outline:2px solid #4f46e5;outline-offset:3px;}
+.recap-filter-hint{margin-left:auto;line-height:1.5;}
+.recap-filter-hint strong{font-weight:600;}
+@media(max-width:767px){.recap-filter-note{gap:.5rem;}.recap-period-shortcuts a{min-height:44px;}.recap-filter-hint{flex-basis:100%;margin-left:0;}}
 .recap-status-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:1rem;padding-top:.85rem;border-top:1px solid #f1f5f9;}
 .recap-status-tabs a{padding:.4rem .7rem;border:1px solid #e2e8f0;border-radius:999px;font-size:.72rem;color:#475569;text-decoration:none;background:#fff;min-height:32px;display:inline-flex;align-items:center;}
 .recap-status-tabs a:hover{border-color:#a5b4fc;color:#3730a3;}.recap-status-tabs a[aria-current=true]{background:#eef2ff;border-color:#c7d2fe;color:#3730a3;font-weight:700;}
@@ -24,10 +61,20 @@
 .recap-section-head h2,.recap-section-head h3{font-size:.93rem;font-weight:750;margin:0;}.recap-section-head p{font-size:.75rem;color:#64748b;margin:0;}
 .usage-modules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;}
 .usage-module{min-width:0;border:1px solid var(--recap-border);border-radius:14px;background:#fff;padding:1.15rem;}
+.recap-funding-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;}
+.recap-funding-card{display:flex;flex-direction:column;min-width:0;padding:1.25rem;border:1px solid var(--recap-border);border-top:3px solid #6366f1;border-radius:14px;background:#fff;color:#172033;text-decoration:none;}
+.recap-funding-card:hover{color:#172033;border-color:#a5b4fc;box-shadow:0 6px 18px rgba(15,23,42,.06);}
+.recap-funding-card[data-funding-stage=disetujui]{border-top-color:#10b981;}.recap-funding-card[data-funding-stage=dicairkan]{border-top-color:#0ea5e9;}
+.recap-funding-label{display:flex;gap:.5rem;align-items:center;font-size:.8rem;font-weight:700;}.recap-funding-note{font-size:.72rem;color:#64748b;line-height:1.5;margin-bottom:1rem;}.recap-funding-action{margin-top:auto;font-size:.78rem;color:#4338ca;font-weight:650;}
+.recap-usage-card{display:flex;flex-direction:column;}.recap-usage-card h4{margin:0;font-size:.86rem;font-weight:750;}
+.recap-history-link{display:flex;gap:.5rem;align-items:center;justify-content:center;min-height:42px;margin-top:auto;padding:.55rem .75rem;border:1px solid #dbe3ef;border-radius:9px;color:#4338ca;background:#f8fafc;font-size:.78rem;font-weight:650;text-decoration:none;}
+.recap-history-link:hover{background:#eef2ff;border-color:#a5b4fc;}
+@media(max-width:767px){.recap-funding-grid{grid-template-columns:minmax(0,1fr);}}
 .usage-module[data-module-card]{cursor:pointer;}
 .usage-module[data-module-card]:focus-within{border-color:var(--recap-primary,#4f46e5);}
 .recap-filter-grid.recap-filter-grid-module{grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;}
-@media(max-width:767px){.recap-filter-grid.recap-filter-grid-module{grid-template-columns:minmax(0,1fr);}}
+.recap-filter-grid.recap-filter-grid-period{grid-template-columns:minmax(0,210px) max-content;justify-content:start;}
+@media(max-width:767px){.recap-filter-grid.recap-filter-grid-module,.recap-filter-grid.recap-filter-grid-period{grid-template-columns:minmax(0,1fr);}.recap-filter-grid.recap-filter-grid-period{justify-content:stretch;}}
 .recap-module-head{display:flex;align-items:center;gap:.65rem;min-width:0;}
 .recap-module-icon{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:10px;background:#eef2ff;color:#4f46e5;}
 .recap-module-head a{font-weight:750;font-size:.86rem;color:#172033;text-decoration:none;}.recap-module-head a:hover{color:#4338ca;text-decoration:none;}
@@ -45,7 +92,6 @@
 .recap-breakdown.recap-breakdown-separated{grid-template-columns:repeat(2,minmax(0,1fr));}
 .recap-breakdown .difference{background:#faf8ff;border-color:#e7def9;}.recap-breakdown .difference strong{color:#6d28d9;}
 .recap-breakdown .revision{background:#fffcf5;border-color:#f3e7cc;}.recap-breakdown .revision strong{color:#92400e;}
-.recap-breakdown .recheck{background:#f8faff;border-color:#dce6fa;}.recap-breakdown .recheck strong{color:#1d4ed8;}
 .recap-module-total-label{margin-top:.9rem;font-size:.7rem;color:#64748b;}.recap-module-total-label+.recap-module-total{margin-top:.1rem;}
 .recap-amount-note{font-size:.7rem;color:#64748b;line-height:1.55;margin:.8rem 0 .4rem;}
 .recap-amount-summary{margin-bottom:1.25rem;}.recap-amount-summary .recap-breakdown{grid-template-columns:repeat(3,minmax(0,1fr));border-top:0;}
@@ -59,7 +105,7 @@
 .recap-followup-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;}
 .recap-module-foot .recap-followup-link{display:flex;align-items:center;gap:.4rem;min-height:46px;min-width:0;padding:.5rem .55rem;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#475569;text-decoration:none;font-size:.69rem;line-height:1.35;transition:background .15s ease,border-color .15s ease;}
 .recap-followup-link>i{flex-shrink:0;font-size:.78rem;}.recap-followup-link>span{flex:1;min-width:0;font-weight:600;}.recap-followup-link>strong{display:grid;place-items:center;min-width:23px;min-height:23px;padding:.1rem .25rem;border-radius:6px;background:#f1f5f9;font-size:.73rem;font-variant-numeric:tabular-nums;}
-.recap-module-foot .recap-followup-link.revision{color:#92400e;}.recap-followup-link.revision>strong{background:#fffbeb;}.recap-module-foot .recap-followup-link.recheck{color:#1d4ed8;}.recap-followup-link.recheck>strong{background:#eff6ff;}.recap-module-foot .recap-followup-link.difference{color:#6d28d9;}.recap-followup-link.difference>strong{background:#f5f3ff;}
+.recap-module-foot .recap-followup-link.revision{color:#92400e;}.recap-followup-link.revision>strong{background:#fffbeb;}.recap-module-foot .recap-followup-link.difference{color:#6d28d9;}.recap-followup-link.difference>strong{background:#f5f3ff;}
 .recap-module-foot .recap-followup-link:hover{background:#f8fafc;border-color:#a5b4fc;text-decoration:none;}.recap-followup-hint{margin:.65rem 0 0;font-size:.66rem;color:#64748b;}
 .recap-guide{margin:1rem 0;color:#64748b;font-size:.77rem;}.recap-guide summary{cursor:pointer;color:#475569;font-weight:600;width:fit-content;}.recap-guide p{margin:.7rem 0;max-width:95ch;line-height:1.65;}
 .recap-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin:1rem 0;}
@@ -75,7 +121,7 @@
 .recap-empty{text-align:center;padding:2.5rem 1rem;color:#64748b;}.recap-empty i{display:block;font-size:1.7rem;color:#818cf8;margin-bottom:.5rem;}.recap-empty h3{font-size:1rem;font-weight:700;color:#334155;}.recap-empty p{font-size:.8rem;max-width:60ch;margin:.5rem auto 1rem;}
 .recap-help-links{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem;}.recap-help-links a{font-size:.74rem;}
 .recap-back{display:inline-flex;gap:.5rem;align-items:center;color:#475569;font-size:.8rem;text-decoration:none;margin-bottom:1rem;}.recap-back:hover{color:#4338ca;}
-.recap-detail-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:1rem;align-items:start;}.recap-card{padding:1.25rem;background:white;border:1px solid var(--recap-border);border-radius:12px;margin-bottom:1rem;}.recap-card h2{font-size:.95rem;font-weight:750;margin-bottom:1rem;}.recap-card dl{margin:0;display:grid;grid-template-columns:155px minmax(0,1fr);gap:.75rem;font-size:.83rem;}.recap-card dt{color:#64748b;font-weight:500;}.recap-card dd{margin:0;overflow-wrap:anywhere;}.recap-detail-amount{font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.recap-detail-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;align-items:start;}.recap-card{padding:1.25rem;background:white;border:1px solid var(--recap-border);border-radius:12px;margin-bottom:1rem;}.recap-card h2{font-size:.95rem;font-weight:750;margin-bottom:1rem;}.recap-card dl{margin:0;display:grid;grid-template-columns:155px minmax(0,1fr);gap:.75rem;font-size:.83rem;}.recap-card dt{color:#64748b;font-weight:500;}.recap-card dd{margin:0;overflow-wrap:anywhere;}.recap-detail-amount{font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
 .recap-step-list{padding-left:1.1rem;font-size:.8rem;color:#475569;line-height:1.7;margin:.75rem 0 0;}.recap-step-list li+li{margin-top:.5rem;}
 .check-form .check-card{border-radius:12px;}.check-form .check-table td{padding:.85rem;}.check-form .form-label{font-size:.8rem;font-weight:650;}.check-form .check-table input{min-width:140px;}.check-form .check-table textarea{min-width:170px;}.check-form .check-table th{padding:.85rem;}
 .check-step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#eef2ff;color:#4338ca;font-size:.75rem;margin-right:.5rem;font-weight:750;}.check-steps{display:flex;gap:.65rem;flex-wrap:wrap;padding:0;list-style:none;font-size:.78rem;color:#64748b;margin:0 0 1.25rem;}.check-steps li{display:flex;align-items:center;}
@@ -90,3 +136,170 @@
 }
 @media(max-width:374.98px){.recap-filter-grid{grid-template-columns:minmax(0,1fr);}.recap-breakdown{grid-template-columns:minmax(0,1fr);}.recap-breakdown a{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:.5rem;align-items:start;}.recap-breakdown strong{text-align:right;margin:0;}.recap-breakdown small{grid-column:1/-1;}.recap-head-actions{width:100%;}.recap-head-actions .btn{width:100%;}}
 @media(prefers-reduced-motion:reduce){.recap-workspace *,.check-form *{scroll-behavior:auto!important;transition:none!important;}}
+@media(min-width:1400px){.recap-funding-grid{grid-template-columns:repeat(4,minmax(0,1fr));}}
+.recap-funding-card[data-funding-stage=pending]{border-top-color:#f59e0b;}
+.recap-funding-card[data-funding-stage=ditolak]{border-top-color:#ef4444;}
+/* Satu panel dengan garis pemisah antarbagian */
+.recap-funding-grid.recap-funding-panel {
+    gap: 1px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+/* Hilangkan bingkai masing-masing kartu */
+.recap-funding-panel > .recap-funding-card {
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: none;
+}
+
+.recap-funding-panel > .recap-funding-card:hover {
+    background: #f8fafc;
+    box-shadow: none;
+}
+
+.recap-funding-panel > .recap-funding-card:focus-visible {
+    outline-offset: -3px;
+}
+
+/* Warna pembeda dipindahkan ke judul bagian */
+.recap-funding-panel [data-funding-stage="diajukan"] .recap-funding-label {
+    color: #4338ca;
+}
+
+.recap-funding-panel [data-funding-stage="dicairkan"] .recap-funding-label {
+    color: #0284c7;
+}
+
+.recap-funding-panel [data-funding-stage="pending"] .recap-funding-label {
+    color: #b45309;
+}
+
+.recap-funding-panel [data-funding-stage="ditolak"] .recap-funding-label {
+    color: #dc2626;
+}
+
+.recap-submission-info{container-type:inline-size;}
+.recap-submission-info .recap-info-groups{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;}
+.recap-submission-info .recap-info-group{min-width:0;padding:1rem;border:1px solid #e2e8f0;border-radius:10px;background:#fff;}
+.recap-submission-info .recap-info-group h3{margin:0 0 1rem;padding-bottom:.65rem;border-bottom:1px solid #edf1f7;font-size:.85rem;line-height:1.4;font-weight:700;color:#334155;}
+.recap-submission-info .recap-info-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem 1.25rem;align-items:start;}
+.recap-submission-info .recap-info-field{min-width:0;}
+.recap-submission-info dt{font-size:.76rem;line-height:1.5;color:#64748b;margin-bottom:.35rem;}
+.recap-submission-info dd{margin:0;font-size:.9rem;line-height:1.6;font-weight:500;color:#172033;overflow-wrap:anywhere;}
+.recap-submission-info .recap-info-wide{grid-column:1/-1;}
+.recap-submission-info .recap-info-amount{font-size:1.1rem;font-weight:750;font-variant-numeric:tabular-nums;color:#4338ca;}
+.recap-submission-info .recap-info-time-part{display:inline-block;white-space:nowrap;}
+.recap-info-status{display:inline-block;padding:.2rem .55rem;border:1px solid;border-radius:6px;font-size:.76rem;font-weight:650;line-height:1.5;}
+.recap-info-status.is-confirmed{color:#166534;background:#f0fdf4;border-color:#bbf7d0;}
+.recap-info-status.is-pending{color:#475569;background:#f8fafc;border-color:#e2e8f0;}
+.recap-submission-info .recap-info-description-group{margin-top:1rem;padding:1rem;border-radius:10px;background:#f8fafc;}
+.recap-submission-info .recap-info-description-group dt{font-weight:650;color:#334155;}
+.recap-submission-info .recap-info-description{white-space:pre-line;font-weight:400;}
+@container(min-width:640px){.recap-submission-info .recap-info-groups{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:575px){
+    .recap-submission-info .recap-info-grid{grid-template-columns:minmax(0,1fr);gap:.9rem;}
+    .recap-submission-info .recap-info-group,.recap-submission-info .recap-info-description-group{padding:.875rem;}
+}
+
+/* Ringkasan nominal, lalu rincian per jenis biaya. */
+.recap-usage-panel{
+    --usage-columns:repeat(4,minmax(0,1fr));
+    --usage-gap:.875rem;--usage-inset:1.25rem;--usage-cell-inset:calc(1.125rem + 1px);
+    border:1px solid #e2e8f0;border-radius:16px;background:#fff;overflow:hidden;
+}
+.recap-usage-count{padding:.35rem .7rem;border-radius:6px;background:#eef2ff;color:#4338ca!important;font-weight:600;}
+.recap-usage-totals{display:grid;grid-template-columns:var(--usage-columns);gap:var(--usage-gap);padding:var(--usage-inset);background:#fafbfd;}
+.recap-usage-stage{
+    --usage-tone:#4338ca;--usage-tint:#eef2ff;
+    display:flex;flex-direction:column;min-width:0;padding:1rem 1.125rem;
+    border:1px solid #e2e8f0;border-top:3px solid var(--usage-tone);border-radius:10px;background:#fff;
+}
+.recap-usage-stage[data-usage-stage=REPORTED]{background:var(--usage-tint);border-color:#c7d2fe;border-top-color:var(--usage-tone);}
+.recap-usage-stage[data-usage-stage=APPROVED]{--usage-tone:#15803d;--usage-tint:#f0fdf4;}
+.recap-usage-stage[data-usage-stage=PENDING],.recap-usage-stage[data-usage-stage=REVISION]{--usage-tone:#b45309;--usage-tint:#fffbeb;}
+.recap-usage-stage[data-usage-stage=REJECTED]{--usage-tone:#be123c;--usage-tint:#fff1f2;}
+.recap-usage-stage[data-usage-stage=REVISION]{grid-column:1/-1;}
+.recap-usage-stage .recap-funding-label{display:flex;align-items:center;gap:.5rem;margin:0;font-size:.82rem;line-height:1.5;color:var(--usage-tone);}
+.recap-usage-stage .recap-funding-label i{flex-shrink:0;}
+.recap-usage-stage .recap-module-total{margin:.75rem 0 0;font-size:clamp(1.15rem,1.65vw,1.6rem);font-weight:750;line-height:1.35;letter-spacing:-.025em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.recap-usage-stage[data-usage-stage=REPORTED] .recap-module-total{color:#312e81;}
+.recap-usage-stage .recap-module-caption{margin:.25rem 0 0;font-size:.75rem;color:#64748b;}
+.recap-usage-stage .recap-funding-note{margin:.7rem 0 0;font-size:.75rem;line-height:1.5;color:#64748b;}
+.recap-usage-detail-head{padding:1.15rem 1.25rem .9rem;border-top:1px solid #e2e8f0;}
+.recap-usage-detail-head h4{font-size:.9rem;font-weight:700;margin:0 0 .3rem;color:#172033;}
+.recap-usage-detail-head p{font-size:.75rem;line-height:1.5;color:#64748b;margin:0;}
+.recap-usage-columns,.recap-usage-row{display:grid;grid-template-columns:var(--usage-columns);column-gap:var(--usage-gap);padding-inline:var(--usage-inset);}
+.recap-usage-columns{background:#f8fafc;border-block:1px solid #e2e8f0;}
+.recap-usage-columns>span{padding:.75rem var(--usage-cell-inset);font-size:.74rem;font-weight:650;line-height:1.5;text-align:left;color:#475569;}
+.recap-usage-columns>span:first-child{text-align:left;}
+.recap-usage-columns>span:nth-child(2){color:#15803d;}
+.recap-usage-columns>span:nth-child(3){color:#b45309;}
+.recap-usage-columns>span:nth-child(4){color:#be123c;}
+.recap-usage-row{min-width:0;align-items:stretch;}
+.recap-usage-row+.recap-usage-row{border-top:1px solid #edf1f7;}
+.recap-usage-row>a{min-width:0;color:#172033;text-decoration:none;overflow-wrap:anywhere;transition:background .15s;}
+.recap-usage-row>a:hover{background:#eef2ff;}
+.recap-usage-row>a:focus-visible{outline:2px solid #6366f1;outline-offset:-3px;}
+.recap-usage-reported{display:flex;flex-direction:column;justify-content:center;gap:.45rem;padding:1rem var(--usage-cell-inset);border-right:1px solid #edf1f7;}
+.recap-usage-category{display:flex;align-items:center;gap:.5rem;font-size:.84rem;font-weight:650;line-height:1.5;}
+.recap-usage-category>i{flex-shrink:0;color:#64748b;}
+.recap-usage-category>.bi-arrow-right{margin-left:auto;font-size:.75rem;}
+.recap-usage-category-amount{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.2rem .5rem;font-size:.9rem;font-weight:650;line-height:1.5;font-variant-numeric:tabular-nums;}
+.recap-usage-category-amount small{font-size:.72rem;font-weight:400;color:#64748b;}
+.recap-usage-finance{position:relative;grid-column:2/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--usage-gap);align-content:center;padding:1rem 0;}
+.recap-usage-status{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:.25rem;min-width:0;padding:0 var(--usage-cell-inset);line-height:1.5;text-align:left;}
+.recap-usage-status-title{display:flex;align-items:baseline;gap:.35rem;font-size:.75rem;font-weight:600;line-height:1.5;}
+.recap-usage-status-title i{flex-shrink:0;}
+.recap-usage-status strong{font-size:.95rem;font-weight:650;font-variant-numeric:tabular-nums;}
+.recap-usage-status small{font-size:.72rem;color:#64748b;}
+.recap-usage-status[data-finance-status=APPROVED]{color:#15803d;}
+.recap-usage-status[data-finance-status=PENDING],.recap-usage-status[data-finance-status=REVISION]{color:#b45309;}
+.recap-usage-status[data-finance-status=REJECTED]{color:#be123c;}
+.recap-usage-status[data-finance-status=REVISION]{grid-column:1/-1;border-top:1px dashed #e2e8f0;margin-top:.75rem;padding-top:.75rem;}
+.recap-usage-status.is-zero strong,.recap-usage-row.is-empty .recap-usage-category-amount{color:#64748b;font-weight:500;}
+.recap-usage-row.is-empty{background:#fbfcfd;}
+.recap-usage-row.is-empty .recap-usage-category{color:#64748b;font-weight:500;}
+.recap-usage-finance-arrow{display:none;}
+.recap-usage-explanation{display:flex;align-items:flex-start;gap:.65rem;padding:1rem 1.25rem;border-top:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:.75rem;line-height:1.6;}
+.recap-usage-explanation>i{color:#64748b;flex-shrink:0;}
+.recap-usage-explanation p{margin:0;}
+.recap-usage-explanation p+p{margin-top:.2rem;}
+.recap-usage-explanation strong{color:#475569;font-weight:650;}
+@media(min-width:992px){
+    /* Judul status cukup sekali di kepala kolom; tetap terbaca pembaca layar. */
+    .recap-usage-status:not([data-finance-status=REVISION]) .recap-usage-status-title{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+}
+@media(max-width:1199px){
+    .recap-usage-totals{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:991px){
+    .recap-usage-columns{display:none;}
+    .recap-usage-rows{padding:0 1.25rem 1.25rem;display:grid;gap:.875rem;}
+    .recap-usage-row{grid-template-columns:minmax(0,1fr);padding-inline:0;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;}
+    .recap-usage-row+.recap-usage-row{border-top:1px solid #e2e8f0;}
+    .recap-usage-reported{padding:.875rem 1rem;border:0;border-bottom:1px solid #edf1f7;background:#f8fafc;}
+    .recap-usage-finance{grid-column:auto;column-gap:0;padding:.875rem 0;}
+    .recap-usage-status{padding:0 1rem;align-items:flex-start;text-align:left;}
+    .recap-usage-status+.recap-usage-status{border-left:1px solid #edf1f7;}
+    .recap-usage-status[data-finance-status=REVISION]{border-left:0;}
+}
+@media(max-width:575px){
+    .recap-usage-totals{grid-template-columns:minmax(0,1fr);padding:.875rem;gap:.65rem;}
+    .recap-usage-stage{padding:.875rem 1rem;}
+    .recap-usage-stage .recap-module-total{font-size:1.3rem;margin-top:.45rem;}
+    .recap-usage-stage .recap-funding-note{margin-top:.35rem;}
+    .recap-usage-detail-head{padding:1rem .875rem;}
+    .recap-usage-rows{padding:0 .875rem .875rem;}
+    .recap-usage-finance{grid-template-columns:minmax(0,1fr);padding:0 1rem;}
+    .recap-usage-status{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.1rem .5rem;align-items:center;padding:.75rem 0;}
+    .recap-usage-status+.recap-usage-status{border:0;border-top:1px solid #edf1f7;}
+    .recap-usage-status-title{grid-row:1/3;}
+    .recap-usage-status strong,.recap-usage-status small{text-align:right;}
+    .recap-usage-status strong{font-size:.85rem;}
+    .recap-usage-status[data-finance-status=REVISION]{margin:0;}
+    .recap-usage-explanation{padding:.875rem;}
+}

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Periode;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -30,14 +29,21 @@ class PeriodeController extends Controller
             ? DB::table('user')->where('id', $row->closed_by)->value('nama')
             : null;
 
-        // Ambil semua transaksi bulan itu + nama user (satu pola untuk semua tabel)
+        // OPR/PD follow their saved accounting period, just like period closing.
+        // Event activity continues to follow the transaction date.
         $list = function (string $table) use ($periode) {
-            return DB::table($table . ' as h')
+            $query = DB::table($table . ' as h')
                 ->leftJoin('user as u', 'u.id', '=', 'h.user_id')
-                ->whereRaw("DATE_FORMAT(h.tanggal, '%Y-%m') = ?", [$periode])
                 ->orderBy('h.tanggal', 'desc')
-                ->select(['h.*', 'u.nama as user_nama'])
-                ->get();
+                ->select(['h.*', 'u.nama as user_nama']);
+            if (in_array($table, ['transaksi_operasional_area_sales_header', 'transaksi_perjalanan_dinas_header'], true)) {
+                $query->where('h.periode', $periode);
+            } else {
+                $query->where('h.tanggal', '>=', $periode.'-01')
+                    ->where('h.tanggal', '<', app(\App\Services\PeriodService::class)->next($periode).'-01');
+            }
+
+            return $query->get();
         };
 
         $bs          = $list('pengajuan_bs'); // ⚠️ sesuaikan nama tabel BS jika berbeda
@@ -50,7 +56,7 @@ class PeriodeController extends Controller
         $sumDetail = function (string $head, string $detail) use ($periode) {
             return DB::table($head . ' as h')
                 ->join($detail . ' as d', 'd.transaksi_id', '=', 'h.transaksi_id')
-                ->whereRaw("DATE_FORMAT(h.tanggal, '%Y-%m') = ?", [$periode])
+                ->where('h.periode', $periode)
                 ->where('h.status', 'VALIDATED')
                 ->when($detail === 'transaksi_perjalanan_dinas_detail', fn ($q) => $q->whereNull('d.deleted_at'))
                 ->sum('d.nominal');
@@ -64,17 +70,36 @@ class PeriodeController extends Controller
             'eventLuar'   => $eventLuar->sum('nominal'),
         ];
 
+        $review = app(\App\Services\PeriodClosingReviewService::class);
+        $closingBlockers = $status === 'OPEN' ? $review->blockers($periode) : collect();
+        $closingReviewToken = $review->token($periode, $closingBlockers);
+        $closingHistory = \App\Models\PeriodClosingLog::where('periode', $periode)->latest('id')->get();
+        $canAttemptClose = $row && $status === 'OPEN' && $periode < app(\App\Services\PeriodService::class)->current();
+
         return view('periode.show', compact(
             'periode', 'status', 'row', 'closedByName',
             'bs', 'operasional', 'perdin', 'eventDalam', 'eventLuar',
-            'totals'
+            'totals', 'closingBlockers', 'canAttemptClose', 'closingReviewToken', 'closingHistory'
         ));
     }
 
-    public function close(Periode $periode)
+    public function close(Request $request, Periode $periode)
     {
-        app(\App\Services\BsPeriodClosingService::class)->close($periode->id);
-        return back()->with('success', "Periode {$periode->periode} berhasil ditutup dan saldo diteruskan ke periode berikutnya.");
+        $data = $request->validate([
+            'exclude_pending' => 'sometimes|boolean',
+            'reason' => 'nullable|required_if:exclude_pending,1|string|min:5|max:1000',
+            'confirm_exclusions' => 'exclude_unless:exclude_pending,1|required|accepted',
+            'review_token' => 'nullable|required_if:exclude_pending,1|string|size:64',
+        ]);
+        $excludePending = $request->boolean('exclude_pending');
+        app(\App\Services\BsPeriodClosingService::class)->close(
+            $periode->id, $excludePending, $data['reason'] ?? null, $data['review_token'] ?? null
+        );
+        $message = $excludePending
+            ? "Periode {$periode->periode} ditutup. Transaksi tertunda dikecualikan dari pengeluaran dan dikunci; rinciannya tersimpan dalam riwayat penutupan. Saldo diteruskan ke periode berikutnya."
+            : "Periode {$periode->periode} berhasil ditutup dan saldo diteruskan ke periode berikutnya.";
+
+        return redirect()->route('periode.show', $periode->periode)->with('success', $message);
     }
 
     public function reopen(Request $request, Periode $periode)

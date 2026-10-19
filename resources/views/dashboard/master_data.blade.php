@@ -14,7 +14,7 @@
     <div class="mb-4 p-4" style="background:linear-gradient(135deg,#10b981 0%,#059669 100%);border-radius:18px;color:white;position:relative;overflow:hidden;">
         <div style="position:absolute;top:-40%;right:-5%;width:280px;height:280px;background:radial-gradient(circle,rgba(255,255,255,0.15),transparent 70%);border-radius:50%;"></div>
         <div style="position:relative;z-index:1;">
-            <h2 style="font-weight:800;margin-bottom:0.25rem;">Panel Master Data</h2>
+            <h2 style="font-weight:800;margin-bottom:0.25rem;">Master Data</h2>
             <p style="opacity:0.9;margin:0;">Pusat konfigurasi fondasi, entitas, dan aturan bisnis aplikasi EMMO.</p>
         </div>
     </div>

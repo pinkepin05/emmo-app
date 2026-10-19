@@ -73,6 +73,18 @@
         .btn-approve { background-color: #10b981; }
         .btn-reject  { background-color: #ef4444; }
         .btn-view    { background-color: #3b82f6; }
+        .selection-toolbar { position: sticky; top: 0.5rem; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; background: #fff; border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(15,23,42,0.04); }
+        .selection-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; }
+        .selection-cell { position: sticky; left: 0; z-index: 1; background: #fff; width: 52px; text-align: center; }
+        .table-custom th.selection-cell { z-index: 2; }
+        .table-custom tr.is-selected, .table-custom tr.is-selected .selection-cell { background: #eff6ff; }
+        .table-custom tr[data-selectable] { cursor: pointer; }
+        .approval-select { width: 1.15rem; height: 1.15rem; cursor: pointer; vertical-align: middle; }
+        #decisionBatchList { max-height: 150px; overflow-y: auto; font-size: 0.85rem; padding-left: 1.25rem; }
+        @media (max-width: 575px) {
+            .selection-actions { width: 100%; margin-left: 0; }
+            .selection-actions .btn { flex: 1; }
+        }
     </style>
     @include('partials.mobile-assets')
 </head>
@@ -95,6 +107,12 @@
         @endif
         @if(session('error'))
             <div class="alert alert-danger border-0 shadow-sm mb-3" style="border-radius: 12px;">❌ {{ session('error') }}</div>
+        @endif
+        @if(session('warning'))
+            <div class="alert alert-warning mb-3" role="status">{{ session('warning') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-danger mb-3" role="alert"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
         @endif
 
         @php
@@ -162,11 +180,36 @@
             </div>
         </div>
 
+        <div class="selection-toolbar" aria-label="Pilihan pengajuan">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <input class="form-check-input approval-select m-0" type="checkbox" id="selectAllPending" @disabled($menunggu === 0)>
+                    <label class="fw-semibold" for="selectAllPending">Select All ({{ $menunggu }} menunggu)</label>
+                </div>
+                <div class="small text-muted mt-1">Pilih pengajuan pada periode ini, maks. 100 per proses.</div>
+            </div>
+            <div class="small" aria-live="polite" aria-atomic="true">
+                <strong><span id="batchCount">0</span> terpilih</strong>
+                <span class="text-muted mx-1">·</span><span class="money" id="batchTotal">Rp 0,00</span>
+                <div id="batchLimit" class="text-danger" hidden>Pilih maksimal 100 pengajuan untuk satu proses.</div>
+            </div>
+            <div class="selection-actions">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSelection" disabled>Batal Pilih</button>
+                <button type="button" class="btn btn-sm btn-success" data-batch-action data-mode="approve"
+                        data-bs-toggle="modal" data-bs-target="#decisionModal"
+                        data-action="{{ route('approval-atasan.batch-approve') }}" disabled><i class="bi bi-check2-all me-1"></i>Approve Terpilih</button>
+                <button type="button" class="btn btn-sm btn-danger" data-batch-action data-mode="reject"
+                        data-bs-toggle="modal" data-bs-target="#decisionModal"
+                        data-action="{{ route('approval-atasan.batch-reject') }}" disabled><i class="bi bi-x-lg me-1"></i>Reject Terpilih</button>
+            </div>
+        </div>
+
         <div class="card-custom">
             <div class="table-responsive">
                 <table class="table-custom mb-0">
                     <thead>
                         <tr>
+                            <th class="selection-cell" scope="col">Pilih</th>
                             <th>Doc No</th>
                             <th>Tipe</th> {{-- 🎯 BARU --}}
                             <th>Tgl Pengajuan</th>
@@ -185,7 +228,18 @@
                             $tipe      = $bs->tipe_pengajuan ?? 'operasional_sales';
                             $isPerjalanan = ($tipe === 'perjalanan_dinas');
                         @endphp
-                        <tr>
+                        <tr data-approval-row @if($bs->status === 'PENDING_ATASAN') data-selectable @endif>
+                            <td class="selection-cell">
+                                @if($bs->status === 'PENDING_ATASAN')
+                                    <input type="checkbox" class="form-check-input approval-select m-0" data-approval-select
+                                           value="{{ $bs->id }}" data-docno="{{ $bs->document_no }}"
+                                           data-amount-minor="{{ \App\Support\Money::minor($bs->nominal_pengajuan) }}"
+                                           aria-label="Pilih pengajuan {{ $bs->document_no }}"
+                                           @checked(in_array((string) $bs->id, array_map('strval', (array) old('ids', [])), true))>
+                                @else
+                                    <span class="text-muted" aria-label="Pengajuan sudah diproses">—</span>
+                                @endif
+                            </td>
                             <td class="fw-semibold text-nowrap">{{ $bs->document_no }}</td>
 
                             {{-- 🎯 BARU: Kolom Tipe Pengajuan --}}
@@ -229,8 +283,11 @@
                                     ];
                                 @endphp
                                 <span class="badge-status {{ $colors[$bs->status] ?? 'bg-secondary text-white' }}">
-                                    {{ str_replace('_', ' ', $bs->status) }}
+                                    {{ $bs->status_label }}
                                 </span>
+                                @if($bs->isRejectedBySystem())
+                                    <small class="d-block text-muted mt-1">{{ $bs->rejection_reason }}</small>
+                                @endif
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-flex gap-1 justify-content-end align-items-center flex-nowrap">
@@ -258,7 +315,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-5"> {{-- 🎯 colspan 8 → 9 --}}
+                            <td colspan="10" class="text-center text-muted py-5">
                                 <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                 Tidak ada pengajuan pada <strong>{{ $formatPeriode($selectedPeriod) }}</strong>.
                             </td>
@@ -270,11 +327,12 @@
         </div>
     </div>
 
-    {{-- Modal SHARED (tidak ada perubahan) --}}
-    <div class="modal fade" id="decisionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="decisionModal" tabindex="-1" aria-hidden="true" aria-labelledby="decisionTitle">
         <div class="modal-dialog modal-dialog-centered">
-            <form id="decisionForm" method="POST">
+            <form id="decisionForm" method="POST" data-old-approval-message="{{ old('approval_message', '') }}" data-old-rejection-reason="{{ old('rejection_reason', '') }}">
                 @csrf
+                <input type="hidden" name="periode" value="{{ $selectedPeriod }}">
+                <div id="batchHiddenInputs"></div>
                 <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--border-color);">
                     <div class="modal-header border-0 pb-0">
                         <div>
@@ -283,12 +341,16 @@
                                 Dokumen: <span id="decisionDocNo" class="fw-semibold text-primary">-</span>
                             </p>
                         </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                     </div>
                     <div class="modal-body">
                         <p class="text-secondary mb-3" style="font-size: 0.9rem;" id="decisionSubtitle"></p>
+                        <div id="decisionBatchSummary" hidden>
+                            <p class="fw-semibold mb-2">Total nominal: <span id="decisionTotal"></span></p>
+                            <ul id="decisionBatchList"></ul>
+                        </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold" style="font-size: 0.85rem;" id="decisionLabel">-</label>
+                            <label class="form-label fw-semibold" style="font-size: 0.85rem;" id="decisionLabel" for="decisionMessage">-</label>
                             <textarea class="form-control" id="decisionMessage" name="message"
                                       rows="4" maxlength="1000" placeholder=""></textarea>
                             <small class="text-muted"><span id="charCount">0</span> / 1000</small>
@@ -304,60 +366,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.getElementById('periodSelect')?.addEventListener('change', function () {
-            const url = new URL(window.location.href);
-            url.searchParams.set('periode', this.value);
-            window.location.href = url.toString();
-        });
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal      = document.getElementById('decisionModal');
-            const form       = document.getElementById('decisionForm');
-            const title      = document.getElementById('decisionTitle');
-            const subtitle   = document.getElementById('decisionSubtitle');
-            const docNoEl    = document.getElementById('decisionDocNo');
-            const label      = document.getElementById('decisionLabel');
-            const message    = document.getElementById('decisionMessage');
-            const charCount  = document.getElementById('charCount');
-            const submitBtn  = document.getElementById('decisionSubmitBtn');
-
-            modal.addEventListener('show.bs.modal', function (event) {
-                const btn    = event.relatedTarget;
-                const mode   = btn.dataset.mode;
-                const action = btn.dataset.action;
-                const docno  = btn.dataset.docno;
-
-                docNoEl.textContent   = docno;
-                form.action           = action;
-                message.value         = '';
-                charCount.textContent = '0';
-
-                if (mode === 'approve') {
-                    title.textContent    = 'Setujui Pengajuan';
-                    subtitle.textContent = 'Tambahkan pesan atau catatan untuk pemohon (opsional).';
-                    label.innerHTML      = 'Pesan Persetujuan <span class="text-muted fw-normal small">(Opsional)</span>';
-                    message.placeholder  = 'Contoh: OK, segera cairkan di Finance...';
-                    message.name         = 'approval_message';
-                    message.required     = false;
-                    submitBtn.className  = 'btn btn-success';
-                    submitBtn.innerHTML  = '<i class="bi bi-check-lg me-1"></i> Ya, Setujui';
-                } else {
-                    title.textContent    = 'Tolak Pengajuan';
-                    subtitle.textContent = 'Mohon berikan alasan penolakan agar pemohon dapat memperbaikinya.';
-                    label.innerHTML      = 'Alasan Penolakan <span class="text-danger">*</span>';
-                    message.placeholder  = 'Tuliskan alasan penolakan...';
-                    message.name         = 'rejection_reason';
-                    message.required     = true;
-                    submitBtn.className  = 'btn btn-danger';
-                    submitBtn.innerHTML  = '<i class="bi bi-x-lg me-1"></i> Ya, Tolak';
-                }
-            });
-
-            message.addEventListener('input', function () {
-                charCount.textContent = this.value.length;
-            });
-        });
-    </script>
+    <script src="{{ asset('js/approval-atasan.js') }}?v={{ filemtime(public_path('js/approval-atasan.js')) }}" defer></script>
 </body>
 </html>

@@ -27,7 +27,7 @@
         </div></div>
         <div class="card mb-3"><div class="table-responsive"><table class="table mb-0">
             <thead><tr><th>Jenis Biaya</th><th>Keterangan</th><th class="text-end">Nominal</th></tr></thead>
-            <tbody>@foreach($transaksi->details as $detail)<tr><td>{{ $detail->costCategory?->nama ?? $detail->costCategory?->name ?? $detail->costCategory?->description ?? '-' }}</td><td>{{ $detail->remark }}</td><td class="text-end text-nowrap">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</td></tr>@endforeach</tbody>
+            <tbody>@foreach($transaksi->details as $detail)<tr><td>{{ $detail->costCategory?->nama ?? $detail->costCategory?->name ?? $detail->costCategory?->description ?? '-' }}</td><td>{{ $detail->remark }}<div>@include('partials.transaction-photo-link', ['photoUrl' => $detail->photo_url])</div></td><td class="text-end text-nowrap">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</td></tr>@endforeach</tbody>
             <tfoot><tr><th colspan="2">Total Pemakaian yang Diajukan</th><th class="text-end text-nowrap">Rp {{ number_format($transaksi->details->sum('nominal'), 2, ',', '.') }}</th></tr></tfoot>
         </table></div></div>
         @include('bs-usage-approvals.actions')

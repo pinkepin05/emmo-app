@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\PengajuanBs;
 use App\Models\BsActivityLog;
+use App\Services\BsApprovalPeriodService;
 use Illuminate\Http\Request;
 
 class ApprovalAtasanController extends Controller
 {
+    public function __construct(private BsApprovalPeriodService $approvalPeriods) {}
+
     public function index(Request $request)
     {
         // 🛡️ Proteksi lapis 1: permission fitur (lapis 2 sudah di middleware route)
         abort_unless(auth()->user()->can('approval-atasan'), 403);
+
+        $this->approvalPeriods->rejectClosedPeriods(atasanId: (int) auth()->id());
 
         $statuses = [
             'PENDING_ATASAN', 'APPROVED_ATASAN', 'REJECTED_ATASAN',
@@ -42,7 +47,7 @@ class ApprovalAtasanController extends Controller
             ->whereRaw("$bulanExpr = ?", [$selectedPeriod])
             ->with([
                 'user', 'atasan',
-                'logs' => fn ($q) => $q->whereIn('activity_code', ['APPROVED_ATASAN', 'REJECTED_ATASAN'])->latest(),
+                'logs' => fn ($q) => $q->whereIn('activity_code', ['APPROVED_ATASAN', 'REJECTED_ATASAN', 'REJECTED_SYSTEM'])->latest(),
             ])
             ->orderByRaw("CASE status
                             WHEN 'PENDING_ATASAN'   THEN 1
@@ -67,12 +72,14 @@ class ApprovalAtasanController extends Controller
             abort(403, 'Anda tidak memiliki akses ke pengajuan ini.');
         }
 
+        $this->approvalPeriods->rejectIfClosed($bs);
         $bs->load(['user', 'atasan', 'members']);
 
         $logs = BsActivityLog::where('pengajuan_bs_id', $bs->id)
                              ->with('actor')
                              ->orderBy('created_at', 'asc')
                              ->get();
+        $bs->setRelation('logs', $logs);
 
         return view('approval-atasan.detail', compact('bs', 'logs'));
     }
@@ -89,9 +96,20 @@ class ApprovalAtasanController extends Controller
             return back()->with('error', 'Pengajuan ini sudah diproses sebelumnya.');
         }
 
+        if ($this->approvalPeriods->rejectIfClosed($bs)) {
+            return back()->with('error', $bs->rejection_reason);
+        }
+
         $request->validate(['approval_message' => 'nullable|string|max:1000']);
         $message = $request->approval_message ?: null;
 
+        $this->approveBs($bs, $message);
+
+        return back()->with('success', 'BS berhasil disetujui.' . ($message ? ' Pesan Anda akan diteruskan ke pemohon.' : ''));
+    }
+
+    private function approveBs(PengajuanBs $bs, ?string $message): void
+    {
         $bs->update([
             'status'           => 'APPROVED_ATASAN',
             'approval_message' => $message,
@@ -105,8 +123,6 @@ class ApprovalAtasanController extends Controller
         \App\Services\BsNotifications::afterCommit(fn () => \App\Models\User::permission('akses.approval-finance')
             ->get()
             ->each(fn($u) => $u->notify(new \App\Notifications\BsApproved($bs))));
-
-        return back()->with('success', 'BS berhasil disetujui.' . ($message ? ' Pesan Anda akan diteruskan ke pemohon.' : ''));
     }
 
     public function reject(Request $request, PengajuanBs $bs)
@@ -121,22 +137,82 @@ class ApprovalAtasanController extends Controller
             return back()->with('error', 'Pengajuan ini sudah diproses sebelumnya.');
         }
 
+        if ($this->approvalPeriods->rejectIfClosed($bs)) {
+            return back()->with('error', $bs->rejection_reason);
+        }
+
         $request->validate(['rejection_reason' => 'required|string|max:1000']);
 
+        $this->rejectBs($bs, $request->rejection_reason);
+
+        return back()->with('success', 'BS berhasil ditolak.');
+    }
+
+    private function rejectBs(PengajuanBs $bs, string $reason): void
+    {
         $bs->update([
             'status'           => 'REJECTED_ATASAN',
-            'rejection_reason' => $request->rejection_reason,
+            'rejection_reason' => $reason,
         ]);
 
         BsActivityLog::record(
             $bs->id,
             'REJECTED_ATASAN',
             'Ditolak Atasan',
-            'Pengajuan ditolak oleh ' . auth()->user()->nama . ' dengan alasan: ' . $request->rejection_reason
+            'Pengajuan ditolak oleh ' . auth()->user()->nama . ' dengan alasan: ' . $reason
         );
 
         \App\Services\BsNotifications::afterCommit(fn () => $bs->user?->notify(new \App\Notifications\BsRejected($bs)));
+    }
 
-        return back()->with('success', 'BS berhasil ditolak.');
+    public function batchApprove(Request $request)
+    {
+        return $this->batchDecision($request, 'approve');
+    }
+
+    public function batchReject(Request $request)
+    {
+        return $this->batchDecision($request, 'reject');
+    }
+
+    private function batchDecision(Request $request, string $action)
+    {
+        abort_unless($request->user()->can('approval-atasan'), 403);
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1|max:100',
+            'ids.*' => 'required|integer|distinct|exists:pengajuan_bs,id',
+            'approval_message' => 'nullable|string|max:1000',
+            'rejection_reason' => ($action === 'reject' ? 'required' : 'nullable').'|string|max:1000',
+            'periode' => ['nullable', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/D'],
+        ]);
+        // AtomicBsRequest holds the period, owner and BS locks for the entire batch.
+        $requests = PengajuanBs::whereIn('id', $validated['ids'])->orderBy('id')->lockForUpdate()->get();
+        abort_if($requests->contains(fn ($bs) => (int) $bs->atasan_user_id !== (int) $request->user()->id), 403);
+
+        $processed = 0;
+        $skipped = [];
+        foreach ($requests as $bs) {
+            if ($bs->status !== 'PENDING_ATASAN') {
+                $skipped[] = $bs->document_no.' (sudah diproses)';
+                continue;
+            }
+            if ($this->approvalPeriods->rejectIfClosed($bs)) {
+                $skipped[] = $bs->document_no.' (ditolak sistem: periode ditutup)';
+                continue;
+            }
+            if ($action === 'approve') {
+                $this->approveBs($bs, $validated['approval_message'] ?? null);
+            } else {
+                $this->rejectBs($bs, $validated['rejection_reason']);
+            }
+            $processed++;
+        }
+
+        $verb = $action === 'approve' ? 'disetujui dan diteruskan ke Finance' : 'ditolak';
+        $message = "{$processed} pengajuan berhasil {$verb}.";
+        if ($skipped) $message .= ' Dilewati: '.implode('; ', $skipped).'.';
+
+        return redirect()->route('approval-atasan.index', array_filter(['periode' => $validated['periode'] ?? null]))
+            ->with($processed === 0 ? 'error' : ($skipped ? 'warning' : 'success'), $message);
     }
 }

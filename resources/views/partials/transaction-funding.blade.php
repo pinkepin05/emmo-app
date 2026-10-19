@@ -1,5 +1,6 @@
 @php
     $fundingDocument = $fundingDocument ?? null;
+    $fundingCompact = $fundingCompact ?? false;
     $fundingInputter = (int) ($fundingDocument?->user_id ?? auth()->id());
     $fundingOwner = (int) old('bs_owner_id', $fundingDocument?->bsCashOwnerId() ?? $fundingInputter);
     $fundingDate = old('tanggal', $fundingDocument?->tanggal ?? \App\Support\AppTime::now()->toDateString());
@@ -21,12 +22,16 @@
                 </option>
             @endforeach
         </select>
-        <p class="small text-muted mt-2">Anggota grup dapat mengajukan pemakaian saldo gabungan pemohon untuk Perjalanan Dinas. Pemohon harus menyetujui rincian sebelum saldo berkurang.</p>
+        @if(!$fundingCompact)
+            <p class="small text-muted mt-2">Anggota grup dapat mengajukan pemakaian saldo pemohon untuk Perjalanan Dinas. Pemohon menyetujui rincian terlebih dahulu; saldo baru berkurang setelah konfirmasi Finance.</p>
+        @endif
     @endif
     <div id="bs-saldo-info" class="mt-2" data-balance="{{ $fundingAvailable }}">
         Sisa Saldo BS: <strong id="bs-balance-display">{{ $fundingAvailable === null ? 'Tidak tersedia' : 'Rp '.number_format($fundingAvailable, 2, ',', '.') }}</strong>
     </div>
     <p id="bs-opening-info" class="small text-warning mt-2" @if($fundingBalance && $fundingBalance['opening_final']) hidden @endif>Saldo bulan sebelumnya tersedia setelah tutup buku.</p>
-    <p class="small text-muted mt-2">Operasional Sales dan Perjalanan Dinas memakai satu saldo BS. {{ $fundingType === 'perjalanan_dinas' ? 'Pemakaian saldo sendiri dibukukan setelah Konfirmasi; pemakaian saldo pemohon dibukukan setelah disetujui pemohon.' : 'Saldo berkurang setelah Konfirmasi.' }}</p>
+    @if(!$fundingCompact)
+        <p class="small text-muted mt-2">Operasional Sales, Perjalanan Dinas, dan event memakai satu saldo BS. Saldo berkurang sesuai nominal yang dikonfirmasi Finance. {{ $fundingType === 'perjalanan_dinas' ? 'Pemakaian saldo pemohon memerlukan persetujuan pemohon sebelum pengecekan Finance.' : '' }}</p>
+    @endif
 </div>
 <script src="{{ asset('js/bs-balance.js') }}"></script>

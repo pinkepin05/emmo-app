@@ -46,6 +46,22 @@ return [
             'throw' => true,
         ],
 
+        'transaction_detail_photos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/transaction-detail-photos'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+        ],
+
+        'bs_attachments' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/bs-attachments'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

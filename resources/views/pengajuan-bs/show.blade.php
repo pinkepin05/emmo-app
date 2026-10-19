@@ -91,7 +91,7 @@
                             @elseif($bs->status == 'PENDING_ATASAN') bg-warning text-dark
                             @elseif($bs->status == 'SETTLED') bg-dark
                             @else bg-info @endif">
-                            {{ str_replace('_', ' ', $bs->status) }}
+                            {{ $bs->status_label }}
                         </span>
                     </div>
                 </div>
@@ -123,6 +123,8 @@
                     {{ $bs->description }}
                 </div>
             @endif
+
+                @include('pengajuan-bs.partials.attachment')
 
             {{-- 🎯 ANGGOTA GRUP DINAS (hanya relevan untuk Perjalanan Dinas) --}}
             @if($bs->members && $bs->members->count() > 0)
@@ -171,7 +173,7 @@
                         $icon = 'bi-circle';
                         if ($log->activity_code == 'CREATED') { $iconClass = 'icon-created'; $icon = 'bi-pencil-square'; }
                         elseif ($log->activity_code == 'APPROVED_ATASAN') { $iconClass = 'icon-approved'; $icon = 'bi-check-circle'; }
-                        elseif ($log->activity_code == 'REJECTED_ATASAN') { $iconClass = 'icon-rejected'; $icon = 'bi-x-circle'; }
+                        elseif (in_array($log->activity_code, ['REJECTED_ATASAN', 'REJECTED_SYSTEM'])) { $iconClass = 'icon-rejected'; $icon = 'bi-x-circle'; }
                         elseif ($log->activity_code == 'DISBURSED') { $iconClass = 'icon-disbursed'; $icon = 'bi-cash-coin'; }
                         elseif ($log->activity_code == 'SETTLED') { $iconClass = 'icon-settled'; $icon = 'bi-archive-fill'; }
                     @endphp

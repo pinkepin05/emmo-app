@@ -65,11 +65,12 @@
         .nominal-formatted { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
     </style>
     @include('partials.mobile-assets')
+    <link rel="stylesheet" href="{{ asset('css/travel-editor.css') }}?v={{ filemtime(public_path('css/travel-editor.css')) }}">
 </head>
 <body>
     @include('partials.application-time')
     <div class="page-header">
-        <div class="container" style="max-width: 1000px;">
+        <div class="container" style="max-width: 1200px;">
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1><i class="bi bi-airplane me-2"></i>Detail Perjalanan Dinas</h1>
@@ -84,7 +85,7 @@
         </div>
     </div>
 
-    <div class="container" style="max-width: 1000px; margin-bottom: 3rem;">
+    <div class="container" style="max-width: 1200px; margin-bottom: 3rem;">
         @include('partials.finance-correction-notice', ['financeSourceType' => 'PD'])
         @if(session('success'))
             <div class="alert alert-success mb-4" style="border-radius: 6px; border: none;">
@@ -216,7 +217,7 @@
                                     <tr>
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $d->costCategory->name ?? $d->costCategory->description ?? '-' }}</td>
-                                        <td>{{ $d->remark ?? '-' }}</td>
+                                        <td>{{ $d->remark ?? '-' }}<div>@include('partials.transaction-photo-link', ['photoUrl' => $d->photo_url])</div></td>
                                         <td class="text-end fw-bold">Rp {{ number_format($d->nominal, 0, ',', '.') }}</td>
                                     </tr>
                                 @empty
@@ -239,7 +240,7 @@
         </div>
         @else
         <div id="edit-mode">
-            <form action="{{ route('transaksi_perjalanan_dinas.update', $transaksi->transaksi_id) }}" method="POST" id="form-edit-pd" data-transaction-editor="travel" data-provinces-url="{{ route('api.wilayah.provinsi') }}" data-cities-url="{{ route('api.wilayah.kota') }}">
+            <form action="{{ route('transaksi_perjalanan_dinas.update', $transaksi->transaksi_id) }}" method="POST" enctype="multipart/form-data" id="form-edit-pd" data-transaction-editor="travel" data-provinces-url="{{ route('api.wilayah.provinsi') }}" data-cities-url="{{ route('api.wilayah.kota') }}">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="_transaction_edit" value="{{ $transaksi->transaksi_id }}">
@@ -251,53 +252,61 @@
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-4">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">ID Transaksi</label>
-                                <input type="text" class="form-control" value="{{ $transaksi->transaksi_id }}" disabled>
+                            <div class="col-lg-8">
+                                <h6 class="pd-edit-section-title">Informasi perjalanan</h6>
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label for="edit-transaksi-id" class="form-label fw-semibold">ID Transaksi</label>
+                                        <input id="edit-transaksi-id" type="text" class="form-control" value="{{ $transaksi->transaksi_id }}" disabled>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="edit-tanggal" class="form-label fw-semibold">Tanggal Dinas <span class="text-danger">*</span></label>
+                                        <input id="edit-tanggal" type="date" name="tanggal" class="form-control" value="{{ old('tanggal', \Carbon\Carbon::parse($transaksi->tanggal)->format('Y-m-d')) }}" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="edit-jarak" class="form-label fw-semibold">Jarak (KM) <span class="text-danger">*</span></label>
+                                        <input type="number" name="jarak_km" id="edit-jarak" class="form-control" value="{{ old('jarak_km', $transaksi->jarak_km) }}" min="0" max="99999999.99" step="0.01" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="edit-durasi" class="form-label fw-semibold">Durasi (Jam) <span class="text-danger">*</span></label>
+                                        <input type="number" name="durasi_jam" id="edit-durasi" class="form-control" value="{{ old('durasi_jam', $transaksi->durasi_jam) }}" min="0" max="24" step="0.01" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="edit-teritory" class="form-label fw-semibold">Territory <span class="text-danger">*</span></label>
+                                        <select name="teritory" id="edit-teritory" class="form-select" required>
+                                            <option value="Jawa" {{ $currentTerritory == 'Jawa' ? 'selected' : '' }}>Jawa</option>
+                                            <option value="Luar Jawa" {{ $currentTerritory == 'Luar Jawa' ? 'selected' : '' }}>Luar Jawa</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="edit-provinsi" class="form-label fw-semibold">Provinsi <span class="text-danger">*</span></label>
+                                        <select name="provinsi_id" id="edit-provinsi" class="form-select" required>
+                                            <option value="">-- Pilih Provinsi --</option>
+                                            @foreach($provinces as $p)
+                                                <option value="{{ $p->id }}" {{ $currentProvinceId == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="edit-kota" class="form-label fw-semibold">Kota/Kabupaten <span class="text-danger">*</span></label>
+                                        <select name="tujuan_dinas_id" id="edit-kota" class="form-select" required>
+                                            <option value="">-- Pilih Kota --</option>
+                                            @foreach($cities as $c)
+                                                <option value="{{ $c->id }}" {{ old('tujuan_dinas_id', $transaksi->tujuan_dinas_id) == $c->id ? 'selected' : '' }}>{{ $c->nama }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="edit-description" class="form-label fw-semibold">Deskripsi Kegiatan <span class="text-danger">*</span></label>
+                                        <textarea id="edit-description" name="description" class="form-control" rows="3" maxlength="255" required>{{ old('description', $transaksi->description) }}</textarea>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Tanggal Dinas <span class="text-danger">*</span></label>
-                                <input type="date" name="tanggal" class="form-control" value="{{ old('tanggal', \Carbon\Carbon::parse($transaksi->tanggal)->format('Y-m-d')) }}" required>
-                            </div>
-                            <div class="col-md-4">
-                                @include('partials.transaction-funding', ['fundingType' => 'perjalanan_dinas', 'fundingDocument' => $transaksi])
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Jarak (KM) <span class="text-danger">*</span></label>
-                                <input type="number" name="jarak_km" id="edit-jarak" class="form-control" value="{{ old('jarak_km', $transaksi->jarak_km) }}" min="0" max="99999999.99" step="0.01" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Durasi (Jam) <span class="text-danger">*</span></label>
-                                <input type="number" name="durasi_jam" id="edit-durasi" class="form-control" value="{{ old('durasi_jam', $transaksi->durasi_jam) }}" min="0" max="24" step="0.01" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Territory <span class="text-danger">*</span></label>
-                                <select name="teritory" id="edit-teritory" class="form-select" required>
-                                    <option value="Jawa" {{ $currentTerritory == 'Jawa' ? 'selected' : '' }}>Jawa</option>
-                                    <option value="Luar Jawa" {{ $currentTerritory == 'Luar Jawa' ? 'selected' : '' }}>Luar Jawa</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Provinsi <span class="text-danger">*</span></label>
-                                <select name="provinsi_id" id="edit-provinsi" class="form-select" required>
-                                    <option value="">-- Pilih Provinsi --</option>
-                                    @foreach($provinces as $p)
-                                        <option value="{{ $p->id }}" {{ $currentProvinceId == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Kota/Kabupaten <span class="text-danger">*</span></label>
-                                <select name="tujuan_dinas_id" id="edit-kota" class="form-select" required>
-                                    <option value="">-- Pilih Kota --</option>
-                                    @foreach($cities as $c)
-                                        <option value="{{ $c->id }}" {{ old('tujuan_dinas_id', $transaksi->tujuan_dinas_id) == $c->id ? 'selected' : '' }}>{{ $c->nama }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">Deskripsi Kegiatan <span class="text-danger">*</span></label>
-                                <textarea name="description" class="form-control" rows="3" maxlength="255" required>{{ old('description', $transaksi->description) }}</textarea>
+                            <div class="col-lg-4">
+                                <aside class="pd-funding-panel" aria-label="Saldo untuk perjalanan">
+                                    <h6 class="pd-edit-section-title"><i class="bi bi-wallet2 me-2"></i>Saldo untuk perjalanan</h6>
+                                    @include('partials.transaction-funding', ['fundingType' => 'perjalanan_dinas', 'fundingDocument' => $transaksi, 'fundingCompact' => true])
+                                </aside>
                             </div>
                         </div>
                     </div>

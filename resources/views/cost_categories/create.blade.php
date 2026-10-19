@@ -26,6 +26,12 @@
                     </div>
                 @endif
 
+                @error('error')
+                    <div class="alert alert-danger" role="alert">
+                        {{ $message }}
+                    </div>
+                @enderror
+
                 <form action="{{ route('cost_categories.store') }}" method="POST">
                     @csrf 
 
@@ -48,6 +54,7 @@
                     <div class="mb-3 form-check">
                         <input type="checkbox" name="is_active" id="is_active" class="form-check-input" checked>
                         <label class="form-check-label" for="is_active">Set Aktif (Is Active)</label>
+                        <div class="form-text">Kategori nonaktif tidak dapat dipilih untuk rincian biaya baru. Riwayat transaksi tetap tersimpan.</div>
                     </div>
 
                     <button type="submit" class="btn btn-success w-100">Simpan Master Cost Category</button>
@@ -56,6 +63,7 @@
                 <hr class="my-5">
 
                 <h5>Daftar Master Cost Category</h5>
+                <p class="text-muted small">Daftar ini memuat kategori aktif dan nonaktif. Hapus hanya dapat dilakukan jika kategori belum digunakan pada transaksi; gunakan Nonaktif untuk menghentikan pemakaian kategori yang sudah digunakan.</p>
                 <div class="table-responsive">
                 <table class="table table-bordered table-striped mt-3">
                     <thead class="table-light">
@@ -84,7 +92,7 @@
                             <form action="{{ route('cost_categories.destroy', $costCategory->id) }}" method="POST" style="display:inline;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger mb-1" onclick="return confirm('Apakah Anda yakin ingin menghapus position ini?')">
+                                <button type="submit" class="btn btn-sm btn-danger mb-1" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori biaya ini?')">
                                     Hapus
                                 </button>
                             </form>

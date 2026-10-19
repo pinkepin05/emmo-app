@@ -22,6 +22,8 @@
             $rpSigned  = fn($v) => ($v < 0 ? '-' : '') . 'Rp ' . number_format(abs($v), 0, ',', '.');
             $statusMap = \App\Models\Periode::whereIn('periode', $snapshots->pluck('periode'))
                             ->pluck('status', 'periode');
+            $showAllPeriods = $showAllPeriods ?? false;
+            $historySnapshots = $snapshots->where('periode', '<', $currentPeriod);
         @endphp
 
         {{-- ===== Header ===== --}}
@@ -29,13 +31,12 @@
             <div>
                 <h1 class="cf-title">Stok Kas</h1>
                 <p class="cf-subtitle">
-                    Gabungan BS dan event.
-                    Sisa Saldo BS untuk belanja dihitung terpisah.
+                    Total Keluar mengikuti nominal yang dikonfirmasi Finance, termasuk event.
+                    Pengeluaran ini mengurangi Sisa Saldo BS.
                 </p>
             </div>
             <div class="cf-actions">
-                <a href="{{ route('bs-balance.show') }}" class="btn-cf ghost">Rincian Saldo BS</a>
-                <a href="{{ route('cash-flow.export') }}" class="btn-cf primary">
+                <a href="{{ route('cash-flow.export', $showAllPeriods ? ['semua_periode' => 1] : []) }}" class="btn-cf primary">
                     <i class="bi bi-file-earmark-excel-fill"></i> Export Excel
                 </a>
                 <a href="{{ route('dashboard.transaksi') }}" class="btn-cf ghost">
@@ -61,10 +62,18 @@
                             <span>· {{ Carbon\Carbon::createFromFormat('!Y-m', $currentPeriod)->translatedFormat('F Y') }}</span>
                         </h2>
                     </div>
-                    <span class="pill {{ $isClosed ? 'closed' : 'open' }}">
-                        @if(!$isClosed)<span class="dot"></span>@endif
-                        {{ $currentStatus }}
-                    </span>
+                    <div class="h-actions">
+                        <span class="pill {{ $isClosed ? 'closed' : 'open' }}">
+                            @if(!$isClosed)<span class="dot"></span>@endif
+                            {{ $currentStatus }}
+                        </span>
+                        <a href="{{ route('cash-flow.show', ['periode' => str_replace('-', '', $currentPeriod)] + ($showAllPeriods ? ['semua_periode' => 1] : [])) }}" class="btn-detail">
+                            <i class="bi bi-eye-fill"></i> Detail
+                        </a>
+                        <a href="{{ route('cash-flow.export-period', str_replace('-', '', $currentPeriod)) }}" class="btn-icon" title="Export Excel periode ini">
+                            <i class="bi bi-file-earmark-excel"></i>
+                        </a>
+                    </div>
                 </div>
 
                 @if(!$currentSnapshot->opening_final)
@@ -99,12 +108,12 @@
                         <span class="lbl">Total Keluar</span>
                         <span class="val amt neg">- Rp {{ number_format($currentSnapshot->total_keluar, 0, ',', '.') }}</span>
                     </div>
-                    @if($showClosingBalance)
+                    @if($showClosingBalance || $currentSnapshot->finance_confirmed)
                         <div class="cf-stat">
                             <span class="cf-ico ico-slate"><i class="bi bi-cash-stack"></i></span>
-                            <span class="lbl">Saldo Akhir</span>
-                            <span class="val amt {{ $currentSnapshot->saldo_akhir < 0 ? 'neg' : 'neu' }}">
-                                {{ $rpSigned($currentSnapshot->saldo_akhir) }}
+                            <span class="lbl">{{ $showClosingBalance ? 'Saldo Akhir' : 'Sisa Saldo BS' }}</span>
+                            <span class="val amt {{ $currentSnapshot->saldo_berjalan < 0 ? 'neg' : 'neu' }}">
+                                {{ $rpSigned($currentSnapshot->saldo_berjalan) }}
                             </span>
                         </div>
                     @endif
@@ -120,13 +129,13 @@
         <div class="cf-section-head">
             <h3>
                 <i class="bi bi-clock-history"></i> Riwayat Periode
-                @if($snapshots->count() > 0)
-                    <span class="cf-badge">{{ $snapshots->count() }}</span>
+                @if($historySnapshots->count() > 0)
+                    <span class="cf-badge">{{ $historySnapshots->count() }}</span>
                 @endif
             </h3>
         </div>
 
-        @forelse($snapshots as $snapshot)
+        @forelse($historySnapshots as $snapshot)
             @php
                 $status      = $statusMap[$snapshot->periode] ?? 'OPEN';
                 $isOpen      = $status === 'OPEN';
@@ -152,7 +161,7 @@
 
                     <div class="h-actions">
                         <span class="pill {{ $isOpen ? 'open' : 'closed' }} d-none d-md-inline-flex">{{ $status }}</span>
-                        <a href="{{ route('cash-flow.show', $periodLabel) }}" class="btn-detail">
+                        <a href="{{ route('cash-flow.show', ['periode' => $periodLabel] + ($showAllPeriods ? ['semua_periode' => 1] : [])) }}" class="btn-detail">
                             <i class="bi bi-eye-fill"></i> Detail
                         </a>
                         <a href="{{ route('cash-flow.export-period', $periodLabel) }}" class="btn-icon" title="Export Excel periode ini">
@@ -168,7 +177,10 @@
                     </div>
                 @endif
 
-                <div class="h-stats {{ $showEnd ? 'with-end' : '' }}">
+                @if(!$snapshot->finance_confirmed)
+                    <p class="h-meta">Arsip periode ditutup menggunakan perhitungan sebelum sinkronisasi Finance.</p>
+                @endif
+                <div class="h-stats {{ $showEnd || $snapshot->finance_confirmed ? 'with-end' : '' }}">
                     <div class="h-stat">
                         <span class="lbl">Awal</span>
                         <span class="val amt {{ $snapshot->saldo_awal < 0 ? 'text-danger' : '' }}">
@@ -183,11 +195,11 @@
                         <span class="lbl">Keluar</span>
                         <span class="val amt neg">- Rp {{ number_format($snapshot->total_keluar, 0, ',', '.') }}</span>
                     </div>
-                    @if($showEnd)
+                    @if($showEnd || $snapshot->finance_confirmed)
                         <div class="h-stat end">
-                            <span class="lbl">Akhir</span>
-                            <span class="val amt {{ $snapshot->saldo_akhir < 0 ? 'text-danger' : '' }}">
-                                {{ $rpSigned($snapshot->saldo_akhir) }}
+                            <span class="lbl">{{ $showEnd ? 'Akhir' : 'Sisa Saldo BS' }}</span>
+                            <span class="val amt {{ $snapshot->saldo_berjalan < 0 ? 'text-danger' : '' }}">
+                                {{ $rpSigned($snapshot->saldo_berjalan) }}
                             </span>
                         </div>
                     @endif
@@ -208,10 +220,14 @@
             <div class="cf-empty">
                 <i class="bi bi-inbox"></i>
                 <h4>Belum Ada Data Historis</h4>
-                <p class="mb-4">Mulai catat transaksi pertama Anda untuk melihat laporan cash flow bulanan.</p>
-                <a href="{{ route('transaksi.create') }}" class="btn-cf primary">
-                    <i class="bi bi-plus-lg"></i> Buat Transaksi Baru
-                </a>
+                @if($currentSnapshot)
+                    <p>Belum ada periode lain. Periode berjalan ditampilkan di atas.</p>
+                @else
+                    <p class="mb-4">Mulai catat transaksi pertama Anda untuk melihat laporan cash flow bulanan.</p>
+                    <a href="{{ route('transaksi.create') }}" class="btn-cf primary">
+                        <i class="bi bi-plus-lg"></i> Buat Transaksi Baru
+                    </a>
+                @endif
             </div>
         @endforelse
 

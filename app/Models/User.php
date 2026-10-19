@@ -18,6 +18,8 @@ class User extends Authenticatable
     protected $table = 'user';
     public $timestamps = false;
 
+    protected $hidden = ['password', 'password_encrypted', 'remember_token'];
+
     protected $fillable = [
         'NIK', 'nama', 'company_id', 'roles_id', 'level_id', 'position_id',
         'homebase_id', 'kost', 'bbm', 'uang_makan', 'hari_kerja_user',
@@ -46,12 +48,18 @@ class User extends Authenticatable
 
     public function canSeeAllTransactions(): bool
     {
-         return in_array($this->role->code ?? '', ['ADMIN', 'DIR', 'FINANCE']);
+         return in_array($this->role->code ?? '', ['ADMIN', 'ADMINISTRATOR', 'DIR', 'FINANCE']);
     }
 
     public function canAccessTransaction($transaksi): bool
     {
         return $this->canSeeAllTransactions() || $transaksi->user_id === $this->id;
+    }
+
+    public function canDeleteTransaction($transaksi): bool
+    {
+        return in_array($this->role?->code, ['ADMIN', 'ADMINISTRATOR', 'FINANCE'], true)
+            && $this->canAccessTransaction($transaksi);
     }
 
     public function canViewBsTransaction($transaksi): bool

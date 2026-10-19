@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\TransactionDetailPhotoService;
 use App\Models\TransaksiOperasionalHeader; 
 use App\Models\TransaksiOperasionalDetail; 
 use App\Models\User;
 use App\Models\CostCategory;
+use App\Rules\ActiveCostCategory;
 
 use App\Services\BonSementaraService; 
 use Illuminate\Support\Facades\DB;
@@ -22,7 +24,7 @@ class TransaksiOperasionalController extends Controller
 
     public function create()
     {
-        $cost_categories = CostCategory::all();
+        $cost_categories = CostCategory::active()->get();
         
         // 🎯 LOGIC: Ambil daftar bulan yang statusnya OPEN
         $dbPeriods = \App\Models\Periode::pluck('status', 'periode')->toArray(); // Sesuaikan 'period' jika nama kolom Anda 'periode'
@@ -40,7 +42,13 @@ class TransaksiOperasionalController extends Controller
             $openPeriods[] = $currentMonth;
         }
 
-        return view('transaksi_operasional.create', compact('cost_categories', 'openPeriods'));
+        $usedDates = TransaksiOperasionalHeader::where('user_id', Auth::id())
+            ->distinct()
+            ->orderBy('tanggal')
+            ->pluck('tanggal')
+            ->all();
+
+        return view('transaksi_operasional.create', compact('cost_categories', 'openPeriods', 'usedDates'));
     }
 public function store(Request $request, BonSementaraService $bsService)
 {
@@ -50,8 +58,9 @@ public function store(Request $request, BonSementaraService $bsService)
         'tanggal' => 'required|date',
         'description' => 'nullable|string|max:255',
         ...\App\Services\TransactionFundingService::rules(),
+        ...TransactionDetailPhotoService::rules('details'),
         'details' => 'required|array|min:1',
-        'details.*.cost_category_id' => 'required|exists:cost_category,id',
+        'details.*.cost_category_id' => ['required', 'integer', new ActiveCostCategory],
         'details.*.remark' => 'required|string|max:255',
         'details.*.nominal' => 'required|numeric|decimal:0,2|min:0|max:9999999999999.99',
     ]);
@@ -92,9 +101,10 @@ $bsOwnerId = app(\App\Services\TransactionFundingService::class)->resolve($reque
             'status'       => 'DRAFT', // 🎯 SIMPAN SEBAGAI DRAFT
         ]);
 
-        foreach ($request->details as $detail) {
+        foreach ($request->details as $index => $detail) {
             TransaksiOperasionalDetail::create([
                 'transaksi_id'     => $transaksi_id,
+                ...app(TransactionDetailPhotoService::class)->attributes($request, 'details.'.$index),
                 'cost_category_id' => $detail['cost_category_id'],
                 'remark'           => $detail['remark'],
                 'nominal'          => $detail['nominal'],
@@ -110,8 +120,8 @@ $bsOwnerId = app(\App\Services\TransactionFundingService::class)->resolve($reque
         
         return redirect()->route('transaksi_operasional.index')
             ->with('success', $confirm
-                ? 'Transaksi Operasional (' . $transaksi_id . ') berhasil disimpan dan dikonfirmasi. Realisasi BS telah dibukukan.'
-                : 'Draft Transaksi Operasional (' . $transaksi_id . ') berhasil disimpan. Klik Konfirmasi untuk membukukan pemakaian BS.');
+                ? 'Transaksi Operasional (' . $transaksi_id . ') dikonfirmasi dan siap diperiksa Finance. Saldo BS berkurang setelah konfirmasi Finance.'
+                : 'Draft Transaksi Operasional (' . $transaksi_id . ') berhasil disimpan. Klik Konfirmasi untuk mengirim pengajuan ke Finance.');
 
     } catch (\Illuminate\Validation\ValidationException $e) {
         DB::rollBack();
@@ -130,7 +140,7 @@ $bsOwnerId = app(\App\Services\TransactionFundingService::class)->resolve($reque
         abort(403, 'Anda tidak memiliki akses ke transaksi ini.');
     }
 
-    $cost_categories = CostCategory::all();
+    $cost_categories = CostCategory::active()->get();
     
     // 🎯 TAMBAHKAN INI: Ambil list BS untuk dropdown edit
 
@@ -159,12 +169,14 @@ public function update(Request $request, $id)
         'tanggal' => 'required|date',
         'description' => 'nullable|string|max:255',
         ...\App\Services\TransactionFundingService::rules(),
+        ...TransactionDetailPhotoService::rules('details'),
         'details' => 'nullable|array',
-        'details.*.cost_category_id' => 'required_with:details|exists:cost_category,id',
+        'details.*.cost_category_id' => ['required_with:details', 'integer', new ActiveCostCategory($transaksi->details->pluck('cost_category_id', 'id')->all())],
         'details.*.remark' => 'required_with:details|string|max:255',
         'details.*.nominal' => 'required_with:details|numeric|decimal:0,2|min:0|max:9999999999999.99',
+        ...TransactionDetailPhotoService::rules('new_details'),
         'new_details' => 'nullable|array',
-        'new_details.*.cost_category_id' => 'required_with:new_details|exists:cost_category,id',
+        'new_details.*.cost_category_id' => ['required_with:new_details', 'integer', new ActiveCostCategory],
         'new_details.*.remark' => 'required_with:new_details|string|max:255',
         'new_details.*.nominal' => 'required_with:new_details|numeric|decimal:0,2|min:0|max:9999999999999.99',
         'delete_details' => 'nullable|array',
@@ -175,7 +187,8 @@ public function update(Request $request, $id)
     app(PeriodService::class)->assertOpen(\Carbon\Carbon::parse($request->tanggal)->format('Y-m'));
 
     // Periksa hak penggunaan saldo sebelum mengubah draft.
-    $bsOwnerId = app(\App\Services\TransactionFundingService::class)->resolve($request, false, $transaksi);
+    app(TransactionDetailPhotoService::class)->assertBelongsTo($request, $transaksi);
+        $bsOwnerId = app(\App\Services\TransactionFundingService::class)->resolve($request, false, $transaksi);
 
     // 6. Cek Duplikasi Tanggal (Kecuali transaksi ini sendiri)
     $headerAda = TransaksiOperasionalHeader::where('tanggal', $request->tanggal)
@@ -199,9 +212,11 @@ public function update(Request $request, $id)
         // B. Update Existing Details
         if ($request->has('details')) {
             foreach ($request->details as $detailId => $data) {
+                if (in_array((string) $detailId, array_map('strval', $request->input('delete_details', [])), true)) continue;
                 $detail = TransaksiOperasionalDetail::find($detailId);
                 if ($detail && $detail->transaksi_id == $transaksi->transaksi_id) {
                     $detail->update([
+                        ...app(TransactionDetailPhotoService::class)->attributes($request, 'details.'.$detailId),
                         'cost_category_id' => $data['cost_category_id'],
                         'remark' => $data['remark'],
                         'nominal' => $data['nominal'],
@@ -214,13 +229,14 @@ public function update(Request $request, $id)
         if ($request->has('delete_details') && is_array($request->delete_details)) {
             TransaksiOperasionalDetail::whereIn('id', $request->delete_details)
                 ->where('transaksi_id', $transaksi->transaksi_id)
-                ->delete();
+                ->get()->each->delete();
         }
 
         // D. Tambah New Details (baris baru yang ditambah saat edit)
         if ($request->has('new_details')) {
-            foreach ($request->new_details as $data) {
+            foreach ($request->new_details as $newIndex => $data) {
                 TransaksiOperasionalDetail::create([
+                    ...app(TransactionDetailPhotoService::class)->attributes($request, 'new_details.'.$newIndex),
                     'transaksi_id' => $transaksi->transaksi_id,
                     'cost_category_id' => $data['cost_category_id'],
                     'remark' => $data['remark'],
@@ -247,7 +263,7 @@ public function update(Request $request, $id)
         $transaksi = TransaksiOperasionalHeader::findOrFail($id);
         app(\App\Services\BsValidationService::class)->finalize($transaksi);
         return redirect()->route('transaksi_operasional.show', $transaksi->id)
-            ->with('success', 'Transaksi berhasil dikonfirmasi dan saldo BS diperbarui.');
+            ->with('success', 'Transaksi dikonfirmasi dan siap diperiksa Finance. Saldo BS berkurang setelah konfirmasi Finance.');
     }
 
 
@@ -255,8 +271,9 @@ public function update(Request $request, $id)
        public function storeDetail(Request $request, $id, BonSementaraService $bsService)
 {
     $request->validate([
+        ...TransactionDetailPhotoService::rules('details'),
         'details' => 'required|array|min:1',
-        'details.*.cost_category_id' => 'required|exists:cost_category,id',
+        'details.*.cost_category_id' => ['required', 'integer', new ActiveCostCategory],
         'details.*.remark' => 'required|string|max:255',
         'details.*.nominal' => 'required|numeric|decimal:0,2|min:0|max:9999999999999.99',
     ]);
@@ -281,9 +298,10 @@ public function update(Request $request, $id)
         // 🎯 CATATAN: Validasi saldo BS TIDAK dilakukan saat tambah detail draft
         // Validasi saldo dilakukan saat VALIDATE
 
-        foreach ($request->details as $detail) {
+        foreach ($request->details as $index => $detail) {
             TransaksiOperasionalDetail::create([
                 'transaksi_id'     => $header->transaksi_id,
+                ...app(TransactionDetailPhotoService::class)->attributes($request, 'details.'.$index),
                 'cost_category_id' => $detail['cost_category_id'],
                 'remark'           => $detail['remark'],
                 'nominal'          => $detail['nominal'],
@@ -294,7 +312,7 @@ public function update(Request $request, $id)
         
         // 🎯 JANGAN TRIGGER CASH FLOW SAAT TAMBAH DETAIL DRAFT!
         
-        return redirect()->back()->with('success', 'Rincian biaya berhasil ditambahkan ke Draft Transaksi (' . $header->transaksi_id . '). Klik "Konfirmasi" untuk membukukan pemakaian BS.');
+        return redirect()->back()->with('success', 'Rincian biaya berhasil ditambahkan ke Draft Transaksi (' . $header->transaksi_id . '). Klik "Konfirmasi" untuk mengirim pengajuan ke Finance.');
 
     } catch (\Exception $e) {
         DB::rollback();
@@ -305,14 +323,16 @@ public function update(Request $request, $id)
     {
         $periode = $request->query('periode');
 
-        $query = TransaksiOperasionalHeader::with('user')->withExists('financeChecks')->orderBy('tanggal', 'desc');
+        $query = TransaksiOperasionalHeader::with('user')->withExists('financeChecks')
+            ->withSum('details as total_nominal', 'nominal')->orderBy('tanggal', 'desc');
 
         if (!auth()->user()->canSeeAllTransactions()) {
-            $query->visibleTo(auth()->user());
+            $query->where('user_id', auth()->id());
         }
 
         $this->filterPeriod($query, $periode);
 
+        if ($request->boolean('dilaporkan')) $query->where('status', 'VALIDATED');
         $transaksis = $query->paginate(10)->withQueryString();
 
         return view('transaksi_operasional.index', compact('transaksis', 'periode'));
@@ -322,7 +342,7 @@ public function update(Request $request, $id)
 {
     $transaksi = TransaksiOperasionalHeader::with('bonSementara', 'details')->findOrFail($id);
 
-    if (!auth()->user()->canAccessTransaction($transaksi)) {
+    if (!auth()->user()->canDeleteTransaction($transaksi)) {
         abort(403, 'Anda tidak memiliki akses ke transaksi ini.');
     }
 
@@ -337,7 +357,7 @@ public function update(Request $request, $id)
     DB::beginTransaction();
 
     try {
-        $transaksi->details()->delete();
+        $transaksi->details()->get()->each->delete();
         $transaksi->delete();
 
         DB::commit();
@@ -360,7 +380,7 @@ public function update(Request $request, $id)
 
         $query = TransaksiOperasionalHeader::with(['user', 'details', 'bonSementara', 'bsOwner']);
         if (!auth()->user()->canSeeAllTransactions()) {
-            $query->visibleTo(auth()->user());
+            $query->where('user_id', auth()->id());
         }
         if ($periode) $query->where('periode', $periode);
 

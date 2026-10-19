@@ -29,6 +29,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\LaporanBsController;
 use App\Http\Controllers\CashFlowController;
 use App\Http\Controllers\AccessManagementController;
+use App\Http\Controllers\FinanceMonitoringController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -46,6 +47,10 @@ Route::middleware('guest')->group(function () {
 // 2. BLOK KARYAWAN UMUM (Harus Login)
 // ==========================================
 Route::middleware('auth')->group(function () {
+    Route::get('/rincian-biaya/{type}/{detail}/foto', [\App\Http\Controllers\TransactionDetailPhotoController::class, 'show'])
+        ->whereIn('type', ['OPR', 'PD'])->whereNumber('detail')->name('transaction-detail-photo.show');
+    Route::get('/rincian-pemeriksaan/{detail}/foto', [\App\Http\Controllers\TransactionDetailPhotoController::class, 'history'])
+        ->whereNumber('detail')->name('transaction-detail-photo.history');
 
     Route::middleware('permission:akses.approval-finance')
         ->prefix('pengecekan-pemakaian-bs')->name('bs-usage-checks.')->group(function () {
@@ -59,8 +64,6 @@ Route::middleware('auth')->group(function () {
         });
 
     Route::get('/api/bs-balance', [\App\Http\Controllers\BsBalanceController::class, 'balances'])->name('bs-balance.balances');
-    Route::get('/saldo-bs', [\App\Http\Controllers\BsBalanceController::class, 'show'])
-        ->middleware('permission:akses.cash-flow')->name('bs-balance.show');
 
     Route::middleware(['permission:akses.pengajuan-bs|akses.transaksi-perjalanan-dinas|akses.cash-flow', 'bs.atomic'])
         ->prefix('persetujuan-pemakaian-bs')->name('bs-usage-approvals.')->group(function () {
@@ -85,10 +88,29 @@ Route::middleware('auth')->group(function () {
             return app(\App\Http\Controllers\TransactionRecapController::class)
                 ->index($request, app(\App\Services\BsUsageDashboardService::class));
         }
-        $bsUsageDashboard = app(\App\Services\BsUsageDashboardService::class)->data($request);
+        if (!$request->filled('pemakaian_periode')) {
+    $request->query->set(
+        'pemakaian_periode',
+        app(\App\Services\PeriodService::class)->current()
+    );
+}
+        $dashboard = app(\App\Services\BsUsageDashboardService::class);
+        $dashboard->filters($request);
+        // Dashboard totals use only the period; list filters belong to the history pages.
+        foreach (['pemakaian_referensi', 'pemakaian_status', 'pemakaian_page', 'tampilan'] as $filter) {
+            $request->query->remove($filter);
+        }
+        $bsUsageDashboard = $dashboard->data($request);
+        $bsUsageDashboard['funding'] = app(\App\Services\BsFundingRecapService::class)->summary($request->user(), $bsUsageDashboard['filters']);
 
-        return view('dashboard.transaksi', compact('bsUsageDashboard'));
+        $selectedPeriod = $bsUsageDashboard['filters']['pemakaian_periode'];
+        $cashSnapshot = app(\App\Services\StockCashFlowService::class)
+            ->dashboardSummary((int) $request->user()->id, $selectedPeriod, $request->user()->can('akses.cash-flow'));
+
+        return view('dashboard.transaksi', compact('bsUsageDashboard', 'selectedPeriod', 'cashSnapshot'));
     })->name('dashboard.transaksi');
+
+    Route::get('/rekap-bs', [\App\Http\Controllers\BsFundingRecapController::class, 'index'])->name('transaction-recap.funding');
 
     Route::get('/laporan-transaksi', [\App\Http\Controllers\TransactionRecapController::class, 'index'])->name('transaction-recap.index');
     Route::get('/laporan-transaksi/modul/{jenis}', [\App\Http\Controllers\TransactionRecapController::class, 'module'])
@@ -122,6 +144,10 @@ Route::middleware('auth')->group(function () {
     // ==========================================
     // MODUL PENGAJUAN BS (permission: akses.pengajuan-bs)
     // ==========================================
+    // Access is checked per submission for applicants, supervisors, and Finance.
+    Route::get('/pengajuan-bs/{bs}/lampiran', \App\Http\Controllers\PengajuanBsAttachmentController::class)
+        ->whereNumber('bs')->name('pengajuan-bs.attachment');
+
     Route::middleware(['permission:akses.pengajuan-bs', 'bs.atomic'])->group(function () {
         Route::get('/pengajuan-bs/export', [PengajuanBsController::class, 'export'])->name('pengajuan-bs.export');
 
@@ -246,18 +272,21 @@ Route::middleware('auth')->group(function () {
         Route::prefix('approval-atasan')->name('approval-atasan.')->group(function () {
             Route::get('/', [ApprovalAtasanController::class, 'index'])->name('index');
             Route::get('/{bs}/detail', [ApprovalAtasanController::class, 'detail'])->name('detail');
+            Route::post('/batch-approve', [ApprovalAtasanController::class, 'batchApprove'])->name('batch-approve');
+            Route::post('/batch-reject', [ApprovalAtasanController::class, 'batchReject'])->name('batch-reject');
             Route::post('/{bs}/approve', [ApprovalAtasanController::class, 'approve'])->name('approve');
             Route::post('/{bs}/reject', [ApprovalAtasanController::class, 'reject'])->name('reject');
         });
     });
 
-    // ==========================================
+       // ==========================================
     // APPROVAL FINANCE (permission divisi Finance)
     // ==========================================
     Route::middleware(['permission:akses.approval-finance', 'bs.atomic'])->group(function () {
         Route::prefix('approval-finance')->name('approval-finance.')->group(function () {
             Route::get('/', [ApprovalFinanceController::class, 'index'])->name('index');
             Route::get('/{bs}/detail', [ApprovalFinanceController::class, 'detail'])->name('detail');
+            Route::post('/batch-disburse', [ApprovalFinanceController::class, 'batchDisburse'])->name('batch-disburse');
             Route::post('/{bs}/disburse', [ApprovalFinanceController::class, 'disburse'])->name('disburse');
             Route::post('/{bs}/reject', [ApprovalFinanceController::class, 'reject'])->name('reject');
         });
@@ -300,6 +329,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/check-plafon-realtime', [TransaksiPerjalananDinasController::class, 'checkPlafonRealtime'])->name('api.check_plafon_realtime');
     Route::post('/api/event-dalam-kota/plafon-info', [PerongkosanEventDalamKotaController::class, 'getPlafonInfo'])->name('api.event_dalam_kota.plafon_info');
     Route::post('/api/event-luar-kota/plafon-info', [PerongkosanEventLuarKotaController::class, 'getPlafonInfo'])->name('api.event_luar_kota.plafon_info');
+
+    
+
+// ...
+Route::middleware(['permission:akses.approval-finance'])->prefix('monitoring-finance')->name('monitoring-finance.')->group(function () {
+    Route::get('/', [FinanceMonitoringController::class, 'index'])->name('index');
+    Route::get('/company/{company}', [FinanceMonitoringController::class, 'showCompany'])->name('company');
+    Route::get('/company/{company}/user/{user}', [FinanceMonitoringController::class, 'showUser'])->name('user');
+    Route::get('/company/{company}/user/{user}/module/{jenis}', [FinanceMonitoringController::class, 'moduleIndex'])
+        ->whereIn('jenis', ['OPR', 'PD', 'EDK', 'ELK'])
+        ->name('module.index');
+    Route::get('/company/{company}/user/{user}/module/{jenis}/{source}', [FinanceMonitoringController::class, 'moduleShow'])
+        ->whereIn('jenis', ['OPR', 'PD', 'EDK', 'ELK'])
+        ->name('module.show');
+});
 });
 
 // ==========================================
@@ -330,6 +374,9 @@ Route::middleware(['auth', 'permission:akses.master-data'])->group(function () {
     })->name('dashboard.master_data');
 
     Route::resource('roles', RoleController::class);
+    Route::post('/users/{user}/password/reveal', [UserController::class, 'revealPassword'])
+        ->middleware('throttle:30,1')
+        ->name('users.password.reveal');
     Route::resource('users', UserController::class);
     Route::resource('companies', CompanyController::class);
     Route::resource('levels', LevelController::class);

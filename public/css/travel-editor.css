@@ -1,0 +1,37 @@
+#form-edit-pd .card-modern { border-radius: 12px; overflow: hidden; }
+#form-edit-pd .card-header-modern { flex-wrap: wrap; gap: .75rem; padding: 1rem 1.25rem; }
+#form-edit-pd .form-label { font-size: .8125rem; margin-bottom: .4rem; }
+#form-edit-pd .pd-edit-section-title { font-size: .875rem; font-weight: 600; margin-bottom: 1rem; }
+#form-edit-pd .pd-funding-panel { padding: 1.25rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+#form-edit-pd #bs-saldo-info { margin-top: 1.25rem !important; font-size: .8125rem; color: #64748b; }
+#form-edit-pd #bs-balance-display { display: block; margin-top: .35rem; color: #1e3a8a; font-size: 1.35rem; overflow-wrap: anywhere; }
+#form-edit-pd #bs-opening-info { color: #92400e !important; font-size: .75rem; margin-bottom: 0; line-height: 1.6; }
+#form-edit-pd [data-mobile-entry] { table-layout: fixed; }
+#form-edit-pd [data-mobile-entry] th:nth-child(1) { width: 22%; }
+#form-edit-pd [data-mobile-entry] th:nth-child(2) { width: 23%; }
+#form-edit-pd [data-mobile-entry] th:nth-child(3) { width: 25%; }
+#form-edit-pd [data-mobile-entry] th:nth-child(4) { width: 18%; }
+#form-edit-pd [data-mobile-entry] th:nth-child(5) { width: 12%; }
+#form-edit-pd [data-mobile-entry] td { vertical-align: top; padding: 1rem .75rem; }
+#form-edit-pd [data-mobile-entry] th { padding: .875rem .75rem; }
+#form-edit-pd [data-mobile-entry] .form-control, #form-edit-pd [data-mobile-entry] .form-select { min-width: 0; }
+#form-edit-pd [data-expense-amount] { text-align: right; font-variant-numeric: tabular-nums; }
+#form-edit-pd [data-remove-expense] { font-size: .75rem; }
+#form-edit-pd [data-expense-total] { display: inline-block; color: #1d4ed8; font-size: 1.125rem; margin-left: .5rem; }
+#form-edit-pd .transaction-edit-actions { justify-content: flex-end; }
+#form-edit-pd .transaction-edit-actions .btn { padding: .65rem 1.25rem; }
+@media (max-width: 991px) {
+    #form-edit-pd .table-responsive { overflow: visible; }
+    #form-edit-pd [data-mobile-entry], #form-edit-pd [data-expense-rows] { display: block; width: 100%; min-width: 0; }
+    #form-edit-pd [data-mobile-entry] thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    #form-edit-pd [data-expense-row] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+    #form-edit-pd [data-expense-row] td { display: block; min-width: 0 !important; width: 100% !important; padding: 0; border: 0; }
+    #form-edit-pd [data-expense-row] td::before { content: attr(data-label); display: block; font-size: .75rem; font-weight: 600; color: #64748b; margin-bottom: .5rem; }
+    #form-edit-pd [data-expense-row] td:last-child { grid-column: 1 / -1; text-align: right !important; }
+    #form-edit-pd [data-expense-row] td:last-child::before { display: none; }
+    #form-edit-pd .expense-photo { max-width: 100%; }
+}
+@media (max-width: 575px) {
+    #form-edit-pd [data-expense-row] { grid-template-columns: minmax(0, 1fr); }
+    #form-edit-pd .transaction-edit-actions .btn { flex: 1 1 auto; }
+}

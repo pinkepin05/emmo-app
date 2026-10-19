@@ -26,58 +26,68 @@ class BsUsageCheckController extends Controller
         return view('bs-usage-checks.index', $data + ['filters' => $filters, 'users' => $this->users()]);
     }
 
-    public function create(string $jenis, int $source, BsUsageCheckService $service)
+    public function create(string $jenis, int $source, BsUsageCheckService $service, \App\Services\BsUsageCheckFormService $form)
     {
-        $transaction = $service->source($jenis, $source);
-        $transaction->load('user');
-        $snapshot = $service->snapshot($transaction);
-        $draft = BsUsageCheckDraft::where('jenis_transaksi', $jenis)->where('transaksi_pemakaian_id', $source)->first();
-        $revisionOf = $transaction->financeChecks()->latest('id')->with('details')->first();
-        $previous = $draft ? collect($draft->details) : ($revisionOf?->details->map(fn ($detail) => $detail->getAttributes()) ?? collect());
-        if (!$draft && $revisionOf?->keputusan === 'REJECTED') $previous = collect();
-        $previous = $previous->keyBy(fn ($item) => (int) $item['cost_category_id']);
-        $items = $snapshot['items']->map(function ($item) use ($previous) {
-            $saved = $previous->get((int) $item['cost_category_id']);
-            $same = $saved && \App\Support\Money::minor($saved['nominal_asal']) === \App\Support\Money::minor($item['nominal_asal']);
-            return $item + [
-                'nominal_disetujui' => $same ? $saved['nominal_disetujui'] : $item['nominal_asal'],
-                'catatan' => $same ? ($saved['catatan'] ?? '') : '',
-            ];
-        });
-        $previousFingerprint = $draft?->source_fingerprint ?? $revisionOf?->source_fingerprint;
-        $sourceChanged = $previousFingerprint && $previousFingerprint !== $snapshot['fingerprint'];
-        $defaults = [
-            'tanggal_pengecekan' => $draft?->tanggal_pengecekan->toDateString() ?? \App\Support\AppTime::now()->toDateString(),
-            'keputusan' => $draft && !isset(BsUsageCheckService::DECISIONS[$draft->keputusan]) ? '' : ($draft?->keputusan ?? 'APPROVED'),
-            'catatan_keputusan' => $draft?->catatan_keputusan ?? '',
-        ];
-
-        return view('bs-usage-checks.create', [
-            'transaction' => $transaction, 'jenis' => $jenis, 'items' => $items,
-            'sourceToken' => $service->token($jenis, $source, $snapshot['fingerprint']),
-            'reviewToken' => $service->reviewToken($jenis, $source, $revisionOf, $draft),
-            'draft' => $draft, 'revisionOf' => $revisionOf, 'defaults' => $defaults, 'sourceChanged' => $sourceChanged,
-            'historyCount' => $transaction->financeChecks()->count(),
-        ]);
+        return view('bs-usage-checks.create', $form->data($service->source($jenis, $source), $jenis));
     }
 
     public function store(Request $request, string $jenis, int $source, BsUsageCheckService $service)
-    {
-        $check = $service->store($request->user(), $jenis, $source, $request->all());
+{
+    $navigation = $request->validate([
+        '_workspace' => 'sometimes|boolean',
+        'workspace_context' => 'sometimes|array',
+        'workspace_context.pemakaian_periode' => ['nullable', 'string', 'regex:/^$|^\d{4}-?(0[1-9]|1[0-2])$/D'],
+        'workspace_context.pemakaian_status' => 'nullable|in:FOLLOW_UP,PENDING,APPROVED,REJECTED,REVISION,DIFFERENCE',
+        'workspace_context.pemakaian_referensi' => 'nullable|string|max:64',
+        'workspace_context.pemakaian_page' => 'nullable|integer|min:1',
+        'workspace_context.dari' => 'nullable|in:dashboard,laporan,pengecekan,periode,monitoring',
+        'workspace_context.company' => ['nullable', 'integer', 'min:1', 'required_if:workspace_context.dari,monitoring'],
+        'workspace_context.user' => ['nullable', 'integer', 'min:1', 'required_if:workspace_context.dari,monitoring'],
+        'workspace_context.page' => 'nullable|integer|min:1',
+        'workspace_context.jenis_filter' => 'nullable|in:OPR,PD,EDK,ELK',
+    ]);
+
+    // Validasi konteks monitoring SEBELUM menyimpan
+    if (($navigation['workspace_context']['dari'] ?? null) === 'monitoring') {
+        $transaction = $service->source($jenis, $source);
+        $transaction->loadMissing('user');
+        $companyId = (int) ($navigation['workspace_context']['company'] ?? 0);
+        $userId = (int) ($navigation['workspace_context']['user'] ?? 0);
+
+        abort_unless($companyId > 0 && $userId > 0, 403, 'Konteks monitoring tidak lengkap.');
+        abort_unless((int) $transaction->user_id === $userId, 403, 'Konteks monitoring tidak sesuai dengan user transaksi.');
+        abort_unless($transaction->user !== null && (int) $transaction->user->company_id === $companyId, 403, 'Konteks monitoring tidak sesuai dengan company user transaksi.');
+    }
+
+    $check = $service->store($request->user(), $jenis, $source, $request->all());
+
+    if ($request->boolean('_workspace')) {
+        $allowedContextKeys = ['pemakaian_periode', 'pemakaian_status', 'pemakaian_referensi', 'pemakaian_page', 'dari', 'company', 'user', 'page', 'jenis_filter'];
+        $context = array_intersect_key($navigation['workspace_context'] ?? [], array_flip($allowedContextKeys));
+        $params = ['jenis' => $jenis, 'source' => $source];
+        foreach ($context as $key => $value) { if ($value === null || $value === '') continue; $params[$key] = $value; }
+        if (array_key_exists('pemakaian_periode', $context)) $params['pemakaian_periode'] = $context['pemakaian_periode'] ?? '';
+
         if ($check instanceof BsUsageCheckDraft) {
-            return redirect()->route('bs-usage-checks.create', [$jenis, $source])
+            return redirect()->route('transaction-recap.show', $params + ['pemeriksaan' => 1])
                 ->with('success', 'Draft pemeriksaan tersimpan. Draft belum menjadi hasil Finance pada dashboard dan laporan.');
         }
-
-        return redirect()->route('bs-usage-checks.show', $check)
-            ->with('success', 'Pengecekan '.$check->document_no.' berhasil disimpan. Saldo BS tetap.');
+        return redirect()->to(route('transaction-recap.show', $params).'#hasil-finance')
+            ->with('success', 'Pengecekan '.$check->document_no.' dikonfirmasi. Sisa Saldo BS dan Total Keluar Stok Kas mengikuti hasil Finance terakhir.');
     }
+
+    if ($check instanceof BsUsageCheckDraft) {
+        return redirect()->route('bs-usage-checks.create', [$jenis, $source])->with('success', 'Draft pemeriksaan tersimpan.');
+    }
+    return redirect()->route('bs-usage-checks.show', $check)->with('success', 'Pengecekan '.$check->document_no.' dikonfirmasi.');
+}
 
     public function show(BsUsageCheck $check)
     {
         $check->load(['details', 'source', 'revisionOf']);
         $history = BsUsageCheck::where('jenis_transaksi', $check->jenis_transaksi)
-            ->where('transaksi_pemakaian_id', $check->transaksi_pemakaian_id)->orderByDesc('id')->paginate(10)->withQueryString();
+            ->where('transaksi_pemakaian_id', $check->transaksi_pemakaian_id)->with('details')
+            ->orderBy('id')->paginate(10)->withQueryString()->fragment('decision-history-title');
 
         return view('bs-usage-checks.show', compact('check', 'history'));
     }
@@ -92,6 +102,23 @@ class BsUsageCheckController extends Controller
 
     private function filters(Request $request): array
     {
+        // Saved links to the removed revision tab now show all statuses.
+        if ($request->query('status_finance') === 'REVISION') {
+            $request->query->set('status_finance', '');
+        }
+        if ($request->query('status_finance') === 'RECHECK') {
+            $request->query->set('status_finance', 'PENDING');
+        }
+
+        // Tautan filter keputusan lama diarahkan ke status pengecekan.
+if (in_array(
+    $request->query('status_finance'),
+    ['APPROVED', 'REJECTED'],
+    true
+)) {
+    $request->query->set('status_finance', 'REVIEWED');
+}
+
         $filters = $request->validate([
             'tampilan' => 'nullable|in:transaksi,rincian,draft',
             'tanggal_awal' => 'nullable|date_format:Y-m-d',
@@ -101,7 +128,7 @@ class BsUsageCheckController extends Controller
             'referensi' => 'nullable|string|max:64',
             'user_id' => 'nullable|integer|exists:user,id',
             'status_selisih' => 'nullable|in:sesuai,tidak_sesuai',
-            'status_finance' => 'nullable|in:PENDING,REVIEWED,APPROVED,REJECTED,REVISION,RECHECK',
+            'status_finance' => 'nullable|in:PENDING,REVIEWED',
             'status_cek' => 'nullable|in:sudah,belum',
             'mode' => 'nullable|in:terakhir,semua',
             'source_id' => 'nullable|required_with:jenis_source|integer|min:1',
@@ -127,6 +154,11 @@ class BsUsageCheckController extends Controller
     private function sourceData(Request $request, array $filters): array
     {
         $query = app(BsUsageDashboardService::class)->financeSources($request->user());
+
+        // ✅ PERUBAHAN 2: Hanya ambil transaksi yang sudah dikonfirmasi (VALIDATED)
+        // Menggunakan 'source_status' karena ini adalah alias yang dibuat oleh BsUsageDashboardService
+        $query->where('source_status', 'VALIDATED');
+
         foreach (['jenis' => 'jenis', 'user_id' => 'user_id', 'periode' => 'check_period', 'source_id' => 'source_id', 'jenis_source' => 'jenis'] as $filter => $column) {
             if (!empty($filters[$filter])) $query->where($column, $filters[$filter]);
         }
@@ -134,10 +166,11 @@ class BsUsageCheckController extends Controller
         if (!empty($filters['tanggal_awal'])) $query->where('tanggal_pengecekan', '>=', $filters['tanggal_awal']);
         if (!empty($filters['tanggal_akhir'])) $query->where('tanggal_pengecekan', '<', \Carbon\CarbonImmutable::parse($filters['tanggal_akhir'])->addDay()->toDateString());
         if (($filters['status_finance'] ?? '') === 'REVIEWED') {
-            $query->whereNotNull('check_id');
-        } elseif (!empty($filters['status_finance'])) {
-            $query->where('finance_status', $filters['status_finance']);
-        }
+    $query->whereNotNull('check_id')
+        ->where('needs_recheck', 0);
+} elseif (($filters['status_finance'] ?? '') === 'PENDING') {
+    $query->where('finance_status', 'PENDING');
+}
         if (!empty($filters['status_selisih'])) {
             // A stale comparison cannot classify the current transaction as matching.
             $query->whereNotNull('check_id')->where('needs_recheck', 0)

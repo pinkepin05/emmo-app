@@ -405,9 +405,10 @@
     </style>
     @include('partials.mobile-assets')
     @include('partials.transaction-actions-assets')
+    @include('partials.transaction-list-assets')
 </head>
 
-<body>
+<body class="transaction-list-page">
     @include('partials.application-time')
     <!-- Page Header -->
     <div class="page-header">
@@ -419,13 +420,21 @@
                 </div>
 
                 <div class="col-lg-6 d-flex justify-content-lg-end gap-2 flex-wrap mt-3 mt-lg-0">
-                    <a href="{{ route('transaksi_operasional.create') }}" class="btn btn-light-header btn-modern">
-                        <i class="bi bi-plus-lg"></i> Tambah Baru
-                    </a>
-                    <a href="{{ route('dashboard.transaksi') }}" class="btn btn-ghost btn-modern">
-                        <i class="bi bi-arrow-left"></i> Kembali
-                    </a>
-                </div>
+    @if(!($monitoringReadOnly ?? false))
+    <a href="{{ route('transaksi_operasional.create') }}" class="btn btn-light-header btn-modern">
+        <i class="bi bi-plus-lg"></i> Tambah Baru
+    </a>
+    @endif
+    @if($monitoringReadOnly ?? false)
+    <a href="{{ $monitoringBackUrl }}" class="btn btn-ghost btn-modern">
+        <i class="bi bi-arrow-left"></i> Kembali ke Monitoring
+    </a>
+    @else
+    <a href="{{ route('dashboard.transaksi') }}" class="btn btn-ghost btn-modern">
+        <i class="bi bi-arrow-left"></i> Kembali
+    </a>
+    @endif
+</div>
             </div>
         </div>
     </div>
@@ -446,15 +455,18 @@
 
         <div class="card-modern animate-slide-in">
             <div class="card-header-modern">
-                <h5>
-                    <i class="bi bi-list-check"></i>
-                    Daftar Transaksi Operasional Area Sales
+                <h5 class="transaction-list-heading">
+                    <i class="bi bi-list-check" aria-hidden="true"></i>
+                    <span class="transaction-list-heading-full">Daftar Transaksi Operasional Area Sales</span>
+                    <span class="transaction-list-heading-short">Daftar Transaksi</span>
                     <span class="count-badge">{{ $transaksis->total() }} Transaksi</span>
                 </h5>
 
                 {{-- 🎯 EXPORT FORM --}}
-                <form method="GET" action="{{ route('transaksi_operasional.index') }}" class="d-inline-flex gap-2 align-items-center flex-wrap">
-    <select name="periode" class="form-select form-select-sm filter-select" onchange="this.form.submit()">
+                <form method="GET" action="{{ route('transaksi_operasional.index') }}" class="transaction-list-filter transaction-list-filter--auto d-inline-flex gap-2 align-items-center flex-wrap">
+    @include('partials.transaction-reported-filter')
+    <label class="transaction-list-period-label" for="transaction-list-period">Periode transaksi</label>
+    <select id="transaction-list-period" name="periode" class="form-select form-select-sm filter-select" onchange="this.form.submit()" aria-label="Periode transaksi">
         <option value="">Semua Periode</option>
         @foreach(\App\Models\Periode::orderBy('periode', 'desc')->get() as $p)
             <option value="{{ $p->periode }}" {{ request('periode') === $p->periode ? 'selected' : '' }}>
@@ -470,33 +482,33 @@
             </div>
 
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table-modern">
-                        <thead>
+                <div class="table-responsive" aria-label="Daftar transaksi operasional">
+                    <table class="table-modern" data-transaction-list="opr" role="table">
+                        <thead role="rowgroup">
     <tr>
         <th><i class="bi bi-hash me-2"></i>ID Transaksi</th>
         <th><i class="bi bi-calendar-event me-2"></i>Tanggal</th>
         <th><i class="bi bi-person me-2"></i>User Karyawan</th>
         <th><i class="bi bi-file-text me-2"></i>Deskripsi Kegiatan</th>
+        <th class="text-end"><i class="bi bi-cash-stack me-2"></i>Total Nominal</th>
         <th class="text-center"><i class="bi bi-check-circle me-2"></i>Status</th>
         <th class="text-center">Aksi</th>
     </tr>
 </thead>
 
-                       <tbody>
+                       <tbody role="rowgroup">
     @forelse($transaksis as $t)
-        <tr>
-            <td>
+        <tr role="row">
+            <td data-field="id" data-label="ID Transaksi" role="cell">
                 <span class="code-badge">{{ $t->transaksi_id }}</span>
-                @include('partials.bs-finance-check-status', ['transaction' => $t, 'jenis' => 'OPR'])
             </td>
 
-            <td>
+            <td data-field="date" data-label="Tanggal" role="cell">
                 <i class="bi bi-calendar3 cell-icon"></i>
                 {{ \Carbon\Carbon::parse($t->tanggal)->format('d M Y') }}
             </td>
 
-            <td>
+            <td data-field="user" data-label="Karyawan" role="cell">
                 <div class="d-flex align-items-center gap-2">
                     <span class="avatar">
                         {{ strtoupper(substr($t->user->name ?? $t->user->nama ?? 'U', 0, 1)) }}
@@ -507,13 +519,15 @@
                 </div>
             </td>
 
-            <td>
+            <td data-field="description" data-label="Deskripsi kegiatan" role="cell">
                 <div class="desc-cell" title="{{ $t->description }}">
-                    {{ $t->description ?? '-' }}
+                    {{ $t->description ?: '-' }}
                 </div>
             </td>
 
-            <td class="text-center">
+            <td data-field="total" data-label="Total nominal" role="cell" class="transaction-total text-end text-nowrap fw-semibold">Rp {{ number_format($t->total_nominal ?? 0, 2, ',', '.') }}</td>
+
+            <td data-field="status" data-label="Status transaksi & pemeriksaan" role="cell" class="text-center">
                 @if($t->status === 'DRAFT')
                     <span class="badge bg-warning text-dark" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 600;">
                         <i class="bi bi-file-earmark-text me-1"></i> Draft
@@ -523,21 +537,23 @@
                         <i class="bi bi-check-circle-fill me-1"></i> Dikonfirmasi
                     </span>
                 @endif
+                @include('partials.bs-finance-check-status', ['transaction' => $t, 'jenis' => 'OPR'])
             </td>
 
-            <td class="text-center">
+            <td data-field="actions" role="cell" class="text-center">
                 @include('partials.transaction-actions', [
-                    'transaction' => $t,
-                    'transactionType' => 'opr',
-                    'detailUrl' => route('transaksi_operasional.show', $t->id),
-                    'confirmUrl' => route('transaksi_operasional.validate', $t->id),
-                    'deleteUrl' => route('transaksi_operasional.destroy', $t->id),
-                ])
+    'transaction' => $t,
+    'transactionType' => 'opr',
+    'detailUrl' => route('transaksi_operasional.show', $t->id),
+    'confirmUrl' => route('transaksi_operasional.validate', $t->id),
+    'deleteUrl' => route('transaksi_operasional.destroy', $t->id),
+    'monitoringReadOnly' => $monitoringReadOnly ?? false,
+])
             </td>
         </tr>
     @empty
         <tr>
-            <td colspan="6">
+            <td colspan="7">
                 <div class="empty-state">
                     <div class="icon-circle">
                         <i class="bi bi-inbox"></i>

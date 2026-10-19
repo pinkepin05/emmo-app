@@ -101,7 +101,7 @@ class BsValidationService
                     'owner_reviewed_at' => null, 'owner_reviewed_by' => null, 'owner_rejection_reason' => null];
             }
             $locked->forceFill($attributes)->save();
-            // Only the owner's explicit return to draft changes the posted usage, never the Finance decision.
+            // Rejected and resubmitted usage waits for a fresh Finance confirmation.
             app(BsCashFlowService::class)->recalculateSnapshot($owner, $locked->periode);
             app(StockCashFlowService::class)->recalculateSnapshot($owner, $locked->periode);
         });

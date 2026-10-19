@@ -11,17 +11,18 @@
         <p class="text-muted small p-3 mb-0">Ubah, tambah, atau tandai rincian untuk dihapus. Semua perubahan disimpan setelah Anda menekan Simpan Perubahan.</p>
         <div class="table-responsive">
             <table class="table-modern" data-mobile-entry>
-                <thead><tr><th>Kategori Biaya</th><th>Keterangan</th><th>Nominal (Rp)</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>Kategori Biaya</th><th>Keterangan</th><th>Foto Bukti</th><th>Nominal (Rp)</th><th>Aksi</th></tr></thead>
                 <tbody data-expense-rows>
                     @foreach($transaksi->details as $detail)
                         @include('partials.transaction-edit-row', [
-                            'prefix' => 'details['.$detail->id.']', 'existingId' => $detail->id,
+                            'originalCategory' => $detail->costCategory,
+                            'photoDetail' => $detail, 'prefix' => 'details['.$detail->id.']', 'existingId' => $detail->id,
                             'values' => old('details.'.$detail->id, $detail->toArray()),
                             'deleted' => in_array((string) $detail->id, $deletedIds, true),
                         ])
                     @endforeach
                     @foreach($newDetails as $key => $values)
-                        @include('partials.transaction-edit-row', ['prefix' => 'new_details['.$key.']', 'existingId' => null, 'deleted' => false])
+                        @include('partials.transaction-edit-row', ['photoDetail' => null, 'prefix' => 'new_details['.$key.']', 'existingId' => null, 'deleted' => false])
                     @endforeach
                 </tbody>
             </table>
@@ -30,9 +31,9 @@
     </div>
 </div>
 <template data-expense-template>
-    @include('partials.transaction-edit-row', ['prefix' => 'new_details[__INDEX__]', 'existingId' => null, 'deleted' => false, 'values' => []])
+    @include('partials.transaction-edit-row', ['photoDetail' => null, 'prefix' => 'new_details[__INDEX__]', 'existingId' => null, 'deleted' => false, 'values' => []])
 </template>
-<div class="d-flex flex-wrap gap-2 mb-4">
+<div class="transaction-edit-actions d-flex flex-wrap gap-2 mb-4">
     <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
     <a href="{{ $cancelUrl }}" class="btn btn-outline-secondary">Batal</a>
 </div>

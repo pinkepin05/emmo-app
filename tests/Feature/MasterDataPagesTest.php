@@ -12,6 +12,8 @@ use Tests\TestCase;
 
 class MasterDataPagesTest extends TestCase
 {
+    use \Tests\Concerns\UserPasswordVisibilityScenarios;
+
     private User $user;
 
     protected function setUp(): void
@@ -75,6 +77,100 @@ class MasterDataPagesTest extends TestCase
                 $this->get(route($route.'.'.$action))->assertRedirect(route('login'));
             }
         }
+    }
+
+    public function test_cost_category_creation_saves_the_code_in_nama(): void
+    {
+        $this->user->givePermissionTo('akses.master-data');
+        $this->actingAs($this->user);
+
+        $this->post(route('cost_categories.store'), [
+            'code' => 'OPRT SALES', 'description' => 'Operational Salesman', 'is_active' => 'on',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('cost_categories.create'));
+
+        $this->assertDatabaseHas('cost_category', [
+            'nama' => 'OPRT SALES', 'description' => 'Operational Salesman', 'is_active' => 1,
+        ]);
+    }
+
+    public function test_cost_category_edit_displays_and_updates_the_existing_code(): void
+    {
+        $this->user->givePermissionTo('akses.master-data');
+        $this->actingAs($this->user);
+        DB::table('cost_category')->insert(['id' => 7, 'nama' => 'OPRT SALES', 'description' => 'Operational Salesman']);
+
+        $this->get(route('cost_categories.edit', 7))->assertOk()->assertSee('value="OPRT SALES"', false);
+        $this->put(route('cost_categories.update', 7), [
+            'code' => 'OPERASIONAL SALES', 'description' => 'Biaya Operasional Sales', 'is_active' => '1',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('cost_categories.create'));
+
+        $this->assertDatabaseHas('cost_category', [
+            'id' => 7, 'nama' => 'OPERASIONAL SALES', 'description' => 'Biaya Operasional Sales', 'is_active' => 1,
+        ]);
+    }
+
+    public function test_cost_category_can_change_active_status_without_changing_transaction_references(): void
+    {
+        $this->user->givePermissionTo('akses.master-data');
+        $this->actingAs($this->user);
+        DB::table('cost_category')->insert(['id' => 7, 'nama' => 'OPRT SALES', 'description' => 'Operational Salesman']);
+        Schema::create('transaksi_operasional_area_sales_detail', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('cost_category_id')->constrained('cost_category')->restrictOnDelete();
+        });
+        DB::table('transaksi_operasional_area_sales_detail')->insert(['id' => 1, 'cost_category_id' => 7]);
+
+        $data = ['code' => 'OPRT SALES', 'description' => 'Operational Salesman'];
+        $this->put(route('cost_categories.update', 7), $data)
+            ->assertSessionHasNoErrors()->assertRedirect(route('cost_categories.create'));
+        $this->assertDatabaseHas('cost_category', ['id' => 7, 'nama' => 'OPRT SALES', 'is_active' => 0]);
+        $this->assertDatabaseHas('transaksi_operasional_area_sales_detail', ['id' => 1, 'cost_category_id' => 7]);
+
+        $this->put(route('cost_categories.update', 7), $data + ['is_active' => '1'])
+            ->assertSessionHasNoErrors()->assertRedirect(route('cost_categories.create'));
+        $this->assertDatabaseHas('cost_category', ['id' => 7, 'nama' => 'OPRT SALES', 'is_active' => 1]);
+        $this->assertDatabaseHas('transaksi_operasional_area_sales_detail', ['id' => 1, 'cost_category_id' => 7]);
+    }
+
+    public function test_cost_category_duplicate_codes_are_rejected_on_create_and_update(): void
+    {
+        $this->user->givePermissionTo('akses.master-data');
+        $this->actingAs($this->user);
+        DB::table('cost_category')->insert([
+            ['id' => 7, 'nama' => 'OPRT SALES', 'description' => 'Operational Salesman'],
+            ['id' => 8, 'nama' => 'HOTEL', 'description' => 'Hotel'],
+        ]);
+        $duplicate = ['code' => 'OPRT SALES', 'description' => 'Duplikat', 'is_active' => '1'];
+
+        $this->from(route('cost_categories.create'))->post(route('cost_categories.store'), $duplicate)
+            ->assertSessionHasErrors('code')->assertRedirect(route('cost_categories.create'));
+        $this->from(route('cost_categories.edit', 8))->put(route('cost_categories.update', 8), $duplicate)
+            ->assertSessionHasErrors('code')->assertRedirect(route('cost_categories.edit', 8));
+        $this->assertDatabaseCount('cost_category', 2);
+        $this->assertDatabaseHas('cost_category', ['id' => 8, 'nama' => 'HOTEL', 'description' => 'Hotel']);
+    }
+
+    public function test_cost_category_deletion_keeps_used_categories_and_removes_unused_categories(): void
+    {
+        $this->user->givePermissionTo('akses.master-data');
+        $this->actingAs($this->user);
+        DB::table('cost_category')->insert([
+            ['id' => 7, 'nama' => 'OPRT SALES', 'is_active' => false],
+            ['id' => 8, 'nama' => 'Belum Dipakai', 'is_active' => false],
+        ]);
+        Schema::create('transaksi_operasional_area_sales_detail', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('cost_category_id')->constrained('cost_category')->restrictOnDelete();
+        });
+        DB::table('transaksi_operasional_area_sales_detail')->insert(['id' => 1, 'cost_category_id' => 7]);
+
+        $this->get(route('cost_categories.index'))->assertOk()->assertSee('OPRT SALES')->assertSee('Non-Aktif');
+        $this->delete(route('cost_categories.destroy', 7))->assertRedirect()->assertSessionHasErrors('error');
+        $this->assertDatabaseHas('cost_category', ['id' => 7, 'is_active' => false]);
+        $this->assertDatabaseHas('transaksi_operasional_area_sales_detail', ['id' => 1, 'cost_category_id' => 7]);
+
+        $this->delete(route('cost_categories.destroy', 8))->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertDatabaseMissing('cost_category', ['id' => 8]);
     }
 
     public function test_master_data_pages_require_master_data_permission(): void
@@ -149,9 +245,10 @@ class MasterDataPagesTest extends TestCase
         foreach (['cost_category', 'weekday_group', 'event_hour_group'] as $name) {
             Schema::create($name, function (Blueprint $table) use ($name) {
                 $table->id();
-                $table->string('code')->nullable();
                 if ($name === 'cost_category') {
                     $table->string('nama')->nullable();
+                } else {
+                    $table->string('code')->nullable();
                 }
                 $table->string('description')->nullable();
                 $table->boolean('is_active')->default(true);
@@ -169,6 +266,8 @@ class MasterDataPagesTest extends TestCase
             $table->id();
             $table->string('nama');
             $table->string('username');
+            $table->string('password')->nullable();
+            $table->text('password_encrypted')->nullable();
             $table->string('NIK')->nullable();
             foreach (['company_id', 'roles_id', 'level_id', 'position_id', 'homebase_id', 'atasan_user_id'] as $column) {
                 $table->integer($column)->nullable();

@@ -42,6 +42,15 @@ class DashboardAccessTest extends TestCase
             $mock->shouldReceive('getRealtimeSisaSaldo')->andReturn('0.00');
         });
 
+        Schema::create('pengajuan_bs', function (Blueprint $table) {
+            $table->id(); $table->integer('user_id'); $table->string('document_no');
+            $table->string('periode'); $table->decimal('nominal_pengajuan', 15, 2)->default(0);
+        });
+        Schema::create('approval_bs_finance', function (Blueprint $table) {
+            $table->id(); $table->integer('pengajuan_bs_id'); $table->string('document_no');
+            $table->date('tanggal_cair'); $table->decimal('nominal_approved', 15, 2)->default(0);
+        });
+
         // Empty transaction tables let the real dashboard render without operational data.
         foreach (['transaksi_operasional_area_sales_header', 'transaksi_perjalanan_dinas_header', 'perongkosan_event_dalam_kota', 'perongkosan_event_luar_kota'] as $name) {
             Schema::create($name, function (Blueprint $table) use ($name) {
@@ -65,13 +74,15 @@ class DashboardAccessTest extends TestCase
                 $table->string('transaksi_id');
                 $table->decimal('nominal', 15, 2);
                 $table->integer('cost_category_id')->default(1);
+                $table->string('remark')->nullable();
                 if ($name === 'transaksi_perjalanan_dinas_detail') $table->softDeletes();
             });
         }
-        Schema::create('cost_category', function (Blueprint $table) { $table->increments('id'); $table->string('nama'); });
+        Schema::create('cost_category', function (Blueprint $table) { $table->increments('id'); $table->string('nama'); $table->boolean('is_active')->default(true); });
         (require database_path('migrations/2026_09_25_150000_create_bs_usage_checks.php'))->up();
         (require database_path('migrations/2026_09_28_100000_extend_finance_checks_to_transaction_modules.php'))->up();
         (require database_path('migrations/2026_09_30_160000_add_finance_check_drafts.php'))->up();
+        (require database_path('migrations/2026_10_07_160000_track_finance_approval_per_source_detail.php'))->up();
         (require database_path('migrations/2026_10_05_090000_track_finance_resubmissions.php'))->up();
     }
 

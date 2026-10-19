@@ -9,6 +9,9 @@ use App\Models\Role;
 use App\Models\Level;
 use App\Models\Position;
 use App\Models\Wilayah;
+use App\Services\UserPasswordService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -34,7 +37,7 @@ class UserController extends Controller
         // Hapus 'wilayahs' dari fungsi compact()
         return view('users.create', compact('data', 'companies', 'roles', 'levels', 'positions', 'atasans'));
     }
-public function store(Request $request)
+public function store(Request $request, UserPasswordService $passwords)
 {
     // 1. Validasi
     $validatedData = $request->validate([
@@ -51,14 +54,14 @@ public function store(Request $request)
         'hari_kerja_user' => 'nullable|in:5 HK,6 HK',
         'atasan_user_id' => 'nullable|exists:user,id',
         'username' => 'required|string|max:20',
-        'password' => 'required|string|min:6', // Hapus max:20, ganti min:6 agar user aman
+        'password' => 'required|string|min:6',
     ]);
 
-    // 2. Enkripsi Password sebelum disimpan
-    $validatedData['password'] = bcrypt($validatedData['password']);
-
-    // 3. Simpan data yang sudah divalidasi dan dienkripsi
-    User::create($validatedData);
+    $password = $validatedData['password'];
+    unset($validatedData['password']);
+    $user = new User($validatedData);
+    $passwords->assign($user, $password);
+    $user->save();
 
     return redirect()->route('users.create')->with('success', 'Data User berhasil ditambahkan!');
 }
@@ -82,10 +85,9 @@ public function store(Request $request)
         return view('users.edit', compact('item', 'companies', 'roles', 'levels', 'positions', 'atasans'));
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id, UserPasswordService $passwords)
     {
-         // (Isi fungsi update biarkan sama persis seperti kode Anda sebelumnya)
-         $request->validate([
+         $data = $request->validate([
             'NIK' => 'nullable|string|max:20|unique:user,NIK,' . $id . ',id',
             'nama' => 'required|string|max:255',
             'company_id' => 'required|exists:company,id',
@@ -99,20 +101,18 @@ public function store(Request $request)
             'hari_kerja_user' => 'nullable|in:5 HK,6 HK',
             'atasan_user_id' => 'nullable|exists:user,id',
             'username' => 'required|string|max:20',
-            'password' => 'nullable|string|max:20', 
+            'password' => 'nullable|string|min:6',
+            'is_active' => 'sometimes|boolean',
         ]);
 
         $item = User::findOrFail($id);
-        $data = $request->all();
-        
-        if (!empty($data['password'])) {
-        $data['password'] = bcrypt($data['password']);
-    } else {
-        // Jika password kosong, jangan ubah password di database
+        $password = $data['password'] ?? null;
         unset($data['password']);
-    }
-    
-        $item->update($data);
+        $item->fill($data);
+        if ($password !== null && $password !== '') {
+            $passwords->assign($item, $password);
+        }
+        $item->save();
 
         return redirect()->route('users.create')->with('success', 'Data User berhasil diperbarui!');
     }
@@ -123,6 +123,29 @@ public function store(Request $request)
         $item->delete();
 
         return redirect()->route('users.create')->with('success', 'Data User berhasil dihapus!');
+    }
+
+    public function revealPassword(Request $request, User $user, UserPasswordService $passwords): JsonResponse
+    {
+        $password = $passwords->reveal($user);
+        $headers = [
+            'Cache-Control' => 'no-store, private, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ];
+
+        if ($password === null) {
+            return response()->json([
+                'message' => 'Password belum tersedia untuk ditampilkan. Isi password baru lalu simpan terlebih dahulu.',
+            ], 409, $headers);
+        }
+
+        Log::notice('Master User password viewed', [
+            'actor_id' => $request->user()->id,
+            'user_id' => $user->id,
+        ]);
+
+        return response()->json(['password' => $password], 200, $headers);
     }
 
     public function index()

@@ -72,6 +72,7 @@ try {
                 'tanggal_pengecekan' => AppTime::now()->toDateString(),
                 'source_token' => $checks->token($type, $source->id, $snapshot['fingerprint']),
                 'details' => $snapshot['items']->map(fn ($item) => [
+                    'source_detail_id' => $item['source_detail_id'],
                     'cost_category_id' => $item['cost_category_id'],
                     'nominal_disetujui' => $i === 0 ? $item['nominal_asal'] : '0',
                     'catatan' => 'Dashboard verification rolled back',

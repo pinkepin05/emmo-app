@@ -12,6 +12,8 @@ class TransaksiOperasionalDetail extends Model
 
     use HasFactory;
 
+    use \App\Models\Concerns\HasDetailPhoto;
+
     protected $table = 'transaksi_operasional_area_sales_detail';
 
     public $timestamps = false;
@@ -20,7 +22,9 @@ class TransaksiOperasionalDetail extends Model
         'transaksi_id',
         'cost_category_id',
         'remark',
-        'nominal'
+        'nominal',
+        'photo_path',
+        'photo_name'
     ];
 
 

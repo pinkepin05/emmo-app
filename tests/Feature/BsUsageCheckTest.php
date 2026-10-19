@@ -19,6 +19,7 @@ class BsUsageCheckTest extends TestCase
 {
     use \Tests\Concerns\BsUsageCheckDraftScenarios;
     use \Tests\Concerns\LegacyFinanceFixtures;
+    use \Tests\Concerns\FinanceItemApprovalScenarios;
 
     protected function setUp(): void
     {
@@ -29,7 +30,35 @@ class BsUsageCheckTest extends TestCase
             $t->increments('id'); $t->string('nama'); $t->integer('roles_id')->nullable(); $t->integer('atasan_user_id')->nullable();
         });
         Schema::create('roles', function (Blueprint $t) { $t->increments('id'); $t->string('code'); });
-        Schema::create('cost_category', function (Blueprint $t) { $t->increments('id'); $t->string('nama'); });
+        Schema::create('periode', function (Blueprint $t) {
+            $t->increments('id'); $t->string('periode')->unique(); $t->string('status'); $t->timestamps();
+        });
+        (require database_path('migrations/2026_10_12_100000_create_period_closing_logs_table.php'))->up();
+        Schema::create('pengajuan_bs', function (Blueprint $t) {
+            $t->increments('id'); $t->integer('user_id'); $t->string('status'); $t->string('settled_periode')->nullable();
+            $t->decimal('nominal_reimburse', 15, 2)->default(0); $t->decimal('nominal_pengembalian', 15, 2)->default(0);
+        });
+        Schema::create('approval_bs_finance', function (Blueprint $t) {
+            $t->increments('id'); $t->integer('pengajuan_bs_id'); $t->date('tanggal_cair'); $t->decimal('nominal_approved', 15, 2);
+        });
+        Schema::create('bs_cash_flow_snapshots', function (Blueprint $t) {
+            $t->increments('id'); $t->integer('user_id'); $t->string('periode');
+            foreach (['saldo_awal', 'total_masuk', 'total_keluar', 'penyesuaian'] as $column) $t->decimal($column, 15, 2)->default(0);
+            $t->decimal('saldo_akhir', 15, 2)->nullable(); $t->boolean('opening_final')->default(false);
+            $t->timestamp('last_updated')->nullable(); $t->unique(['user_id', 'periode']);
+        });
+        (require database_path('migrations/2026_09_18_110000_create_stock_cash_flow_snapshots_table.php'))->up();
+        (require database_path('migrations/2026_09_23_110000_add_personal_funds_to_stock_cash_flow.php'))->up();
+        (require database_path('migrations/2026_10_07_120000_mark_finance_based_cash_snapshots.php'))->up();
+        (require database_path('migrations/2026_10_09_025352_add_operasional_and_perjalanan_dinas_columns_to_stock_cash_flow_snapshots_table.php'))->up();
+        DB::table('periode')->insert([['periode' => '2026-08', 'status' => 'OPEN'], ['periode' => '2026-09', 'status' => 'OPEN']]);
+        foreach ([1, 3] as $owner) {
+            DB::table('pengajuan_bs')->insert(['id' => $owner, 'user_id' => $owner, 'status' => 'DISBURSED']);
+            foreach (['2026-08', '2026-09'] as $month) DB::table('approval_bs_finance')->insert([
+                'pengajuan_bs_id' => $owner, 'tanggal_cair' => $month.'-01', 'nominal_approved' => 1000000,
+            ]);
+        }
+        Schema::create('cost_category', function (Blueprint $t) { $t->increments('id'); $t->string('nama'); $t->boolean('is_active')->default(true); });
         foreach (array_intersect_key(BsUsageCheckService::TYPES, array_flip(['OPR', 'PD'])) as $type => $model) {
             Schema::create((new $model)->getTable(), function (Blueprint $t) {
                 $t->increments('id'); $t->string('transaksi_id', 32)->unique(); $t->date('tanggal');
@@ -57,6 +86,8 @@ class BsUsageCheckTest extends TestCase
         (require database_path('migrations/2026_09_28_100000_extend_finance_checks_to_transaction_modules.php'))->up();
         (require database_path('migrations/2026_09_30_160000_add_finance_check_drafts.php'))->up();
         (require database_path('migrations/2026_10_05_090000_track_finance_resubmissions.php'))->up();
+        (require database_path('migrations/2026_10_07_160000_track_finance_approval_per_source_detail.php'))->up();
+        (require database_path('migrations/2026_10_08_100000_add_photos_to_transaction_details.php'))->up();
         DB::table('user')->insert([
             ['id' => 1, 'nama' => 'Pemilik Transaksi'], ['id' => 2, 'nama' => 'Finance'], ['id' => 3, 'nama' => 'Pemilik Dana'],
         ]);
@@ -71,7 +102,7 @@ class BsUsageCheckTest extends TestCase
         $model = BsUsageCheckService::TYPES[$type];
         $source = $model::create([
             'transaksi_id' => ($type === 'OPR' ? 'OAS' : 'PD').str_pad((string) ($model::count() + 1), 8, '0', STR_PAD_LEFT),
-            'tanggal' => '2026-08-01', 'periode' => '2026-08', 'user_id' => 1, 'bs_owner_id' => 3, 'status' => 'DRAFT',
+            'tanggal' => '2026-08-01', 'periode' => '2026-08', 'user_id' => 1, 'bs_owner_id' => 3, 'status' => 'VALIDATED',
         ]);
         foreach ($amounts as $category => $amount) {
             $source->details()->create(['cost_category_id' => $category, 'nominal' => $amount, 'remark' => 'Biaya sumber']);
@@ -89,6 +120,7 @@ class BsUsageCheckTest extends TestCase
             'tanggal_pengecekan' => $date,
             'source_token' => $service->token($type, $source->id, $snapshot['fingerprint']),
             'details' => $snapshot['items']->map(fn ($item) => [
+                'source_detail_id' => $item['source_detail_id'],
                 'cost_category_id' => $item['cost_category_id'],
                 'nominal_disetujui' => $approved[$item['cost_category_id']] ?? $item['nominal_asal'],
                 'catatan' => 'Hasil pengecekan',
@@ -114,8 +146,9 @@ class BsUsageCheckTest extends TestCase
                 $removed->delete();
             }
             $this->get(route('bs-usage-checks.create', [$type, $source->id]))->assertOk()
-                ->assertSee('Simpan Konfirmasi')->assertSee('Pemilik Transaksi')->assertSee('value="125.25"', false);
-            $data = $this->payload($source, $type, [1 => '120.15']);
+                ->assertSee('Simpan Konfirmasi')->assertSee('Pemilik Transaksi')->assertSee('value="100.00"', false)->assertSee('value="25.25"', false);
+            $data = $this->payload($source, $type);
+            $data['details'][0]['nominal_disetujui'] = '94.90';
             $data += ['user_id' => 3, 'user_checker_id' => 1, 'periode' => '1999-01', 'no_referensi' => 'PALSU', 'jenis_transaksi' => 'EVENT', 'transaksi_pemakaian_id' => 999, 'document_no' => 'PALSU'];
             $this->post(route('bs-usage-checks.store', [$type, $source->id]), $data)->assertSessionHasNoErrors();
             $check = BsUsageCheck::latest('id')->firstOrFail();
@@ -124,13 +157,13 @@ class BsUsageCheckTest extends TestCase
             $this->assertEquals(1, $check->user_id);
             $this->assertEquals(2, $check->user_checker_id);
             $this->assertSame('2026-09', $check->periode);
-            $this->assertCount(2, $check->details);
-            $this->assertSame('125.25', $check->details->first()->nominal_asal);
-            $this->assertSame('120.15', $check->details->first()->nominal_disetujui);
+            $this->assertCount(3, $check->details);
+            $this->assertSame('100.00', $check->details->first()->nominal_asal);
+            $this->assertSame('94.90', $check->details->first()->nominal_disetujui);
             $this->assertSame('5.10', $check->details->first()->selisih);
             $this->assertSame($source::class, $check->source::class);
-            $this->assertSame('DRAFT', $source->fresh()->status);
-            $this->get(route('bs-usage-checks.show', $check))->assertOk()->assertSee('125,25')->assertSee('Finance');
+            $this->assertSame('VALIDATED', $source->fresh()->status);
+            $this->get(route('bs-usage-checks.show', $check))->assertOk()->assertSee('25,25')->assertSee('Kategori berulang')->assertSee('Finance');
         }
     }
 
@@ -299,7 +332,7 @@ class BsUsageCheckTest extends TestCase
             ]);
         }
         $response = $this->get(route('bs-usage-checks.index'))->assertOk()
-            ->assertSee('Transaksi dan hasil Finance terakhir')->assertSee('Rincian &amp; riwayat', false)
+            ->assertSee('Transaksi dan hasil Finance terakhir')->assertDontSee('Rincian &amp; riwayat', false)
             ->assertSee('EDK-VALIDATED')->assertDontSee('EDK-DRAFT')->assertDontSee('Laporan Pengecekan BS')
             ->assertViewHas('sources', fn ($sources) => $sources->total() === 3);
         $rows = $response->viewData('sources')->keyBy('jenis');
@@ -308,7 +341,7 @@ class BsUsageCheckTest extends TestCase
         $this->assertEquals(10, $rows['OPR']->selisih);
         $this->assertSame('PENDING', $rows['PD']->finance_status);
         $this->assertNull($rows['PD']->selisih);
-        $this->assertSame('DRAFT', $rows['OPR']->source_status);
+        $this->assertSame('VALIDATED', $rows['OPR']->source_status);
         $this->assertEquals(650, $response->viewData('totals')->nominal_asal);
         $this->assertEquals(140, $response->viewData('totals')->nominal_disetujui);
         $this->assertEquals(2, $response->viewData('totals')->unresolved_count);
@@ -331,7 +364,7 @@ class BsUsageCheckTest extends TestCase
         $this->post(route('bs-usage-checks.store', ['OPR', $rejected->id]), $rejectedData)->assertSessionHasNoErrors();
         $response = $this->get(route('bs-usage-checks.index'))->assertOk();
         $sources = $response->viewData('sources')->keyBy('source_id');
-        $this->assertSame('RECHECK', $sources[$changed->id]->finance_status);
+        $this->assertSame('PENDING', $sources[$changed->id]->finance_status);
         $this->assertNull($sources[$changed->id]->selisih);
         $this->assertSame('REVISION', $sources[$revision->id]->finance_status);
         $this->assertNull($sources[$revision->id]->selisih);
@@ -341,12 +374,17 @@ class BsUsageCheckTest extends TestCase
         $this->assertEquals(0, $response->viewData('totals')->nominal_disetujui);
         $this->assertEquals(300, $response->viewData('totals')->selisih);
         $this->assertEquals(2, $response->viewData('totals')->unresolved_count);
-        foreach (['RECHECK' => $changed->id, 'REVISION' => $revision->id, 'REJECTED' => $rejected->id] as $status => $id) {
+        foreach (['PENDING' => $changed->id, 'REVISION' => $revision->id, 'REJECTED' => $rejected->id] as $status => $id) {
             $this->get(route('bs-usage-checks.index', ['status_finance' => $status]))->assertOk()
                 ->assertViewHas('sources', fn ($sources) => $sources->total() === 1 && $sources->first()->source_id === $id);
         }
-        $this->get(route('bs-usage-checks.index', ['status_finance' => 'RECHECK', 'status_selisih' => 'tidak_sesuai']))
+        $this->get(route('bs-usage-checks.index', ['status_finance' => 'PENDING', 'status_selisih' => 'tidak_sesuai']))
             ->assertOk()->assertViewHas('sources', fn ($sources) => $sources->isEmpty());
+        $this->get(route('bs-usage-checks.index', ['status_finance' => 'RECHECK']))->assertOk()
+            ->assertDontSee('Perlu Cek Ulang')->assertDontSee('value="RECHECK"', false)
+            ->assertViewHas('filters', fn ($filters) => $filters['status_finance'] === 'PENDING')
+            ->assertViewHas('sources', fn ($sources) => $sources->total() === 1
+                && $sources->first()->source_id === $changed->id && $sources->first()->finance_status === 'PENDING');
     }
 
     public function test_unified_finance_filters_use_latest_saved_check_and_item_differences(): void

@@ -65,7 +65,7 @@ trait BsUsageCheckDraftScenarios
         $this->assertDatabaseCount('document_number_sequences', 0);
         $this->assertFalse($source->financeChecks()->exists());
         $this->assertSame('PENDING', app(BsUsageDashboardService::class)->sourceResult(User::findOrFail(1), 'OPR', $source->id)->finance_status);
-        $this->get(route('bs-usage-checks.index'))->assertOk()->assertSee('Lanjutkan Draft');
+        $this->get(route('bs-usage-checks.index'))->assertOk()->assertSee('Detail Transaksi')->assertSee('Draft pemeriksaan #'.$draft->id.' tersedia.');
         $this->get(route('bs-usage-checks.index', ['tampilan' => 'draft']))->assertOk()
             ->assertSee('PRIVATE DRAFT NOTE')->assertViewHas('drafts', fn ($drafts) => $drafts->total() === 1);
         $this->get(route('bs-usage-checks.report', ['mode' => 'semua']))->assertOk()->assertDontSee('PRIVATE DRAFT NOTE')
@@ -153,7 +153,7 @@ trait BsUsageCheckDraftScenarios
         $this->assertSame('100.00', BsUsageCheckDraft::first()->details[0]['nominal_asal']);
         $this->assertDatabaseCount('bs_usage_checks', 1);
         $this->get(route('bs-usage-checks.index'))->assertOk()
-            ->assertViewHas('sources', fn ($sources) => $sources->first()->finance_status === 'RECHECK' && $sources->first()->selisih === null);
+            ->assertViewHas('sources', fn ($sources) => $sources->first()->finance_status === 'PENDING' && $sources->first()->selisih === null);
         $data = $this->draftPayload($source, amounts: [1 => '190', 2 => '40']);
         $data['save_action'] = 'confirm';
         $this->post($url, $data)->assertSessionHasNoErrors();
@@ -227,7 +227,12 @@ trait BsUsageCheckDraftScenarios
                     'tanggal' => '2026-09-01', 'periode' => '2026-09', 'status' => 'DRAFT',
                 ]);
                 $source = $model::findOrFail($id);
-                $this->postJson(route('bs-usage-checks.store', [$type, $id]), $this->draftPayload($source, $type))
+                $this->get(route('bs-usage-checks.create', [$type, $id]))->assertForbidden();
+                $data = $this->payload($source, $type) + [
+                    'save_action' => 'draft',
+                    'review_token' => app(BsUsageCheckService::class)->reviewToken($type, $id, null, null),
+                ];
+                $this->postJson(route('bs-usage-checks.store', [$type, $id]), $data)
                     ->assertUnprocessable()->assertJsonValidationErrors('source');
                 $source->forceFill(['status' => 'VALIDATED'])->save();
             }

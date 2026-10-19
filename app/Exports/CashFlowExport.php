@@ -37,7 +37,7 @@ class CashFlowExport implements WithMultipleSheets
 
         $sheets = [new CashFlowSheetExport('Ringkasan Stok Kas', [
             'Periode', 'Status Periode', 'Saldo Awal (Rp)', 'Total Masuk (Rp)',
-            'Pengeluaran BS (Rp)', 'Event Dalam Kota (Rp)', 'Event Luar Kota (Rp)',
+            'Operasional & Perjalanan Dinas (Rp)', 'Event Dalam Kota (Rp)', 'Event Luar Kota (Rp)',
             'Total Keluar (Rp)', 'Penyesuaian BS (Rp)', 'Saldo Akhir (Rp)', 'Status Saldo Awal',
         ], $rows, ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])];
 
@@ -61,6 +61,19 @@ class CashFlowExport implements WithMultipleSheets
             $sheets[] = new CashFlowSheetExport('Penyesuaian BS', [
                 'Dokumen BS', 'Penyesuaian (Rp)',
             ], $rows, ['B']);
+
+            if (!empty($this->transactions['shared_bs'])) {
+                $rows = array_map(fn (array $usage) => [
+                    Carbon::parse($usage['date'])->format('Y-m-d'), $usage['type'], $usage['reference'],
+                    $usage['user_name'], $usage['owner_name'], (float) $usage['reported'],
+                    $usage['approved'] === null ? null : (float) $usage['approved'], $usage['finance_status'],
+                    'Saldo hanya berkurang pada pemilik BS sesuai hasil pemeriksaan Finance.',
+                ], $this->transactions['shared_bs']);
+                $sheets[] = new CashFlowSheetExport('Pemakaian BS Bersama', [
+                    'Tanggal', 'Jenis', 'ID Transaksi', 'Pemakai', 'Pemilik BS',
+                    'Nominal Dilaporkan (Rp)', 'Disetujui Finance (Rp)', 'Status Finance', 'Keterangan',
+                ], $rows, ['F', 'G']);
+            }
         }
 
         return $sheets;

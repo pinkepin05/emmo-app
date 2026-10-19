@@ -137,6 +137,8 @@
             <p class="mb-0" style="font-size: 0.92rem;">{{ $bs->description ?? 'Tidak ada deskripsi.' }}</p>
         </div>
 
+        @include('pengajuan-bs.partials.attachment', ['forApproval' => true])
+
         {{-- ================= ANGGOTA GRUP ================= --}}
         <div class="card-custom mb-4">
             <div class="section-title">{{ $isPerjalanan ? 'Anggota Grup Dinas' : 'Keanggotaan' }}</div>

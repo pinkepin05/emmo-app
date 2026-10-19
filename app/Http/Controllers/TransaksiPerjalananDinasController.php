@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Services\DocumentNumberService;
 
 use Illuminate\Http\Request;
+use App\Services\TransactionDetailPhotoService;
 use App\Models\TransaksiPerjalananDinasHeader;
 use App\Models\TransaksiPerjalananDinasDetail;
 use App\Models\User;
 use App\Models\SettingPlafonPerjalananDinas;
 use App\Models\CostCategory;
+use App\Rules\ActiveCostCategory;
 use App\Models\WilayahDistance;
 use App\Models\Periode;
 use App\Services\BonSementaraService;
@@ -24,7 +26,7 @@ class TransaksiPerjalananDinasController extends Controller
 {
     public function create()
     {
-        $cost_categories = CostCategory::all();
+        $cost_categories = CostCategory::active()->get();
         $dbPeriods = Periode::pluck('status', 'periode')->toArray();
         $currentMonth = \App\Support\AppTime::now()->format('Y-m');
 
@@ -39,7 +41,13 @@ class TransaksiPerjalananDinasController extends Controller
             $openPeriods[] = $currentMonth;
         }
 
-        return view('transaksi_perjalanan_dinas.create', compact('cost_categories', 'openPeriods'));
+        $usedDates = TransaksiPerjalananDinasHeader::where('user_id', Auth::id())
+            ->distinct()
+            ->orderBy('tanggal')
+            ->pluck('tanggal')
+            ->all();
+
+        return view('transaksi_perjalanan_dinas.create', compact('cost_categories', 'openPeriods', 'usedDates'));
     }
 
     public function getProvinsiByTeritory(Request $request)
@@ -117,8 +125,9 @@ class TransaksiPerjalananDinasController extends Controller
             'jarak_km' => 'required|numeric|decimal:0,2|min:0|max:99999999.99',
             'durasi_jam' => 'required|numeric|min:0|max:24',
             ...\App\Services\TransactionFundingService::rules(),
-            'details' => 'required|array|min:1',
-            'details.*.cost_category_id' => 'required|exists:cost_category,id',
+            ...TransactionDetailPhotoService::rules('details'),
+        'details' => 'required|array|min:1',
+            'details.*.cost_category_id' => ['required', 'integer', new ActiveCostCategory],
             'details.*.remark' => 'required|string|max:255',
             'details.*.nominal' => 'required|numeric|decimal:0,2|min:0|max:9999999999999.99',
         ]);
@@ -189,10 +198,11 @@ class TransaksiPerjalananDinasController extends Controller
                 $pesan_sukses = 'Draft Perjalanan Dinas (' . $transaksi_id . ') disimpan. Buka detail untuk Konfirmasi.';
             }
 
-            foreach ($request->details as $detail) {
+            foreach ($request->details as $index => $detail) {
                 TransaksiPerjalananDinasDetail::create([
                     'transaksi_id'     => $transaksi_id,
-                    'cost_category_id' => $detail['cost_category_id'],
+                    ...app(TransactionDetailPhotoService::class)->attributes($request, 'details.'.$index),
+                'cost_category_id' => $detail['cost_category_id'],
                     'remark'           => $detail['remark'],
                     'nominal'          => $detail['nominal'],
                 ]);
@@ -223,7 +233,7 @@ class TransaksiPerjalananDinasController extends Controller
                 $status = app(\App\Services\BsValidationService::class)->finalize($header);
                 $pesan_sukses = $status === 'PENDING_OWNER'
                     ? 'Permintaan pemakaian BS dikirim kepada pemohon. Saldo belum berkurang sampai disetujui.'
-                    : 'Transaksi Perjalanan Dinas (' . $transaksi_id . ') berhasil disimpan dan dikonfirmasi. Realisasi BS telah dibukukan.';
+                    : 'Transaksi Perjalanan Dinas (' . $transaksi_id . ') dikonfirmasi dan siap diperiksa Finance. Saldo BS berkurang setelah konfirmasi Finance.';
             }
 
             DB::commit();
@@ -244,7 +254,7 @@ class TransaksiPerjalananDinasController extends Controller
         return redirect()->route('transaksi_perjalanan_dinas.show', $transaksi->transaksi_id)
             ->with('success', $status === 'PENDING_OWNER'
                 ? 'Permintaan pemakaian BS dikirim kepada pemohon. Saldo belum berkurang sampai disetujui.'
-                : 'Transaksi berhasil dikonfirmasi. Realisasi BS telah dibukukan.');
+                : 'Transaksi dikonfirmasi dan siap diperiksa Finance. Saldo BS berkurang setelah konfirmasi Finance.');
     }
 
     public function withdraw(Request $request, $id)
@@ -266,16 +276,21 @@ class TransaksiPerjalananDinasController extends Controller
             ->with('success', 'Transaksi kembali menjadi draft. Perbaiki rincian lalu ajukan kembali untuk persetujuan.');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $query = TransaksiPerjalananDinasHeader::with(['user', 'tujuanDinas'])->withExists('financeChecks');
+        $filters = $request->validate(['periode' => ['nullable', 'string', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/D']]);
+        $periode = $filters['periode'] ?? null;
+        $query = TransaksiPerjalananDinasHeader::with(['user', 'tujuanDinas'])->withExists('financeChecks')
+            ->withSum('details as total_nominal', 'nominal');
 
         if (!auth()->user()->canSeeAllTransactions()) {
-            $query->visibleTo(auth()->user());
+            $query->where('user_id', auth()->id());
         }
 
-        $transaksis = $query->orderBy('tanggal', 'desc')->paginate(10);
-        return view('transaksi_perjalanan_dinas.index', compact('transaksis'));
+        if ($periode) $query->where('periode', $periode);
+        if ($request->boolean('dilaporkan')) $query->where('status', 'VALIDATED');
+        $transaksis = $query->orderBy('tanggal', 'desc')->paginate(10)->withQueryString();
+        return view('transaksi_perjalanan_dinas.index', compact('transaksis', 'periode'));
     }
 
     public function show($id)
@@ -287,7 +302,7 @@ class TransaksiPerjalananDinasController extends Controller
             abort(403, 'Anda tidak memiliki akses ke transaksi ini.');
         }
 
-        $cost_categories = CostCategory::all();
+        $cost_categories = CostCategory::active()->get();
 
     
 
@@ -333,12 +348,14 @@ class TransaksiPerjalananDinasController extends Controller
             'jarak_km' => 'required|numeric|decimal:0,2|min:0|max:99999999.99',
             'durasi_jam' => 'required|numeric|min:0|max:24',
             ...\App\Services\TransactionFundingService::rules(),
-            'details' => 'nullable|array',
-            'details.*.cost_category_id' => 'required_with:details|exists:cost_category,id',
+            ...TransactionDetailPhotoService::rules('details'),
+        'details' => 'nullable|array',
+            'details.*.cost_category_id' => ['required_with:details', 'integer', new ActiveCostCategory($transaksi->details->pluck('cost_category_id', 'id')->all())],
             'details.*.remark' => 'nullable|string|max:255',
             'details.*.nominal' => 'required_with:details|numeric|decimal:0,2|min:0|max:9999999999999.99',
-            'new_details' => 'nullable|array',
-            'new_details.*.cost_category_id' => 'required_with:new_details|exists:cost_category,id',
+            ...TransactionDetailPhotoService::rules('new_details'),
+        'new_details' => 'nullable|array',
+            'new_details.*.cost_category_id' => ['required_with:new_details', 'integer', new ActiveCostCategory],
             'new_details.*.remark' => 'nullable|string|max:255',
             'new_details.*.nominal' => 'required_with:new_details|numeric|decimal:0,2|min:0|max:9999999999999.99',
             'delete_details' => 'nullable|array',
@@ -352,6 +369,7 @@ class TransaksiPerjalananDinasController extends Controller
             return back()->withErrors(['tujuan_dinas_id' => 'Wilayah tujuan tidak sesuai dengan Territory yang dipilih.']);
         }
 
+        app(TransactionDetailPhotoService::class)->assertBelongsTo($request, $transaksi);
         $bsOwnerId = app(\App\Services\TransactionFundingService::class)->resolve($request, true, $transaksi);
 
         DB::beginTransaction();
@@ -379,10 +397,12 @@ class TransaksiPerjalananDinasController extends Controller
 
             if ($request->has('details')) {
                 foreach ($request->details as $detailId => $data) {
+                if (in_array((string) $detailId, array_map('strval', $request->input('delete_details', [])), true)) continue;
                     $detail = TransaksiPerjalananDinasDetail::find($detailId);
                     if ($detail && $detail->transaksi_id == $transaksi->transaksi_id) {
                         $validateRules($data['cost_category_id'], $request->jarak_km, $request->durasi_jam);
                         $detail->update([
+                        ...app(TransactionDetailPhotoService::class)->attributes($request, 'details.'.$detailId),
                             'cost_category_id' => $data['cost_category_id'],
                             'remark' => $data['remark'],
                             'nominal' => $data['nominal'],
@@ -394,14 +414,15 @@ class TransaksiPerjalananDinasController extends Controller
             if ($request->has('delete_details') && is_array($request->delete_details)) {
                 TransaksiPerjalananDinasDetail::whereIn('id', $request->delete_details)
                     ->where('transaksi_id', $transaksi->transaksi_id)
-                    ->delete();
+                    ->get()->each->delete();
             }
 
             if ($request->has('new_details')) {
-                foreach ($request->new_details as $data) {
+                foreach ($request->new_details as $newIndex => $data) {
                     $validateRules($data['cost_category_id'], $request->jarak_km, $request->durasi_jam);
                     TransaksiPerjalananDinasDetail::create([
-                        'transaksi_id' => $transaksi->transaksi_id,
+                        ...app(TransactionDetailPhotoService::class)->attributes($request, 'new_details.'.$newIndex),
+                    'transaksi_id' => $transaksi->transaksi_id,
                         'cost_category_id' => $data['cost_category_id'],
                         'remark' => $data['remark'],
                         'nominal' => $data['nominal'],
@@ -433,8 +454,9 @@ class TransaksiPerjalananDinasController extends Controller
     public function storeDetail(Request $request, $id, BonSementaraService $bsService, PlafonService $plafonService)
     {
         $request->validate([
-            'details' => 'required|array|min:1',
-            'details.*.cost_category_id' => 'required|exists:cost_category,id',
+            ...TransactionDetailPhotoService::rules('details'),
+        'details' => 'required|array|min:1',
+            'details.*.cost_category_id' => ['required', 'integer', new ActiveCostCategory],
             'details.*.remark' => 'required|string|max:255',
             'details.*.nominal' => 'required|numeric|decimal:0,2|min:0|max:9999999999999.99',
         ]);
@@ -482,10 +504,11 @@ class TransaksiPerjalananDinasController extends Controller
                 }
             }
 
-            foreach ($request->details as $detail) {
+            foreach ($request->details as $index => $detail) {
                 TransaksiPerjalananDinasDetail::create([
                     'transaksi_id'     => $header->transaksi_id,
-                    'cost_category_id' => $detail['cost_category_id'],
+                    ...app(TransactionDetailPhotoService::class)->attributes($request, 'details.'.$index),
+                'cost_category_id' => $detail['cost_category_id'],
                     'remark'           => $detail['remark'],
                     'nominal'          => $detail['nominal'],
                 ]);
@@ -525,7 +548,7 @@ class TransaksiPerjalananDinasController extends Controller
     {
         $transaksi = TransaksiPerjalananDinasHeader::where('transaksi_id', $id)->firstOrFail();
 
-        if (!auth()->user()->canAccessTransaction($transaksi)) {
+        if (!auth()->user()->canDeleteTransaction($transaksi)) {
             abort(403, 'Anda tidak memiliki akses ke transaksi ini.');
         }
 
@@ -536,7 +559,7 @@ class TransaksiPerjalananDinasController extends Controller
 
             $periode = $transaksi->periode;
 
-        $transaksi->details()->delete();
+        $transaksi->details()->get()->each->delete();
         $transaksi->delete();
 
         return redirect()->route('transaksi_perjalanan_dinas.index')
@@ -593,7 +616,7 @@ class TransaksiPerjalananDinasController extends Controller
         $query = TransaksiPerjalananDinasHeader::with(['user', 'details', 'tujuanDinas', 'bonSementara', 'bsOwner']);
 
         if (!auth()->user()->canSeeAllTransactions()) {
-            $query->visibleTo(auth()->user());
+            $query->where('user_id', auth()->id());
         }
 
         if ($periode) $query->where('periode', $periode);

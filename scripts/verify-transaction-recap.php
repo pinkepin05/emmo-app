@@ -95,7 +95,7 @@ try {
                 'tanggal_pengecekan' => AppTime::now()->toDateString(), 'keputusan' => $decision,
                 'catatan_keputusan' => 'Verifikasi lokal - dibatalkan setelah pengujian',
                 'source_token' => $service->token($type, $source->id, $snapshot['fingerprint']),
-                'details' => $snapshot['items']->map(fn ($item) => ['cost_category_id' => (int) $item['cost_category_id'],
+                'details' => $snapshot['items']->map(fn ($item) => ['source_detail_id' => $item['source_detail_id'], 'cost_category_id' => (int) $item['cost_category_id'],
                     'nominal_disetujui' => '0', 'catatan' => 'Local rollback smoke'])->all(),
             ]);
             if (BsUsageCheck::count() !== $start + 1) throw new RuntimeException('Decision was not saved.');

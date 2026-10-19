@@ -21,143 +21,112 @@
             background-color: var(--bg-body);
             color: var(--text-primary);
             min-height: 100vh;
+            padding-bottom: 6rem; /* ruang untuk floating bar */
         }
 
         /* ===== HEADER ===== */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
         .page-title { font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; margin: 0; }
         .page-subtitle { color: var(--text-secondary); font-size: 0.9rem; margin: 0.3rem 0 0; }
-        .btn-nav {
-            background-color: white; border: 1px solid var(--border-color);
-            color: var(--text-secondary); font-weight: 500; font-size: 0.875rem;
-            padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; white-space: nowrap;
-        }
+        .btn-nav { background-color: white; border: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 500; font-size: 0.875rem; padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; white-space: nowrap; }
         .btn-nav:hover { background-color: #f1f5f9; color: var(--text-primary); }
         .btn-nav-dark { background: var(--text-primary); color: #fff; border: none; }
         .btn-nav-dark:hover { background: #334155; color: #fff; }
 
         /* ===== STAT CARDS ===== */
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 1rem 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.9rem;
-            height: 100%;
-            transition: all 0.2s ease;
-        }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.9rem; height: 100%; transition: all 0.2s ease; }
         .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px -6px rgba(15,23,42,0.08); }
-        .stat-icon {
-            width: 44px; height: 44px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.15rem; flex-shrink: 0;
-        }
-        .stat-label {
-            font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);
-            text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem;
-        }
-        .stat-value {
-            font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em;
-            font-variant-numeric: tabular-nums; line-height: 1.2;
-        }
+        .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+        .stat-label { font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+        .stat-value { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
 
         /* ===== TOOLBAR ===== */
-        .toolbar {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 0.9rem 1.25rem;
-            margin: 1rem 0;
-        }
-        .toolbar .form-select {
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-        .toolbar .form-select:focus {
-            border-color: var(--text-primary);
-            box-shadow: 0 0 0 3px rgba(15,23,42,0.08);
-        }
-        .current-badge {
-            display: inline-block; background: #10b981; color: white;
-            font-size: 0.65rem; font-weight: 700; padding: 0.25em 0.7em;
-            border-radius: 999px; margin-left: 0.5rem; vertical-align: middle;
-        }
+        .toolbar { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.9rem 1.25rem; margin: 1rem 0; }
+        .toolbar .form-select { border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+        .toolbar .form-select:focus { border-color: var(--text-primary); box-shadow: 0 0 0 3px rgba(15,23,42,0.08); }
+        .current-badge { display: inline-block; background: #10b981; color: white; font-size: 0.65rem; font-weight: 700; padding: 0.25em 0.7em; border-radius: 999px; margin-left: 0.5rem; vertical-align: middle; }
 
         /* ===== FILTER CHIPS ===== */
-        .chip-filter {
-            border: 1px solid var(--border-color); background: #fff;
-            border-radius: 999px; padding: 0.38rem 0.9rem;
-            font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);
-            cursor: pointer; transition: all 0.15s ease;
-            display: inline-flex; align-items: center; gap: 0.4rem;
-        }
+        .chip-filter { border: 1px solid var(--border-color); background: #fff; border-radius: 999px; padding: 0.38rem 0.9rem; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; display: inline-flex; align-items: center; gap: 0.4rem; }
         .chip-filter:hover { background: #f1f5f9; color: var(--text-primary); }
         .chip-filter.active { background: var(--text-primary); border-color: var(--text-primary); color: #fff; }
-        .chip-count {
-            background: rgba(100,116,139,0.12); border-radius: 999px;
-            padding: 0.05em 0.55em; font-size: 0.7rem; font-weight: 800;
-        }
+        .chip-count { background: rgba(100,116,139,0.12); border-radius: 999px; padding: 0.05em 0.55em; font-size: 0.7rem; font-weight: 800; }
         .chip-filter.active .chip-count { background: rgba(255,255,255,0.22); }
 
-        /* ===== DENSITY TOGGLE ===== */
-        .density-btn.active {
-            background: var(--text-primary);
-            color: #fff;
-            border-color: var(--text-primary);
-        }
+        .density-btn.active { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
 
         /* ===== 🎯 CARD LIST ===== */
-        .bs-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--border-color);
-            border-radius: 16px;
-            display: flex; flex-direction: column;
-            height: 100%; overflow: hidden;
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
-        }
+        .bs-card { background: var(--bg-card); border: 1px solid var(--border-color); border-left: 4px solid var(--border-color); border-radius: 16px; display: flex; flex-direction: column; height: 100%; overflow: hidden; transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease; position: relative; }
         .bs-card:hover { box-shadow: 0 12px 24px -12px rgba(15,23,42,0.14); transform: translateY(-2px); }
         .bs-card.status-approved_atasan  { border-left-color: #f59e0b; }
         .bs-card.status-disbursed        { border-left-color: #10b981; }
         .bs-card.status-rejected_finance { border-left-color: #ef4444; }
 
-        .bs-card-head {
-            padding: 1rem 1.25rem 0.85rem;
-            display: flex; justify-content: space-between; align-items: flex-start;
-            gap: 1rem; border-bottom: 1px dashed var(--border-color);
+        /* 🎯 SELECTED STATE */
+        .bs-card.selected {
+            border-color: #2563eb !important;
+            border-left-color: #1d4ed8 !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15), 0 8px 20px -8px rgba(37,99,235,0.3);
+            background: linear-gradient(to right, #eff6ff 0%, #ffffff 40%);
         }
-        .doc-no { font-weight: 800; font-size: 1rem; letter-spacing: -0.01em; }
-        .head-nominal { text-align: right; flex-shrink: 0; }
-        .head-nominal .amount {
-            font-size: 1.08rem; font-weight: 800; color: #2563eb;
-            font-variant-numeric: tabular-nums; white-space: nowrap;
+        .bs-card.selected::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 36px; height: 36px;
+            background: #2563eb;
+            clip-path: polygon(100% 0, 0 0, 100% 100%);
+            z-index: 2;
         }
-        .head-nominal .meta-label {
-            font-size: 0.66rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.18rem;
+        .bs-card.selected::before {
+            content: '\F26B'; /* bootstrap check icon via bootstrap-icons */
+            font-family: 'bootstrap-icons';
+            position: absolute;
+            top: 4px; right: 4px;
+            color: white;
+            font-size: 0.75rem;
+            z-index: 3;
         }
 
-        .bs-card-body {
-            padding: 0.95rem 1.25rem;
-            display: flex; flex-direction: column; gap: 0.7rem; flex: 1;
+        .bs-select-check {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 6px;
+            border: 2px solid var(--border-color);
+            background: white; cursor: pointer;
+            flex-shrink: 0; transition: all 0.15s ease;
+            position: relative;
         }
+        .bs-select-check:hover { border-color: #2563eb; background: #eff6ff; }
+        .bs-select-check.checked {
+            background: #2563eb; border-color: #2563eb;
+        }
+        .bs-select-check.checked::after {
+            content: '\F26B';
+            font-family: 'bootstrap-icons';
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 900;
+        }
+        .bs-select-check.indeterminate {
+            background: #2563eb; border-color: #2563eb;
+        }
+        .bs-select-check.indeterminate::after {
+            content: '';
+            width: 10px; height: 2px; background: white; border-radius: 1px;
+        }
+
+        .bs-card-head { padding: 1rem 1.25rem 0.85rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; border-bottom: 1px dashed var(--border-color); }
+        .head-left { display: flex; align-items: flex-start; gap: 0.7rem; flex: 1; min-width: 0; }
+        .head-content { flex: 1; min-width: 0; }
+        .doc-no { font-weight: 800; font-size: 1rem; letter-spacing: -0.01em; }
+        .head-nominal { text-align: right; flex-shrink: 0; }
+        .head-nominal .amount { font-size: 1.08rem; font-weight: 800; color: #2563eb; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .head-nominal .meta-label { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.18rem; }
+
+        .bs-card-body { padding: 0.95rem 1.25rem; display: flex; flex-direction: column; gap: 0.7rem; flex: 1; }
         .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem 1rem; }
         @media (max-width: 420px) { .meta-grid { grid-template-columns: 1fr; } }
-        .meta-label {
-            font-size: 0.66rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.18rem;
-        }
+        .meta-label { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.18rem; }
         .meta-value { font-size: 0.85rem; font-weight: 600; }
         .meta-value.muted { font-weight: 500; color: var(--text-secondary); }
 
@@ -166,141 +135,151 @@
         .ket-ok      { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
         .ket-reject  { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
-        .bs-card-foot {
-            padding: 0.85rem 1.25rem;
-            background: #f8fafc;
-            border-top: 1px solid var(--border-color);
-            display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-        }
+        .bs-card-foot { padding: 0.85rem 1.25rem; background: #f8fafc; border-top: 1px solid var(--border-color); display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 
-        .avatar {
-            width: 30px; height: 30px; border-radius: 50%;
-            background: #eef2ff; color: #4f46e5;
-            font-weight: 700; font-size: 0.72rem;
-            display: inline-flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
+        .avatar { width: 30px; height: 30px; border-radius: 50%; background: #eef2ff; color: #4f46e5; font-weight: 700; font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        /* ===== BADGES ===== */
-        .badge-status {
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            padding: 0.38em 0.75em; border-radius: 999px;
-            font-weight: 700; font-size: 0.68rem;
-            text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
-        }
-        .badge-status::before {
-            content: ''; width: 6px; height: 6px; border-radius: 50%;
-            background: currentColor; opacity: 0.9;
-        }
-        .badge-tipe {
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            padding: 0.35em 0.7em; border-radius: 999px;
-            font-weight: 700; font-size: 0.68rem;
-            text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
-        }
+        .badge-status { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.38em 0.75em; border-radius: 999px; font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+        .badge-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.9; }
+        .badge-tipe { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35em 0.7em; border-radius: 999px; font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
         .badge-tipe-operasional { background: #eff6ff; color: #1d4ed8; }
         .badge-tipe-dinas       { background: #ecfdf5; color: #047857; }
 
-        /* ===== FORM PENCAIRAN ===== */
-        .nominal-display {
-            border-radius: 0 8px 8px 0 !important;
-            border: 1px solid var(--border-color);
-            padding: 0.4rem 0.6rem;
-            font-size: 0.9rem; font-weight: 600; color: var(--text-primary);
-            transition: all 0.2s;
-        }
-        .nominal-display:focus {
-            border-color: var(--text-primary);
-            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
-            outline: none;
-        }
+        .nominal-display { border-radius: 0 8px 8px 0 !important; border: 1px solid var(--border-color); padding: 0.4rem 0.6rem; font-size: 0.9rem; font-weight: 600; color: var(--text-primary); transition: all 0.2s; }
+        .nominal-display:focus { border-color: var(--text-primary); box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08); outline: none; }
         .nominal-display.is-invalid { border-color: #ef4444 !important; background-color: #fef2f2; }
         .nominal-display.is-valid { border-color: #10b981 !important; }
 
-        .btn-cairkan {
-            background-color: var(--text-primary); color: white; border: none;
-            padding: 0.45rem 0.9rem; border-radius: 8px; font-weight: 600;
-            font-size: 0.82rem; white-space: nowrap; cursor: pointer; transition: all 0.15s ease;
-        }
+        .btn-cairkan { background-color: var(--text-primary); color: white; border: none; padding: 0.45rem 0.9rem; border-radius: 8px; font-weight: 600; font-size: 0.82rem; white-space: nowrap; cursor: pointer; transition: all 0.15s ease; }
         .btn-cairkan:hover:not(:disabled) { background-color: #334155; transform: translateY(-1px); }
         .btn-cairkan:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        .btn-full {
-            background: #fffbeb; color: #d97706; border: 1px solid #fde68a;
-            width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 0.85rem; transition: all 0.15s ease; flex-shrink: 0;
-        }
+        .btn-full { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: all 0.15s ease; flex-shrink: 0; }
         .btn-full:hover { background: #fef3c7; transform: translateY(-1px); }
 
-        .btn-tolak {
-            background-color: #ef4444; color: white; border: none;
-            padding: 0.45rem 0.75rem; border-radius: 8px; font-weight: 600;
-            font-size: 0.82rem; white-space: nowrap; cursor: pointer; transition: all 0.15s ease;
-        }
+        .btn-tolak { background-color: #ef4444; color: white; border: none; padding: 0.45rem 0.75rem; border-radius: 8px; font-weight: 600; font-size: 0.82rem; white-space: nowrap; cursor: pointer; transition: all 0.15s ease; }
         .btn-tolak:hover { background-color: #dc2626; transform: translateY(-1px); }
 
         .btn-act { border:none; padding:0.42rem 0.75rem; border-radius:8px; font-weight:600; font-size:0.78rem; color:white; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; white-space:nowrap; transition:all 0.15s ease; }
         .btn-act:hover { transform:translateY(-1px); filter:brightness(1.08); color:white; }
         .btn-view { background-color:#3b82f6; }
 
-        .empty-card {
-            background: var(--bg-card); border: 1px dashed var(--border-color);
-            border-radius: 16px; padding: 3rem 1rem;
-        }
+        .empty-card { background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 16px; padding: 3rem 1rem; }
 
         /* ===== 🎯 MODE KOMPAK ===== */
         #bsList.compact { --bs-gutter-y: .5rem; }
         #bsList.compact > .bs-item { flex: 0 0 100%; max-width: 100%; width: 100%; }
-
-        #bsList.compact .bs-card {
-            flex-direction: row; align-items: center; flex-wrap: wrap;
-            gap: .4rem 1.5rem; padding: .55rem 1rem;
-            border-left-width: 3px; border-radius: 12px;
-        }
+        #bsList.compact .bs-card { flex-direction: row; align-items: center; flex-wrap: wrap; gap: .4rem 1.5rem; padding: .55rem 1rem; border-left-width: 3px; border-radius: 12px; }
         #bsList.compact .bs-card:hover { transform: none; }
-
-        #bsList.compact .bs-card-head {
-            border-bottom: none; padding: 0; align-items: center;
-            flex: 1 1 300px; min-width: 250px;
-        }
-        #bsList.compact .bs-card-head > div:first-child {
-            display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; min-width: 0;
-        }
+        #bsList.compact .bs-card-head { border-bottom: none; padding: 0; align-items: center; flex: 1 1 300px; min-width: 250px; }
+        #bsList.compact .bs-card-head > div:first-child { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; min-width: 0; }
         #bsList.compact .bs-card-head .mt-2 { margin-top: 0 !important; }
         #bsList.compact .doc-no { font-size: .88rem; }
         #bsList.compact .head-nominal { text-align: right; }
         #bsList.compact .head-nominal .meta-label { display: none; }
         #bsList.compact .head-nominal .amount { font-size: .95rem; }
         #bsList.compact .head-nominal .meta-value.muted { font-size: .68rem; }
-
         #bsList.compact .bs-card-body { padding: 0; gap: .25rem; flex: 1 1 320px; min-width: 240px; }
         #bsList.compact .meta-grid { display: flex; flex-wrap: wrap; align-items: center; }
-        #bsList.compact .meta-grid > div {
-            display: flex; align-items: center; gap: .4rem;
-            padding: 0 .75rem; border-left: 1px solid var(--border-color);
-        }
+        #bsList.compact .meta-grid > div { display: flex; align-items: center; gap: .4rem; padding: 0 .75rem; border-left: 1px solid var(--border-color); }
         #bsList.compact .meta-grid > div:first-child { border-left: none; padding-left: 0; }
         #bsList.compact .meta-grid > div:last-child { display: none; }
         #bsList.compact .meta-label { display: none; }
         #bsList.compact .meta-value { font-size: .78rem; }
         #bsList.compact .avatar { width: 22px; height: 22px; font-size: .6rem; }
-        #bsList.compact .ket-box {
-            padding: .12rem .6rem; font-size: .72rem;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        #bsList.compact .ket-box { padding: .12rem .6rem; font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         #bsList.compact .ket-box br { display: none; }
-
-        #bsList.compact .bs-card-foot {
-            padding: 0; background: transparent; border-top: none;
-            margin-left: auto; flex: 0 0 auto;
-        }
+        #bsList.compact .bs-card-foot { padding: 0; background: transparent; border-top: none; margin-left: auto; flex: 0 0 auto; }
 
         @media (max-width: 991.98px) {
             #bsList.compact .bs-card { flex-direction: column; align-items: stretch; gap: .6rem; }
             #bsList.compact .bs-card-head { border-bottom: 1px dashed var(--border-color); padding-bottom: .55rem; }
             #bsList.compact .bs-card-foot { margin-left: 0; padding-top: .55rem; border-top: 1px solid var(--border-color); }
             #bsList.compact .ket-box { white-space: normal; }
+        }
+
+        /* ===== 🎯 BATCH SELECTION BAR (Floating) ===== */
+        .batch-select-bar {
+            display: flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px -2px rgba(15,23,42,0.06);
+        }
+        .batch-select-bar .form-check { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .batch-select-bar .form-check-input { width: 18px; height: 18px; cursor: pointer; }
+        .batch-select-bar .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
+        .batch-select-bar .form-check-input:focus { box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        .batch-select-bar .form-check-label { font-weight: 600; font-size: 0.88rem; cursor: pointer; user-select: none; }
+        .batch-counter { font-size: 0.82rem; color: var(--text-secondary); font-weight: 500; }
+        .batch-counter strong { color: #2563eb; }
+
+        /* ===== 🎯 FLOATING ACTION BAR ===== */
+        .floating-action-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -8px 24px -8px rgba(15,23,42,0.15);
+            padding: 0.9rem 1.25rem;
+            z-index: 1030;
+            transform: translateY(110%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .floating-action-bar.visible { transform: translateY(0); }
+        .floating-action-inner {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .fab-info { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .fab-count {
+            background: #2563eb; color: white;
+            width: 36px; height: 36px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.95rem;
+        }
+        .fab-text { font-size: 0.88rem; color: var(--text-secondary); }
+        .fab-text strong { color: var(--text-primary); font-size: 1rem; }
+        .fab-total {
+            padding: 0.5rem 1rem;
+            background: #eff6ff;
+            border-radius: 10px;
+            font-weight: 800;
+            color: #1d4ed8;
+            font-size: 1.05rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .fab-actions { display: flex; gap: 0.5rem; }
+        .btn-fab-clear {
+            background: transparent; border: 1px solid var(--border-color);
+            color: var(--text-secondary); padding: 0.6rem 1.1rem; border-radius: 10px;
+            font-weight: 600; cursor: pointer; font-size: 0.88rem;
+        }
+        .btn-fab-clear:hover { background: #f1f5f9; color: var(--text-primary); }
+        .btn-fab-submit {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white; border: none;
+            padding: 0.65rem 1.5rem; border-radius: 10px;
+            font-weight: 700; cursor: pointer; font-size: 0.9rem;
+            box-shadow: 0 4px 12px -2px rgba(16,185,129,0.4);
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            transition: all 0.15s ease;
+        }
+        .btn-fab-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 16px -2px rgba(16,185,129,0.5); }
+        .btn-fab-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        @media (max-width: 576px) {
+            .floating-action-inner { flex-direction: column; align-items: stretch; text-align: center; }
+            .fab-info { justify-content: center; }
+            .fab-actions { justify-content: center; width: 100%; }
+            .btn-fab-clear, .btn-fab-submit { flex: 1; }
         }
     </style>
     @include('partials.mobile-assets')
@@ -316,9 +295,11 @@
                 <p class="page-subtitle">Cairkan pengajuan BS yang telah disetujui atasan.</p>
             </div>
             <div class="d-flex gap-2">
+                {{-- Tombol laporan disembunyikan sementara.
                 <a href="{{ route('laporan-bs.index') }}" class="btn-nav btn-nav-dark">
                     <i class="bi bi-bar-chart-line me-1"></i> Laporan Pertanggungjawaban
                 </a>
+                --}}
                 <a href="{{ route('dashboard.transaksi') }}" class="btn-nav">
                     <i class="bi bi-arrow-left me-1"></i> Kembali
                 </a>
@@ -338,7 +319,6 @@
             $formatPeriode = fn($p) => ($bulanId[(int)substr($p,5,2)] ?? '-') . ' ' . substr($p,0,4);
             $currentPeriod = \App\Support\AppTime::now()->format('Y-m');
 
-            // Helper: tanggal singkat (buang detik & zona, full version jadi tooltip)
             $shortDate = function ($dt) {
                 if (!$dt) return '—';
                 try {
@@ -410,13 +390,11 @@
                 </p>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <div class="btn-group btn-group-sm me-2" role="group" aria-label="Mode tampilan list">
-                    <button type="button" class="btn btn-outline-secondary density-btn active"
-                            data-density="comfortable" title="Kartu nyaman (default)">
+                <div class="btn-group btn-group-sm me-2" role="group">
+                    <button type="button" class="btn btn-outline-secondary density-btn active" data-density="comfortable" title="Kartu nyaman (default)">
                         <i class="bi bi-grid-1x2-fill"></i><span class="d-none d-md-inline ms-1">Nyaman</span>
                     </button>
-                    <button type="button" class="btn btn-outline-secondary density-btn"
-                            data-density="compact" title="Baris padat: lebih banyak dokumen per layar">
+                    <button type="button" class="btn btn-outline-secondary density-btn" data-density="compact" title="Baris padat">
                         <i class="bi bi-list-ul"></i><span class="d-none d-md-inline ms-1">Kompak</span>
                     </button>
                 </div>
@@ -432,6 +410,21 @@
                 </select>
             </div>
         </div>
+
+        {{-- 🎯 BATCH SELECT BAR (Select All + Counter) --}}
+        @if($pending > 0)
+            <div class="batch-select-bar">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllPending">
+                    <label class="form-check-label" for="selectAllPending">
+                        Pilih semua yang menunggu cair
+                    </label>
+                </div>
+                <span class="batch-counter ms-auto">
+                    Terpilih: <strong><span id="batchCount">0</span> dokumen</strong>
+                </span>
+            </div>
+        @endif
 
         {{-- ================= FILTER CHIPS STATUS ================= --}}
         @if($data->isNotEmpty())
@@ -452,7 +445,7 @@
             </div>
         @endif
 
-        {{-- ================= 🎯 CARD LIST (pakai id bsList) ================= --}}
+        {{-- ================= 🎯 CARD LIST ================= --}}
         <div class="row g-3" id="bsList">
             @forelse($data as $bs)
                 @php
@@ -470,27 +463,40 @@
                         : ($bs->status === 'REJECTED_FINANCE'
                             ? $shortDate($bs->logs->firstWhere('activity_code', 'REJECTED_FINANCE')?->created_at)
                             : '—');
+                    $canSelect    = $bs->status === 'APPROVED_ATASAN';
                 @endphp
-                <div class="col-12 col-lg-6 bs-item" data-status="{{ $bs->status }}">
+                <div class="col-12 col-lg-6 bs-item" data-status="{{ $bs->status }}"
+                     data-id="{{ $bs->id }}"
+                     data-nominal="{{ $bs->nominal_pengajuan }}"
+                     data-selectable="{{ $canSelect ? '1' : '0' }}">
                     <div class="bs-card status-{{ strtolower($bs->status) }}">
 
                         {{-- HEAD --}}
                         <div class="bs-card-head">
-                            <div class="min-w-0">
-                                <div class="doc-no text-break">{{ $bs->document_no }}</div>
-                                <div class="d-flex flex-wrap gap-2 mt-2">
-                                    @if($isPerjalanan)
-                                        <span class="badge-tipe badge-tipe-dinas" title="Perjalanan Dinas dengan tim/grup">
-                                            <i class="bi bi-airplane-fill"></i> Perjalanan Dinas
+                            <div class="head-left">
+                                {{-- 🎯 CHECKBOX SELECT --}}
+                                @if($canSelect)
+                                    <div class="bs-select-check" role="checkbox" aria-checked="false" tabindex="0"
+                                         data-bs-id="{{ $bs->id }}"
+                                         data-bs-nominal="{{ $bs->nominal_pengajuan }}"
+                                         title="Pilih untuk dicairkan penuh"></div>
+                                @endif
+                                <div class="head-content min-w-0">
+                                    <div class="doc-no text-break">{{ $bs->document_no }}</div>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        @if($isPerjalanan)
+                                            <span class="badge-tipe badge-tipe-dinas" title="Perjalanan Dinas dengan tim/grup">
+                                                <i class="bi bi-airplane-fill"></i> Perjalanan Dinas
+                                            </span>
+                                        @else
+                                            <span class="badge-tipe badge-tipe-operasional" title="Operasional Sales perorangan">
+                                                <i class="bi bi-briefcase-fill"></i> Operasional Sales
+                                            </span>
+                                        @endif
+                                        <span class="badge-status {{ $statusColors[$bs->status] ?? 'bg-secondary text-white' }}">
+                                            {{ str_replace('_', ' ', $bs->status) }}
                                         </span>
-                                    @else
-                                        <span class="badge-tipe badge-tipe-operasional" title="Operasional Sales perorangan">
-                                            <i class="bi bi-briefcase-fill"></i> Operasional Sales
-                                        </span>
-                                    @endif
-                                    <span class="badge-status {{ $statusColors[$bs->status] ?? 'bg-secondary text-white' }}">
-                                        {{ str_replace('_', ' ', $bs->status) }}
-                                    </span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="head-nominal">
@@ -514,8 +520,7 @@
                                 </div>
                                 <div>
                                     <div class="meta-label">Tgl Pengajuan</div>
-                                    <div class="meta-value muted"
-                                         title="{{ \App\Support\AppTime::format($bs->created_at) }}">
+                                    <div class="meta-value muted" title="{{ \App\Support\AppTime::format($bs->created_at) }}">
                                         {{ $dateCreated }}
                                     </div>
                                 </div>
@@ -525,7 +530,7 @@
                                         @if($bs->status === 'DISBURSED' && $cair)
                                             <span title="{{ \App\Support\AppTime::format($cair->created_at) }}">{{ $dateDecision }}</span>
                                         @elseif($bs->status === 'REJECTED_FINANCE')
-                                            {{ $dateDecision }}
+                                            <span title="{{ \App\Support\AppTime::format($bs->logs->firstWhere('activity_code', 'REJECTED_FINANCE')?->created_at) }}">{{ $dateDecision }}</span>
                                         @else
                                             —
                                         @endif
@@ -544,8 +549,7 @@
                                     Maks cair: <strong>Rp {{ number_format($bs->nominal_pengajuan, 0, ',', '.') }}</strong>
                                 </div>
                             @elseif($bs->status === 'DISBURSED' && $cair)
-                                <div class="ket-box ket-ok"
-                                     title="Cair Rp {{ number_format($cair->nominal_approved, 0, ',', '.') }} · {{ $dateDecision }} · {{ $cair->financeUser->nama ?? '-' }} · No. {{ $cair->document_no }}">
+                                <div class="ket-box ket-ok" title="Cair Rp {{ number_format($cair->nominal_approved, 0, ',', '.') }}">
                                     <div class="fw-bold" style="font-size:0.9rem;">
                                         <i class="bi bi-cash-coin me-1"></i>
                                         Cair Rp {{ number_format($cair->nominal_approved, 0, ',', '.') }}
@@ -558,8 +562,7 @@
                                     </div>
                                 </div>
                             @elseif($bs->status === 'REJECTED_FINANCE')
-                                <div class="ket-box ket-reject"
-                                     title="{{ $bs->rejection_reason ?? 'Tidak ada alasan.' }}">
+                                <div class="ket-box ket-reject" title="{{ $bs->rejection_reason ?? 'Tidak ada alasan.' }}">
                                     <i class="bi bi-exclamation-triangle me-1"></i>
                                     {{ $bs->rejection_reason ?? 'Tidak ada alasan.' }}
                                 </div>
@@ -594,7 +597,7 @@
                                     <i class="bi bi-x-lg"></i>
                                 </button>
                             @endif
-                            <a href="{{ route('approval-finance.detail', $bs->id) }}" class="btn-act btn-view ms-auto" title="Lihat Detail Pengajuan">
+                            <a href="{{ route('approval-finance.detail', $bs->id) }}" class="btn-act btn-view ms-auto" title="Lihat Detail">
                                 <i class="bi bi-eye"></i> Detail
                             </a>
                         </div>
@@ -614,6 +617,32 @@
         <div id="filterEmpty" class="d-none text-center text-muted py-4 small">
             <i class="bi bi-funnel fs-4 d-block mb-2"></i>
             Tidak ada dokumen dengan status tersebut pada periode ini.
+        </div>
+    </div>
+
+    {{-- 🎯 FLOATING ACTION BAR --}}
+    <div class="floating-action-bar" id="fabBar">
+        <div class="floating-action-inner">
+            <div class="fab-info">
+                <span class="fab-count" id="fabCount">0</span>
+                <div class="fab-text">
+                    <div><strong id="fabCountText">0</strong> pengajuan terpilih</div>
+                    <div style="font-size: 0.78rem;">Akan dicairkan dengan <b>nominal penuh</b></div>
+                </div>
+                <div class="fab-total" id="fabTotal">Rp 0</div>
+            </div>
+            <div class="fab-actions">
+                <button type="button" class="btn-fab-clear" id="fabClear">
+                    <i class="bi bi-x-circle"></i> Batal Pilih
+                </button>
+                <form id="batchDisburseForm" action="{{ route('approval-finance.batch-disburse') }}" method="POST" style="display: contents;">
+                    @csrf
+                    <div id="batchHiddenInputs"></div>
+                    <button type="submit" class="btn-fab-submit">
+                        <i class="bi bi-check2-all"></i> Cairkan Semua Terpilih
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -658,7 +687,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // ===== Dropdown periode: ganti bulan → redirect =====
+            // ===== Dropdown periode =====
             const periodSelect = document.getElementById('periodSelect');
             if (periodSelect) {
                 periodSelect.addEventListener('change', function () {
@@ -668,7 +697,7 @@
                 });
             }
 
-            // ===== 🎯 Toggle densitas: Nyaman ↔ Kompak (persisten via localStorage) =====
+            // ===== Toggle densitas =====
             const bsList      = document.getElementById('bsList');
             const densityBtns = document.querySelectorAll('.density-btn');
             const applyDensity = (mode) => {
@@ -682,11 +711,10 @@
             try { savedDensity = localStorage.getItem('bsListDensity') === 'compact' ? 'compact' : 'comfortable'; } catch (e) {}
             applyDensity(savedDensity);
 
-            // ===== 🎯 Filter chip status =====
+            // ===== Filter chip status =====
             const chips = document.querySelectorAll('.chip-filter');
             const items = document.querySelectorAll('.bs-item');
             const filterEmpty = document.getElementById('filterEmpty');
-
             chips.forEach(chip => {
                 chip.addEventListener('click', function () {
                     chips.forEach(c => c.classList.remove('active'));
@@ -708,7 +736,6 @@
             const docNoEl     = document.getElementById('rejectDocNo');
             const reasonInput = document.getElementById('rejection_reason');
             const charCountEl = document.getElementById('charCount');
-
             if (rejectModal) {
                 rejectModal.addEventListener('show.bs.modal', function (event) {
                     const button = event.relatedTarget;
@@ -724,7 +751,7 @@
                 });
             }
 
-            // ===== Auto-format nominal (5000 → 5.000) =====
+            // ===== Auto-format nominal per card =====
             document.querySelectorAll('.nominal-form').forEach(form => {
                 const display = form.querySelector('.nominal-display');
                 const hidden  = form.querySelector('.nominal-hidden');
@@ -734,17 +761,12 @@
 
                 display.addEventListener('input', function () {
                     let raw = this.value.replace(/[^\d]/g, '');
-
                     if (raw === '') {
-                        this.value = '';
-                        hidden.value = '';
-                        btn.disabled = true;
+                        this.value = ''; hidden.value = ''; btn.disabled = true;
                         this.classList.remove('is-valid', 'is-invalid');
                         return;
                     }
-
                     let num = parseInt(raw, 10);
-
                     if (num > maxVal) {
                         num = maxVal;
                         this.classList.add('is-invalid');
@@ -755,7 +777,6 @@
                         if (num > 0) this.classList.add('is-valid');
                         btn.disabled = false;
                     }
-
                     this.value = num.toLocaleString('id-ID');
                     hidden.value = num;
                 });
@@ -783,6 +804,152 @@
                     }
                 });
             });
+
+            // ===========================================================
+            // 🎯 BATCH SELECTION LOGIC
+            // ===========================================================
+            const selectAllCheckbox = document.getElementById('selectAllPending');
+            const fabBar = document.getElementById('fabBar');
+            const fabCount = document.getElementById('fabCount');
+            const fabCountText = document.getElementById('fabCountText');
+            const fabTotal = document.getElementById('fabTotal');
+            const fabClear = document.getElementById('fabClear');
+            const batchForm = document.getElementById('batchDisburseForm');
+            const batchHiddenInputs = document.getElementById('batchHiddenInputs');
+            const batchCountEl = document.getElementById('batchCount');
+
+            const selectableChecks = document.querySelectorAll('.bs-select-check');
+            const selected = new Set();
+
+            const formatRupiah = (num) => 'Rp ' + num.toLocaleString('id-ID');
+
+            function updateSelectionUI() {
+                const count = selected.size;
+                let total = 0;
+                selected.forEach(id => {
+                    const check = document.querySelector(`.bs-select-check[data-bs-id="${id}"]`);
+                    if (check) total += parseInt(check.dataset.bsNominal) || 0;
+                });
+
+                // Update FAB bar
+                if (count > 0) {
+                    fabBar.classList.add('visible');
+                    fabCount.textContent = count;
+                    fabCountText.textContent = count;
+                    fabTotal.textContent = formatRupiah(total);
+                } else {
+                    fabBar.classList.remove('visible');
+                }
+
+                if (batchCountEl) batchCountEl.textContent = count;
+
+                // Update "select all" state
+                if (selectAllCheckbox) {
+                    const totalSelectable = selectableChecks.length;
+                    if (count === 0) {
+                        selectAllCheckbox.checked = false;
+                        selectAllCheckbox.indeterminate = false;
+                    } else if (count === totalSelectable) {
+                        selectAllCheckbox.checked = true;
+                        selectAllCheckbox.indeterminate = false;
+                    } else {
+                        selectAllCheckbox.checked = false;
+                        selectAllCheckbox.indeterminate = true;
+                    }
+                }
+            }
+
+            function toggleSelect(check, forceState = null) {
+                const bsId = parseInt(check.dataset.bsId);
+                const card = check.closest('.bs-card');
+                const shouldSelect = forceState !== null ? forceState : !selected.has(bsId);
+
+                if (shouldSelect) {
+                    selected.add(bsId);
+                    check.classList.add('checked');
+                    check.setAttribute('aria-checked', 'true');
+                    if (card) card.classList.add('selected');
+                } else {
+                    selected.delete(bsId);
+                    check.classList.remove('checked');
+                    check.setAttribute('aria-checked', 'false');
+                    if (card) card.classList.remove('selected');
+                }
+                updateSelectionUI();
+            }
+
+            function clearSelection() {
+                selectableChecks.forEach(check => toggleSelect(check, false));
+            }
+
+            // Event: click pada checkbox
+            selectableChecks.forEach(check => {
+                check.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleSelect(check);
+                });
+                // Keyboard accessibility (Space / Enter)
+                check.addEventListener('keydown', (e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        toggleSelect(check);
+                    }
+                });
+            });
+
+            // Event: klik card juga toggle (kecuali link / button)
+            document.querySelectorAll('.bs-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    // Jangan toggle jika klik link, button, atau form input
+                    if (e.target.closest('a, button, input, textarea, label, .btn-act, .btn-tolak, .btn-cairkan, .btn-full, .nominal-display, .nominal-form')) return;
+                    const check = card.querySelector('.bs-select-check');
+                    if (check) toggleSelect(check);
+                });
+            });
+
+            // Event: Select All
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function () {
+                    const shouldSelect = this.checked;
+                    selectableChecks.forEach(check => toggleSelect(check, shouldSelect));
+                });
+            }
+
+            // Event: Clear button
+            if (fabClear) {
+                fabClear.addEventListener('click', clearSelection);
+            }
+
+            // Event: Submit batch
+            if (batchForm) {
+                batchForm.addEventListener('submit', function (e) {
+                    if (selected.size === 0) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    const message = `Anda akan mencairkan ${selected.size} pengajuan BS dengan nominal penuh.\n\n` +
+                                    `Total nominal: ${fabTotal.textContent}\n\n` +
+                                    `Tindakan ini tidak dapat dibatalkan. Lanjutkan?`;
+                    if (!confirm(message)) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Generate hidden inputs: ids[]
+                    batchHiddenInputs.innerHTML = '';
+                    selected.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = id;
+                        batchHiddenInputs.appendChild(input);
+                    });
+                });
+            }
+
+            // Inisialisasi
+            updateSelectionUI();
         });
     </script>
 </body>

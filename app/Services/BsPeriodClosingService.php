@@ -8,8 +8,7 @@ use App\Models\CashFlowSnapshot;
 use App\Models\StockCashFlowSnapshot;
 use App\Models\PengajuanBs;
 use App\Models\Periode;
-use App\Models\TransaksiOperasionalHeader;
-use App\Models\TransaksiPerjalananDinasHeader;
+use App\Models\PeriodClosingLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -17,9 +16,17 @@ class BsPeriodClosingService
 {
     public function __construct(private PeriodService $periods, private BsCashFlowService $cash) {}
 
-    public function close(int $id): void
+    public function close(int $id, bool $excludePending = false, ?string $reason = null, ?string $reviewToken = null): void
     {
-        DB::transaction(function () use ($id) {
+        if ($excludePending) {
+            abort_unless(auth()->user()?->can('akses.master-data'), 403);
+            $reason = trim($reason ?? '');
+            validator(['reason' => $reason, 'review_token' => $reviewToken], [
+                'reason' => 'required|string|min:5|max:1000',
+                'review_token' => 'required|string|size:64',
+            ])->validate();
+        }
+        DB::transaction(function () use ($id, $excludePending, $reason, $reviewToken) {
             $records = Periode::orderBy('periode')->lockForUpdate()->get();
             $period = $records->firstWhere('id', $id);
             abort_unless($period, 404);
@@ -29,8 +36,16 @@ class BsPeriodClosingService
             $this->require(!$prior->contains('status', 'OPEN'), 'Tutup periode sebelumnya terlebih dahulu.');
             $this->require($prior->isEmpty() || $prior->last()->periode === $this->periods->previous($period->periode), 'Ada bulan yang belum tercatat di antara periode. Lengkapi urutan periode terlebih dahulu.');
             $this->require(!$records->where('periode', '>', $period->periode)->contains('status', 'CLOSED'), 'Periode berikutnya sudah ditutup; lakukan rekonsiliasi urutan tutup buku.');
-            foreach ([TransaksiOperasionalHeader::class, TransaksiPerjalananDinasHeader::class] as $model) {
-                $this->require(!$model::where('periode', $period->periode)->whereIn('status', ['DRAFT', 'PENDING_OWNER'])->exists(), 'Masih ada transaksi draft atau menunggu persetujuan pemohon pada periode ini. Selesaikan transaksi sebelum tutup buku.');
+            $review = app(PeriodClosingReviewService::class);
+            $blockers = $review->blockers($period->periode);
+            if ($excludePending) {
+                $this->require(hash_equals($review->token($period->periode, $blockers), $reviewToken),
+                    'Daftar transaksi tertunda berubah. Muat ulang halaman periode dan periksa kembali sebelum menutup buku.');
+            } else {
+                $this->require(!$blockers->whereIn('stage', ['DRAFT', 'PENDING_OWNER'])->count(),
+                    'Masih ada transaksi draft atau menunggu persetujuan pemohon pada periode ini. Selesaikan transaksi atau gunakan Tutup dengan Pengecualian pada halaman periode.');
+                $this->require($blockers->isEmpty(),
+                    'Masih ada transaksi atau event yang belum selesai dikonfirmasi Finance. Selesaikan pengecekan Finance atau gunakan Tutup dengan Pengecualian pada halaman periode.');
             }
 
             $this->cash->ensureSnapshotForPeriod($period->periode);
@@ -39,9 +54,17 @@ class BsPeriodClosingService
             $stock->ensureSnapshotForPeriod($period->periode);
             $this->require(!StockCashFlowSnapshot::where('periode', $period->periode)->where('opening_final', false)->exists(), 'Saldo awal Stok Kas belum final; periksa penutupan periode sebelumnya.');
             $period->update(['status' => 'CLOSED', 'closed_at' => now(), 'closed_by' => auth()->id()]);
+            PeriodClosingLog::create([
+                'periode' => $period->periode,
+                'mode' => $excludePending ? 'EXCLUDE_PENDING' : 'STANDARD',
+                'actor_id' => auth()->id(), 'actor_name' => auth()->user()?->nama,
+                'reason' => $excludePending ? $reason : null,
+                'excluded_transactions' => $blockers->values()->all(), 'created_at' => now(),
+            ]);
+            app(BsApprovalPeriodService::class)->rejectClosedPeriods(periode: $period->periode);
             $this->cash->ensureSnapshotForPeriod($period->periode);
             $stock->ensureSnapshotForPeriod($period->periode);
-            // Maintain the existing non-BS summary without changing its source rules.
+            // The legacy summary also respects the explicitly excluded transactions.
             app(CashFlowService::class)->ensureSnapshotForPeriod($period->periode);
 
             $next = $this->periods->next($period->periode);

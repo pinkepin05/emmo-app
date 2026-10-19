@@ -6,6 +6,7 @@ use App\Models\CashFlowSnapshot;
 use App\Models\PengajuanBs;
 use App\Models\ApprovalBsFinance;
 use App\Models\Periode;
+use App\Models\PeriodClosingLog;
 use App\Models\TransaksiOperasionalHeader;
 use App\Models\TransaksiPerjalananDinasHeader;
 use Illuminate\Support\Facades\DB;
@@ -68,11 +69,14 @@ class CashFlowService
     protected function calculateTotalKeluar(int $userId, string $periode): float
     {
         $cash = app(BsCashFlowService::class);
+        $excluded = PeriodClosingLog::activeExclusions($periode);
         $total = 0;
-        foreach ([TransaksiOperasionalHeader::class, TransaksiPerjalananDinasHeader::class] as $model) {
-            $total += $cash->expenses($model, $userId, $periode)->withSum('details', 'nominal')->get()->sum('details_sum_nominal');
+        foreach (['OPR' => TransaksiOperasionalHeader::class, 'PD' => TransaksiPerjalananDinasHeader::class] as $type => $model) {
+            $total += $cash->expenses($model, $userId, $periode)
+                ->whereNotIn('id', $excluded->where('type', $type)->pluck('id'))
+                ->withSum('details', 'nominal')->get()->sum('details_sum_nominal');
         }
-        return (float) ($total + $this->calculateEventKeluar($userId, $periode));
+        return (float) ($total + $this->calculateEventKeluar($userId, $periode, $excluded));
     }
 
     // 🎯 BARU: Hitung pengembalian sisa BS di periode ini
@@ -91,15 +95,17 @@ class CashFlowService
             ->sum('nominal_reimburse');
     }
 
-    protected function calculateEventKeluar(int $userId, string $periode): float
+    protected function calculateEventKeluar(int $userId, string $periode, \Illuminate\Support\Collection $excluded): float
     {
         $dalam = DB::table('perongkosan_event_dalam_kota')
             ->where('user_id', $userId)
+            ->whereNotIn('id', $excluded->where('type', 'EDK')->pluck('id'))
             ->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [$periode])
             ->sum('nominal');
 
         $luar = DB::table('perongkosan_event_luar_kota')
             ->where('user_id', $userId)
+            ->whereNotIn('id', $excluded->where('type', 'ELK')->pluck('id'))
             ->whereRaw("DATE_FORMAT(tanggal, '%Y-%m') = ?", [$periode])
             ->sum('nominal');
 

@@ -68,7 +68,7 @@
         }
         .btn-ghost:hover { background: rgba(255, 255, 255, 0.25); color: white; }
 
-        /* 🎯 Card statis — TANPA hover */
+        /* 🎯 Card statis */
         .card-modern {
             background: white;
             border: none;
@@ -120,7 +120,6 @@
             border-radius: 20px;
         }
 
-        /* 🎯 Info tiles (rangkuman) */
         .info-tile {
             background: #f8fafc;
             border: 2px solid #e2e8f0;
@@ -225,6 +224,37 @@
 
         .nominal-cell { font-weight: 700; color: #2d3748; white-space: nowrap; }
 
+        /* 🎯 FOTO KOLOM TERSENDIRI */
+        .photo-cell {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .photo-thumbnail-col {
+            width: 56px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .photo-thumbnail-col:hover {
+            border-color: var(--purple-color);
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.25);
+        }
+        .no-photo-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
         /* 🎯 Empty state */
         .empty-state { text-align: center; padding: 3.5rem 1rem; }
         .empty-state .icon-circle {
@@ -267,6 +297,7 @@
             box-shadow: 0 4px 15px rgba(238, 9, 121, 0.4);
             transition: all 0.3s ease;
         }
+
         .btn-danger-modern:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238, 9, 121, 0.5); color: white; }
 
         .btn-icon {
@@ -274,7 +305,6 @@
             display: inline-flex; align-items: center; justify-content: center; padding: 0;
         }
 
-        /* 🎯 Tombol submit utama — statis, TANPA hover */
         .btn-submit-success {
             background: var(--success-gradient);
             color: white;
@@ -313,6 +343,33 @@
         @media (max-width: 768px) {
             .page-header h1 { font-size: 1.5rem; }
             .card-header-modern { flex-direction: column; align-items: flex-start; }
+            .table-modern thead { display: none; }
+            .table-modern, .table-modern tbody, .table-modern tr, .table-modern td {
+                display: block;
+                width: 100%;
+            }
+            .table-modern tr {
+                margin-bottom: 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 1rem;
+                background: white;
+            }
+            .table-modern td {
+                border: none;
+                padding: 0.5rem 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .table-modern td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #718096;
+                font-size: 0.8rem;
+                text-transform: uppercase;
+            }
+            .photo-cell { justify-content: flex-end; }
         }
     </style>
     @include('partials.mobile-assets')
@@ -320,14 +377,15 @@
 <body>
     @include('partials.application-time')
     @php
+    $monitoringReadOnly = $monitoringReadOnly ?? false;
     $isPeriodClosed = !app(\App\Services\PeriodService::class)->isOpen($transaksi->periode);
-    $isDraft = $transaksi->status === 'DRAFT' && auth()->user()->canAccessTransaction($transaksi);
+    $isDraft = !$monitoringReadOnly && $transaksi->status === 'DRAFT' && auth()->user()->canAccessTransaction($transaksi);
     $isEditMode = $isDraft && !$isPeriodClosed && (request('edit') == 1 || old('_transaction_edit') === $transaksi->transaksi_id);
 @endphp
 
-<!-- PAGE HEADER (Tambahkan tombol Edit di pojok kanan atas) -->
+<!-- PAGE HEADER -->
 <div class="page-header">
-    <div class="container" style="max-width: 1000px;">
+    <div class="container" style="max-width: 1100px;">
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <h1><i class="bi bi-receipt me-3"></i>Detail Nota Operasional</h1>
@@ -349,21 +407,20 @@
                 @endif
             </div>
             <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 d-flex justify-content-lg-end gap-2 flex-wrap">
-                {{-- 🎯 TOMBOL EDIT --}}
-                @if($isDraft && !$isPeriodClosed && !$isEditMode)
-                    <a href="{{ route('transaksi_operasional.show', $transaksi->id) }}?edit=1" class="btn btn-modern" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);">
-                        <i class="bi bi-pencil-square"></i> Edit Transaksi
-                    </a>
-                @endif
-                <a href="{{ route('transaksi_operasional.index') }}" class="btn btn-ghost btn-modern">
-                    <i class="bi bi-arrow-left"></i> Kembali ke Daftar
-                </a>
+                @if(!$monitoringReadOnly && $isDraft && !$isPeriodClosed && !$isEditMode)
+<a href="{{ route('transaksi_operasional.show', $transaksi->id) }}?edit=1" class="btn btn-modern" ...>
+    <i class="bi bi-pencil-square"></i> Edit Transaksi
+</a>
+@endif
+                <a href="{{ $monitoringReadOnly ? ($monitoringBackUrl ?? route('transaksi_operasional.index')) : route('transaksi_operasional.index') }}" class="btn btn-ghost btn-modern">
+    <i class="bi bi-arrow-left"></i> Kembali ke Daftar
+</a>
             </div>
         </div>
     </div>
 </div>
 
-    <div class="container" style="max-width: 1000px; margin-bottom: 3rem;">
+    <div class="container" style="max-width: 1100px; margin-bottom: 3rem;">
         @include('partials.finance-correction-notice', ['financeSourceType' => 'OPR'])
         
         @if(session('success'))
@@ -448,7 +505,7 @@
             </div>
         </div>
 
-        <!-- 🎯 CARD 2: MUTASI PENGELUARAN -->
+        <!-- 🎯 CARD 2: MUTASI PENGELUARAN (DENGAN KOLOM FOTO TERSENDIRI) -->
         <div class="card-modern animate-slide-in" style="animation-delay: 0.1s">
             <div class="card-header-modern">
                 <h5><i class="bi bi-bar-chart-line"></i> Mutasi Pengeluaran Item Biaya</h5>
@@ -459,9 +516,10 @@
                         <thead>
                             <tr>
                                 <th width="8%" class="text-center">No.</th>
-                                <th width="30%"><i class="bi bi-tag me-2"></i>Kategori Biaya</th>
-                                <th width="40%"><i class="bi bi-chat-left-text me-2"></i>Keterangan Item (Remark)</th>
-                                <th width="22%" class="text-end"><i class="bi bi-currency-dollar me-2"></i>Nominal Pengeluaran</th>
+                                <th width="25%"><i class="bi bi-tag me-2"></i>Kategori Biaya</th>
+                                <th width="35%"><i class="bi bi-chat-left-text me-2"></i>Keterangan Item (Remark)</th>
+                                <th width="12%" class="text-center">Foto Bukti</th>
+                                <th width="20%" class="text-end"><i class="bi bi-currency-dollar me-2"></i>Nominal Pengeluaran</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -470,19 +528,33 @@
                             @forelse($transaksi->details as $index => $detail)
                                 @php $totalKeseluruhan += $detail->nominal; @endphp
                                 <tr>
-                                    <td class="text-center"><span class="row-num">{{ $index + 1 }}</span></td>
-                                    <td>
+                                    <td class="text-center" data-label="No."><span class="row-num">{{ $index + 1 }}</span></td>
+                                    <td data-label="Kategori">
                                         <span class="category-chip">
                                             <i class="bi bi-tag-fill"></i>
-                                            {{ $detail->costCategory->nama ?? $detail->costCategory->nama ?? 'Kategori #'.$detail->cost_category_id }}
+                                            {{ $detail->costCategory->nama ?? 'Kategori #'.$detail->cost_category_id }}
                                         </span>
                                     </td>
-                                    <td>{{ $detail->remark }}</td>
-                                    <td class="text-end nominal-cell">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</td>
+                                    <td data-label="Keterangan">{{ $detail->remark }}</td>
+                                    
+                                    {{-- 🎯 KOLOM FOTO TERSENDIRI --}}
+                                    <td class="photo-cell" data-label="Foto">
+                                        @if($detail->photo_url)
+                                            <a href="{{ $detail->photo_url }}" target="_blank" rel="noopener" title="Klik untuk memperbesar">
+                                                <img src="{{ $detail->photo_url }}" alt="Foto bukti" class="photo-thumbnail-col" loading="lazy">
+                                            </a>
+                                        @else
+                                            <div class="no-photo-badge" title="Tidak ada foto">
+                                                <i class="bi bi-image-slash"></i>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    
+                                    <td class="text-end nominal-cell" data-label="Nominal">Rp {{ number_format($detail->nominal, 0, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4">
+                                    <td colspan="5">
                                         <div class="empty-state">
                                             <div class="icon-circle"><i class="bi bi-inbox"></i></div>
                                             <h6>Rincian item biaya kosong</h6>
@@ -501,7 +573,7 @@
                         @if($totalKeseluruhan > 0)
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="text-end">TOTAL KESELURUHAN NOTA :</td>
+                                <td colspan="4" class="text-end">TOTAL KESELURUHAN NOTA :</td>
                                 <td class="text-end"><span class="total-value">Rp {{ number_format($totalKeseluruhan, 0, ',', '.') }}</span></td>
                             </tr>
                         </tfoot>
@@ -515,22 +587,22 @@
         @endif
 
         <!-- 🎯 CARD 3 & 4: FORM TAMBAH RINCIAN & KONFIRMASI (Hanya untuk DRAFT) -->
-        @php
-            $isPeriodClosed = !app(\App\Services\PeriodService::class)->isOpen($transaksi->periode);
-            $isDraft = $transaksi->status === 'DRAFT' && auth()->user()->canAccessTransaction($transaksi);
-        @endphp
-
+      @php
+$monitoringReadOnly = $monitoringReadOnly ?? false;
+$isPeriodClosed = !app(\App\Services\PeriodService::class)->isOpen($transaksi->periode);
+$isDraft = !$monitoringReadOnly && $transaksi->status === 'DRAFT' && auth()->user()->canAccessTransaction($transaksi);
+$isEditMode = $isDraft && !$isPeriodClosed && (request('edit') == 1 || old('_transaction_edit') === $transaksi->transaksi_id);
+@endphp
        @include('partials.bs-finance-check-status', ['transaction' => $transaksi, 'jenis' => 'OPR'])
        @if($isDraft && !$isPeriodClosed)
     
     @if($isEditMode)
         {{-- ================= MODE EDIT ================= --}}
-        <form action="{{ route('transaksi_operasional.update', $transaksi->id) }}" method="POST" id="form-edit-operasional" data-transaction-editor="operational">
+        <form action="{{ route('transaksi_operasional.update', $transaksi->id) }}" method="POST" enctype="multipart/form-data" id="form-edit-operasional" data-transaction-editor="operational">
             @csrf
             @method('PUT')
             <input type="hidden" name="_transaction_edit" value="{{ $transaksi->transaksi_id }}">
 
-            {{-- Card Edit Header --}}
             <div class="card-modern animate-slide-in">
                 <div class="card-header-modern success">
                     <h5><i class="bi bi-pencil-square"></i> Edit Informasi Utama</h5>
@@ -564,7 +636,7 @@
         </form>
 
     @else
-        {{-- ================= MODE VIEW NORMAL (Kode Asli Anda) ================= --}}
+        {{-- ================= MODE VIEW NORMAL ================= --}}
         <div class="card-modern animate-slide-in" style="animation-delay: 0.3s">
             <div class="card-header-modern" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.15) 0%, rgba(56, 239, 125, 0.15) 100%); border-bottom-color: rgba(17, 153, 142, 0.3);">
                 <h5 style="color: #11998e;"><i class="bi bi-check-circle"></i> Konfirmasi Transaksi</h5>
@@ -573,7 +645,7 @@
                 <div class="info-box mb-3">
                     <i class="bi bi-info-circle me-2 text-primary"></i>
                     <small class="text-muted">
-                        <strong>Perhatian:</strong> Setelah dikonfirmasi, transaksi akan mengurangi saldo BS. Saldo BS gabungan harus mencukupi. Transaksi final tidak dapat diedit atau dihapus.
+                        <strong>Perhatian:</strong> Konfirmasi mengunci transaksi untuk diperiksa Finance. Saldo BS berkurang sesuai nominal yang dikonfirmasi Finance. Transaksi final tidak dapat diedit atau dihapus.
                     </small>
                 </div>
                 <form action="{{ route('transaksi_operasional.validate', $transaksi->id) }}" method="POST">
@@ -590,7 +662,6 @@
     @endif
 
 @elseif($isDraft && $isPeriodClosed)
-    {{-- TAMPILAN: DRAFT tapi Periode Sudah CLOSED --}}
     <div class="card-modern animate-slide-in" style="animation-delay: 0.2s">
         <div class="card-header-modern" style="background: linear-gradient(135deg, rgba(238, 9, 121, 0.1) 0%, rgba(255, 106, 0, 0.1) 100%); border-bottom-color: rgba(238, 9, 121, 0.2);">
             <h5 style="color: #ee0979;"><i class="bi bi-lock-fill"></i> Periode Sudah Di-Close</h5>
@@ -605,7 +676,6 @@
     </div>
 
 @else
-    {{-- TAMPILAN: SUDAH VALIDATED --}}
     <div class="card-modern animate-slide-in" style="animation-delay: 0.2s">
         <div class="card-header-modern" style="background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(32, 168, 107, 0.1) 100%); border-bottom-color: rgba(25, 135, 84, 0.2);">
             <h5 style="color: #198754;"><i class="bi bi-lock-fill"></i> Transaksi Sudah Dikonfirmasi</h5>
@@ -616,7 +686,7 @@
             </div>
             <p class="text-muted mb-2">Waktu Konfirmasi: <strong>{{ \App\Support\AppTime::format($transaksi->validated_at) }}</strong></p>
             <p class="text-muted mb-0">
-                Transaksi ini <strong>sudah dikonfirmasi</strong>. {{ $transaksi->bsCashOwnerId() ? 'Pemakaian saldo BS gabungan telah dibukukan.' : 'Arsip tanpa BS.' }}
+                Transaksi ini <strong>sudah dikonfirmasi</strong>. {{ $transaksi->bsCashOwnerId() ? 'Pengurangan saldo BS mengikuti hasil konfirmasi Finance terakhir.' : 'Arsip tanpa BS.' }}
                 Tidak ada perubahan yang dapat dilakukan lagi.
             </p>
         </div>

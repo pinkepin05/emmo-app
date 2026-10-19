@@ -1,0 +1,6 @@
+.finance-monitoring-page .card { border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 0.85rem; }
+.finance-monitoring-page .card-header { border-bottom: 1px solid rgba(15, 23, 42, 0.06); }
+.finance-monitoring-page .table thead th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.02em; color: #475569; }
+.finance-monitoring-page .table td, .finance-monitoring-page .table th { vertical-align: middle; }
+.finance-monitoring-page .nav-pills .nav-link { font-size: 0.9rem; border-radius: 999px; }
+.finance-monitoring-page .badge { font-weight: 600; }

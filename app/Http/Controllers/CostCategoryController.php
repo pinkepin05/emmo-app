@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\CostCategory;
 use Illuminate\Database\QueryException;
+use Illuminate\Validation\Rule;
 
 class CostCategoryController extends Controller
 {
@@ -31,15 +32,15 @@ class CostCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $request->validate([
-            'code' => 'required|unique:cost_category,code',
-            'description' => 'required',
+        // Field code pada form disimpan di kolom nama.
+        $validated = $request->validate([
+            'code' => ['required', 'string', Rule::unique('cost_category', 'nama')],
+            'description' => ['required', 'string'],
         ]);
 
         CostCategory::create([
-            'code' => $request->code,
-            'description' => $request->description,
+            'nama' => $validated['code'],
+            'description' => $validated['description'],
             'is_active' => $request->has('is_active') ? 1 : 0
         ]);
         return redirect()->route('cost_categories.create')->with('success', 'Master Cost Category berhasil ditambahkan!');
@@ -70,16 +71,15 @@ class CostCategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // Validasi code dengan mengabaikan ID record yang sedang diedit
-        $request->validate([
-            'code' => 'required|unique:cost_category,code,' . $id,
-            'description' => 'required',
+        $costCategory = CostCategory::findOrFail($id);
+        $validated = $request->validate([
+            'code' => ['required', 'string', Rule::unique('cost_category', 'nama')->ignore($costCategory)],
+            'description' => ['required', 'string'],
         ]);
 
-        $costCategory = CostCategory::findOrFail($id);
         $costCategory->update([
-            'code' => $request->code,
-            'description' => $request->description,
+            'nama' => $validated['code'],
+            'description' => $validated['description'],
             'is_active' => $request->has('is_active') ? 1 : 0
         ]);
 

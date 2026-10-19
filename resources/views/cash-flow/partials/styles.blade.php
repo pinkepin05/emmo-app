@@ -160,6 +160,12 @@
     .trx-date{display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--ink-3);margin-top:.15rem;}
     .trx-amt{font-weight:800;font-size:.92rem;}
     .trx-amt.pos{color:var(--green);} .trx-amt.neg{color:var(--red);} .trx-amt.neu{color:var(--ink);}
+    .shared-bs-link{color:var(--blue);text-decoration:none;}
+    .shared-bs-link:hover{text-decoration:underline;}
+    .shared-bs-person{font-size:.8rem;color:var(--ink-2);margin:.25rem 0;overflow-wrap:anywhere;}
+    .shared-bs-amounts{display:flex;gap:1rem;flex-wrap:wrap;font-size:.85rem;}
+    .shared-bs-amounts div{display:flex;flex-direction:column;gap:.2rem;}
+    .shared-bs-amounts span{font-size:.72rem;color:var(--ink-2);}
     .trx-foot{display:flex;justify-content:flex-end;align-items:baseline;gap:.6rem;padding:.8rem 1rem;
               border-top:1px solid var(--line-2);background:var(--surface-2);font-size:.85rem;}
     .trx-foot .lbl{color:var(--ink-2);font-weight:600;}

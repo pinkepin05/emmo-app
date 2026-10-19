@@ -22,7 +22,7 @@ const server = createServer((request, response) => {
         name = url.searchParams.get('pemakaian_periode') === '2099-01' ? 'dashboard-empty' : 'dashboard';
     } else if (/^\/laporan-transaksi\/modul\/(OPR|PD|EDK|ELK)$/.test(url.pathname)) {
         const suffix = url.searchParams.get('pemakaian_periode') === '2099-01' ? 'empty'
-            : ({ PENDING: 'pending', APPROVED: 'approved', DIFFERENCE: 'difference', REVISION: 'revision', RECHECK: 'recheck', REJECTED: 'rejected' }[url.searchParams.get('pemakaian_status')] ?? '');
+            : ({ PENDING: 'pending', APPROVED: 'approved', DIFFERENCE: 'difference', REVISION: 'revision', REJECTED: 'rejected' }[url.searchParams.get('pemakaian_status')] ?? '');
         name = 'module-' + url.pathname.split('/').at(-1) + (suffix ? '-' + suffix : '');
     } else if (url.pathname.startsWith('/laporan-transaksi/OPR/')) name = 'detail';
     else { response.writeHead(404); response.end(); return; }
@@ -96,6 +96,8 @@ try {
         await call('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
         await navigate(initial);
         assert.equal(await js(`document.querySelectorAll('[data-module-card]').length`), 4);
+        assert.equal(await js(`document.querySelectorAll('.recap-filter').length`), 1);
+        assert.equal(await js(`document.querySelectorAll('[data-amount-status="RECHECK"]').length`), 0);
         assert.equal(await js(`document.querySelectorAll('[data-recap-tab], [data-recap-report]').length`), 0);
         assert.equal(await js(`document.documentElement.scrollWidth <= innerWidth + 1`), true);
         await js(`document.querySelector('.usage-modules').scrollIntoView({block:'start'})`);
@@ -126,7 +128,7 @@ try {
     }
     // Child status links must keep their status and must not trigger the card title.
     for (const [index, type] of ['OPR', 'PD', 'EDK', 'ELK'].entries()) {
-        for (const [selector, status] of [['.approved', 'APPROVED'], ['.pending', 'PENDING'], ['.difference', 'DIFFERENCE'], ['.revision', 'REVISION'], ['.recheck', 'RECHECK'], ['.rejected', 'REJECTED']]) {
+        for (const [selector, status] of [['.approved', 'APPROVED'], ['.pending', 'PENDING'], ['.difference', 'DIFFERENCE'], ['.revision', 'REVISION'], ['.rejected', 'REJECTED']]) {
             await navigate(initial);
             if (status === 'REVISION' && !await js(`Boolean(document.querySelector('[data-module-card]:nth-child(${index + 1}) ${selector}'))`)) continue;
             await click(`[data-module-card]:nth-child(${index + 1}) ${selector}`);

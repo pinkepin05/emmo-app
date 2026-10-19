@@ -3,6 +3,7 @@
 namespace Tests\Concerns;
 
 use App\Models\BsUsageCheck;
+use App\Support\Money;
 use App\Models\Periode;
 use App\Models\User;
 use App\Services\BsCashFlowService;
@@ -37,7 +38,7 @@ trait FinanceRejectionScenarios
             $this->get(route($prefix.'.show', $key).'?edit=1')->assertOk();
             $this->actingAs(User::findOrFail(2));
             $payload = ['tanggal_pengecekan' => '2026-09-16', 'source_token' => $this->recapToken($source, $type),
-                'keputusan' => 'APPROVED', 'details' => [['cost_category_id' => 1, 'nominal_disetujui' => '250000']]];
+                'keputusan' => 'APPROVED', 'details' => [['source_detail_id' => $source->details()->first()->id, 'cost_category_id' => 1, 'nominal_disetujui' => '250000']]];
             $this->postJson(route('bs-usage-checks.store', [$type, $source->id]), $payload)
                 ->assertUnprocessable()->assertJsonValidationErrors('source');
             $this->actingAs(User::findOrFail(1));
@@ -54,7 +55,7 @@ trait FinanceRejectionScenarios
             $this->assertEquals(2, DB::table('bs_usage_logs')->where('transaction_type', $type === 'PD' ? 'perjalanan_dinas' : 'operasional_sales')->where('transaction_id', $source->id)->count());
             $this->assertSame($before, app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
             $row = app(BsUsageDashboardService::class)->sourceResult(User::findOrFail(1), $type, $source->id);
-            $this->assertSame('RECHECK', $row->finance_status);
+            $this->assertSame('PENDING', $row->finance_status);
             $this->assertNull($row->selisih);
             $this->postJson(route('transaction-recap.correct', [$type, $source->id]), ['check_id' => $rejection->id])
                 ->assertUnprocessable()->assertJsonValidationErrors('check_id');
@@ -66,7 +67,7 @@ trait FinanceRejectionScenarios
             $this->assertSame('APPROVED', $row->finance_status);
             $this->assertEquals(200000, $row->nominal_finance);
             $this->assertEquals(50000, $row->selisih);
-            $this->assertSame($before, app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
+            $this->assertSame(Money::decimal(Money::minor($before) + 20000000), app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
             $this->get($detail)->assertOk()->assertSee($rejection->document_no)->assertSee($approval->document_no)->assertDontSee('Catatan internal Finance');
         }
     }
@@ -114,10 +115,10 @@ trait FinanceRejectionScenarios
         $source->refresh();
         $this->assertSame('VALIDATED', $source->status);
         $this->assertEquals(2, $source->submission_version);
-        $this->assertSame('RECHECK', app(BsUsageDashboardService::class)->sourceResult(User::findOrFail(3), 'PD', $source->id)->finance_status);
+        $this->assertSame('PENDING', app(BsUsageDashboardService::class)->sourceResult(User::findOrFail(3), 'PD', $source->id)->finance_status);
         $again = $this->recapDecision($source, 'PD', 'REJECTED', '0', 'Bukti masih tidak cocok');
         $this->assertEquals($rejected->id, $again->revision_of_id);
         $this->assertSame('REJECTED', app(BsUsageDashboardService::class)->sourceResult(User::findOrFail(3), 'PD', $source->id)->finance_status);
-        $this->assertSame('250000.00', app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
+        $this->assertSame('0.00', app(BsCashFlowService::class)->calculate(1, '2026-09')['total_keluar']);
     }
 }

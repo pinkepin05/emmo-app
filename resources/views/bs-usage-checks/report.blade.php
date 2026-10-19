@@ -12,7 +12,7 @@
             <td role="cell" data-label="Pemilik pengajuan">{{ $row->check->user_name }}</td>
             <td role="cell" data-label="Jenis">{{ $row->check->jenis_transaksi }}</td>
             <td role="cell" data-label="No referensi"><a href="{{ route('bs-usage-checks.index', ['tampilan' => 'rincian', 'mode' => 'semua', 'jenis_source' => $row->check->jenis_transaksi, 'source_id' => $row->check->transaksi_pemakaian_id]) }}">{{ $row->check->no_referensi }}</a></td>
-            <td role="cell" data-label="Item">{{ $row->cost_category_name }}</td>
+            <td role="cell" data-label="Item">{{ $row->cost_category_name }}<div class="recap-meta text-break">{{ $row->source_remark ?: (in_array($row->check->jenis_transaksi, ['OPR', 'PD']) && $row->source_detail_id === null ? 'Gabungan kategori (riwayat)' : '—') }}</div></td>
             <td role="cell" data-label="Nominal asal" class="money recap-number-cell">{{ $money($row->nominal_asal) }}</td>
             <td role="cell" data-label="Hasil pemeriksaan" class="money recap-number-cell">{{ $money($row->nominal_disetujui) }}</td>
             <td role="cell" data-label="Selisih" class="money recap-number-cell {{ $row->selisih !== '0.00' ? 'text-danger' : '' }}">{{ $money($row->selisih) }}</td>

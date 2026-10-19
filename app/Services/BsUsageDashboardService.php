@@ -13,15 +13,19 @@ class BsUsageDashboardService
 {
     public function filters(Request $request): array
     {
+        // Keep saved links to the former status usable with the Pending filter.
+        if ($request->query('pemakaian_status') === 'RECHECK') {
+            $request->query->set('pemakaian_status', 'PENDING');
+        }
+
         $filters = $request->validate([
             'pemakaian_periode' => ['nullable', 'regex:/^\d{4}-?(0[1-9]|1[0-2])$/D'],
             'pemakaian_jenis' => 'nullable|in:OPR,PD,EDK,ELK',
             'pemakaian_page' => 'nullable|integer|min:1',
-            'pemakaian_status' => 'nullable|in:FOLLOW_UP,PENDING,APPROVED,REJECTED,REVISION,RECHECK,DIFFERENCE',
+            'pemakaian_status' => 'nullable|in:CHECKED,FOLLOW_UP,PENDING,APPROVED,REJECTED,REVISION,DIFFERENCE,NOT_APPROVED',
             'pemakaian_referensi' => 'nullable|string|max:64',
             'tampilan' => 'nullable|in:ringkasan,daftar,pengajuan,finance',
         ]);
-        // Accept legacy bookmarks, but the module route now determines the view.
         unset($filters['tampilan']);
         $periods = app(PeriodService::class);
         $filters['pemakaian_periode'] = $request->query->has('pemakaian_periode')
@@ -47,10 +51,18 @@ class BsUsageDashboardService
         }
         $query = $this->classified($union);
         if (!empty($filters['pemakaian_referensi'])) $query->where('no_referensi', 'like', '%'.$filters['pemakaian_referensi'].'%');
-        if (($filters['pemakaian_status'] ?? '') === 'FOLLOW_UP') {
+        // Both tabs count the same period, module, search and user scope, before applying the selected tab.
+        $checkCounts = (clone $query)->selectRaw("COUNT(CASE WHEN finance_status IN ('APPROVED', 'REJECTED', 'REVISION') THEN 1 END) as checked,
+            COUNT(CASE WHEN finance_status = 'PENDING' THEN 1 END) as unchecked")->first();
+        $checkStatusCounts = ['CHECKED' => (int) $checkCounts->checked, 'PENDING' => (int) $checkCounts->unchecked];
+        if (($filters['pemakaian_status'] ?? '') === 'CHECKED') {
+            $query->whereIn('finance_status', ['APPROVED', 'REJECTED', 'REVISION']);
+        } elseif (($filters['pemakaian_status'] ?? '') === 'FOLLOW_UP') {
             $query->where('in_pending_group', 1);
         } elseif (($filters['pemakaian_status'] ?? '') === 'DIFFERENCE') {
             $query->where('finance_status', 'APPROVED')->where('different_items', '>', 0);
+        } elseif (($filters['pemakaian_status'] ?? '') === 'NOT_APPROVED') {
+            $query->where('in_not_approved_group', 1);
         } elseif (!empty($filters['pemakaian_status'])) {
             $query->where('finance_status', $filters['pemakaian_status']);
         }
@@ -66,7 +78,7 @@ class BsUsageDashboardService
             ->paginate(10, ['*'], 'pemakaian_page')
             ->appends(array_diff_key($filters, ['pemakaian_page' => true, 'pemakaian_jenis' => true]))->fragment('pemakaian-bs');
 
-        return compact('filters', 'summary', 'modules', 'rows');
+        return compact('filters', 'summary', 'modules', 'rows', 'checkStatusCounts');
     }
 
     public function sourceResult(User $viewer, string $type, int $id): ?\stdClass
@@ -84,7 +96,6 @@ class BsUsageDashboardService
         abort_unless($viewer->can('akses.approval-finance'), 403);
         $union = null;
         foreach (BsUsageCheckService::TYPES as $type => $model) {
-            // Finance may also inspect saved OPR/PD drafts. Events require confirmation.
             $part = $this->transactions($type, $model, $viewer, includeDrafts: true);
             $union = $union ? $union->unionAll($part) : $part;
         }
@@ -94,13 +105,17 @@ class BsUsageDashboardService
 
     private function classified(Builder $sources): Builder
     {
+        // A changed submission waits for a Finance decision on its current version.
         $classified = DB::query()->fromSub($sources, 'usage')->select('usage.*')
-            ->selectRaw("CASE WHEN check_id IS NULL THEN 'PENDING' WHEN needs_recheck = 1 THEN 'RECHECK' ELSE keputusan END as finance_status");
-        // Retain the combined follow-up amount for compatibility. Public summaries
-        // display unchecked, revision, recheck and approval differences separately.
+            ->selectRaw("CASE WHEN check_id IS NULL OR needs_recheck = 1 THEN 'PENDING' ELSE keputusan END as finance_status");
+
         $amounted = DB::query()->fromSub($classified, 'usage')->select('usage.*')
-            ->selectRaw("CASE WHEN finance_status IN ('PENDING', 'RECHECK', 'REVISION') THEN nominal_user WHEN finance_status = 'APPROVED' THEN nominal_user - nominal_finance ELSE 0 END as nominal_pending")
-            ->selectRaw("CASE WHEN finance_status IN ('PENDING', 'RECHECK', 'REVISION') OR (finance_status = 'APPROVED' AND different_items > 0) THEN 1 ELSE 0 END as in_pending_group");
+            ->selectRaw("CASE WHEN finance_status IN ('PENDING', 'REVISION') THEN nominal_user WHEN finance_status = 'APPROVED' THEN nominal_user - nominal_finance ELSE 0 END as nominal_pending")
+            ->selectRaw("CASE WHEN finance_status IN ('PENDING', 'REVISION') OR (finance_status = 'APPROVED' AND different_items > 0) THEN 1 ELSE 0 END as in_pending_group")
+            // Count each source once, using only the current final Finance decision.
+            // Approval above the reported amount is not a negative rejection.
+            ->selectRaw("CASE WHEN finance_status = 'REJECTED' THEN nominal_user WHEN finance_status = 'APPROVED' AND nominal_user > nominal_finance THEN nominal_user - nominal_finance ELSE 0 END as nominal_not_approved")
+            ->selectRaw("CASE WHEN finance_status = 'REJECTED' OR (finance_status = 'APPROVED' AND nominal_user > nominal_finance) THEN 1 ELSE 0 END as in_not_approved_group");
         return DB::query()->fromSub($amounted, 'usage');
     }
 
@@ -109,19 +124,19 @@ class BsUsageDashboardService
         $reviewed = "finance_status = 'APPROVED'";
         return $query->selectRaw("COUNT(*) as confirmed_count,
             COALESCE(SUM(nominal_user), 0) as nominal_user,
-            COALESCE(SUM(CASE WHEN check_id IS NULL THEN 1 ELSE 0 END), 0) as unchecked_count,
-            COALESCE(SUM(needs_recheck), 0) as recheck_count,
+            COALESCE(SUM(CASE WHEN finance_status = 'PENDING' THEN 1 ELSE 0 END), 0) as unchecked_count,
             COALESCE(SUM(CASE WHEN $reviewed THEN 1 ELSE 0 END), 0) as checked_count,
             COALESCE(SUM(CASE WHEN $reviewed AND different_items > 0 THEN 1 ELSE 0 END), 0) as different_count,
             COALESCE(SUM(nominal_pending), 0) as nominal_pending,
             COALESCE(SUM(in_pending_group), 0) as pending_count,
-            COALESCE(SUM(CASE WHEN finance_status IN ('PENDING', 'RECHECK', 'REVISION') THEN nominal_user ELSE 0 END), 0) as nominal_waiting,
+            COALESCE(SUM(CASE WHEN finance_status IN ('PENDING', 'REVISION') THEN nominal_user ELSE 0 END), 0) as nominal_waiting,
             COALESCE(SUM(CASE WHEN finance_status = 'PENDING' THEN nominal_user ELSE 0 END), 0) as nominal_unchecked,
             COALESCE(SUM(CASE WHEN finance_status = 'REVISION' THEN nominal_user ELSE 0 END), 0) as nominal_revision,
-            COALESCE(SUM(CASE WHEN finance_status = 'RECHECK' THEN nominal_user ELSE 0 END), 0) as nominal_recheck,
             COALESCE(SUM(CASE WHEN finance_status = 'REVISION' THEN 1 ELSE 0 END), 0) as revision_count,
             COALESCE(SUM(CASE WHEN finance_status = 'REJECTED' THEN 1 ELSE 0 END), 0) as rejected_count,
             COALESCE(SUM(CASE WHEN finance_status = 'REJECTED' THEN nominal_user ELSE 0 END), 0) as nominal_rejected,
+            COALESCE(SUM(nominal_not_approved), 0) as nominal_not_approved,
+            COALESCE(SUM(in_not_approved_group), 0) as not_approved_count,
             COALESCE(SUM(CASE WHEN $reviewed THEN nominal_finance ELSE 0 END), 0) as nominal_finance,
             COALESCE(SUM(CASE WHEN $reviewed THEN nominal_user - nominal_finance ELSE 0 END), 0) as selisih");
     }
@@ -129,7 +144,6 @@ class BsUsageDashboardService
     private function transactions(string $type, string $model, User $viewer, bool $includeDrafts = false): Builder
     {
         $header = (new $model)->getTable();
-        // Eloquent applies SoftDeletes only for PD. OPR has no deleted_at column.
         $event = BsUsageCheckService::isEvent(new $model);
         $items = $event ? DB::table($header)->select('transaksi_id')
             ->selectRaw('NULL as cost_category_id, ROUND(nominal, 2) as nominal_asal')
@@ -143,8 +157,6 @@ class BsUsageDashboardService
             ->selectRaw('SUM(nominal_disetujui) as nominal_finance, SUM(CASE WHEN nominal_asal <> nominal_disetujui THEN 1 ELSE 0 END) as different_items')
             ->groupBy('bs_usage_check_id');
 
-        // A check may have been saved against a draft that was changed before confirmation.
-        // Compare each category, including added/removed ones; matching totals alone is insufficient.
         $changed = DB::query()->fromSub(clone $items, 'current_item')
             ->leftJoin('bs_usage_check_details as checked_item', function (JoinClause $join) {
                 $join->whereRaw('(checked_item.cost_category_id = current_item.cost_category_id OR (checked_item.cost_category_id IS NULL AND current_item.cost_category_id IS NULL))')
@@ -158,13 +170,41 @@ class BsUsageDashboardService
                 ->whereRaw('(remaining_item.cost_category_id = old_item.cost_category_id OR (remaining_item.cost_category_id IS NULL AND old_item.cost_category_id IS NULL))')->selectRaw('1'))->selectRaw('1');
 
         if ($event) {
-            // Event totals belong to their numeric ID, even if a legacy reference is empty/duplicated.
             $amounts = DB::table($header)->select('id as source_id')->selectRaw('ROUND(nominal, 2) as nominal_user');
             $changed = DB::query()->selectRaw('1')->whereNotExists(DB::table('bs_usage_check_details as event_item')
                 ->whereColumn('event_item.bs_usage_check_id', 'finance.id')->whereNull('event_item.cost_category_id')
                 ->whereRaw('event_item.nominal_asal = ROUND('.$header.'.nominal, 2)')->selectRaw('1'));
             $removed = DB::table('bs_usage_check_details as other_item')->whereColumn('other_item.bs_usage_check_id', 'finance.id')
                 ->whereNotNull('other_item.cost_category_id')->selectRaw('1');
+        }
+
+        $differences = DB::query()->selectRaw('1')->whereExists($changed)->orWhereExists($removed);
+        if (!$event) {
+            $lines = (new $model)->details()->getRelated()->newQuery()
+                ->select('id', 'transaksi_id', 'cost_category_id', 'remark')
+                ->selectRaw('ROUND(nominal, 2) as nominal_asal')->toBase();
+            $hasLines = DB::table('bs_usage_check_details as line_check')
+                ->whereColumn('line_check.bs_usage_check_id', 'finance.id')->whereNotNull('line_check.source_detail_id')->selectRaw('1');
+            $binary = in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true) ? 'BINARY ' : '';
+            $changedLines = DB::query()->fromSub(clone $lines, 'source_line')
+                ->leftJoin('bs_usage_check_details as checked_line', function (JoinClause $a) {
+                    $a->on('checked_line.source_detail_id', '=', 'source_line.id')
+                        ->on('checked_line.bs_usage_check_id', '=', 'finance.id');
+                })->whereColumn('source_line.transaksi_id', $header.'.transaksi_id')
+                ->where(fn ($q) => $q->whereNull('checked_line.id')
+                    ->orWhereColumn('checked_line.cost_category_id', '<>', 'source_line.cost_category_id')
+                    ->orWhereColumn('checked_line.nominal_asal', '<>', 'source_line.nominal_asal')
+                    ->orWhereRaw("{$binary}COALESCE(checked_line.source_remark, '') <> {$binary}COALESCE(source_line.remark, '')"))->selectRaw('1');
+            $removedLines = DB::table('bs_usage_check_details as previous_line')
+                ->whereColumn('previous_line.bs_usage_check_id', 'finance.id')
+                ->whereNotExists(DB::query()->fromSub(clone $lines, 'remaining_line')
+                    ->whereColumn('remaining_line.transaksi_id', $header.'.transaksi_id')
+                    ->whereColumn('remaining_line.id', 'previous_line.source_detail_id')->selectRaw('1'))->selectRaw('1');
+            $legacyDifferences = $differences;
+            $differences = DB::query()->selectRaw('1')
+                ->where(fn ($q) => $q->whereExists($hasLines)
+                    ->where(fn ($q) => $q->whereExists($changedLines)->orWhereExists($removedLines)))
+                ->orWhere(fn ($q) => $q->whereNotExists($hasLines)->whereExists($legacyDifferences));
         }
 
         $query = DB::table($header)->join('user as owner', 'owner.id', '=', $header.'.user_id')
@@ -180,16 +220,15 @@ class BsUsageDashboardService
                 'finance.keputusan', 'finance.catatan_keputusan', 'finance.periode as check_period',
                 'approved.nominal_finance', 'approved.different_items',
             ])->selectRaw('? as jenis, COALESCE(amounts.nominal_user, 0) as nominal_user', [$type])
-            ->selectRaw('CASE WHEN finance.id IS NOT NULL AND (EXISTS ('.$changed->toSql().') OR EXISTS ('.$removed->toSql().')'
+            ->selectRaw('CASE WHEN finance.id IS NOT NULL AND (EXISTS ('.$differences->toSql().')'
                 .($event ? ' OR finance.source_revision IS NULL OR finance.source_revision <> ' : ' OR COALESCE(finance.source_revision, 0) <> ')
-                .$header.'.submission_version) THEN 1 ELSE 0 END as needs_recheck', [...$changed->getBindings(), ...$removed->getBindings()]);
+                .$header.'.submission_version) THEN 1 ELSE 0 END as needs_recheck', $differences->getBindings());
 
         if (!$includeDrafts || $event) $query->where($header.'.status', 'VALIDATED');
         if ($includeDrafts && !$event) {
             $query->where(fn ($q) => $q->whereNull($header.'.finance_correction_check_id')->orWhere($header.'.status', 'VALIDATED'));
         }
 
-        // Finance already has permission to review all sources. Other dashboards keep their owner scope.
         if (!$viewer->can('akses.approval-finance') && !$viewer->canSeeAllTransactions()) {
             $query->where($header.'.user_id', $viewer->id);
         }

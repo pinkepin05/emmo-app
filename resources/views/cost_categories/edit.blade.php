@@ -23,7 +23,7 @@
                     <div class="mb-3">
                         <label for="code" class="form-label">Cost Category Code</label>
                         <!-- Hapus 'readonly', tambahkan validasi error dan old() -->
-                        <input type="text" name="code" id="code" class="form-control @error('code') is-invalid @enderror" value="{{ old('code', $costCategories->code) }}">
+                        <input type="text" name="code" id="code" class="form-control @error('code') is-invalid @enderror" value="{{ old('code', $costCategories->nama) }}">
                         @error('code')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -40,6 +40,7 @@
                     <div class="mb-3 form-check">
                         <input type="checkbox" name="is_active" id="is_active" class="form-check-input" value="1" {{ $costCategories->is_active ? 'checked' : '' }}>
                         <label class="form-check-label" for="is_active">Set Aktif (Is Active)</label>
+                        <div class="form-text">Kategori nonaktif tidak dapat dipilih untuk rincian biaya baru. Riwayat transaksi tetap tersimpan.</div>
                     </div>
 
                     <div class="d-flex justify-content-between">

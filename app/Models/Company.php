@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Company extends Model
 {
     //
-
+// ... di dalam class Company ...
+public function users()
+{
+    return $this->hasMany(User::class, 'company_id');
+}
     use HasFactory;
 
     //1. Memberitahu Laravel nama tabelnya adalah 'company'

@@ -34,7 +34,7 @@ class BsUsageApprovalController extends Controller
         $request->validate(['approval_version' => 'required|integer|min:1']);
         $service->approve($this->document($id), (int) $request->approval_version);
         return redirect()->route('bs-usage-approvals.show', $id)
-            ->with('success', 'Pemakaian disetujui dan dikonfirmasi. Saldo BS telah berkurang sesuai rincian biaya.');
+            ->with('success', 'Pemakaian disetujui dan siap diperiksa Finance. Saldo BS berkurang setelah konfirmasi Finance.');
     }
 
     public function reject(Request $request, int $id, BsValidationService $service)

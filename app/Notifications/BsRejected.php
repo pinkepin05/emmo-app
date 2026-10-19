@@ -10,7 +10,7 @@ class BsRejected extends Notification
 {
     use Queueable;
 
-    public function __construct(public PengajuanBs $bs) {}
+    public function __construct(public PengajuanBs $bs, public bool $bySystem = false) {}
 
     public function via(object $notifiable): array { return ['database']; }
 
@@ -18,7 +18,9 @@ class BsRejected extends Notification
     {
         return [
             'title'   => '❌ Pengajuan BS Ditolak',
-            'message' => 'Pengajuan BS ' . $this->bs->document_no . ' Anda ditolak oleh atasan.',
+            'message' => $this->bySystem
+                ? 'Pengajuan BS ' . $this->bs->document_no . ' Anda ditolak oleh sistem. ' . $this->bs->rejection_reason
+                : 'Pengajuan BS ' . $this->bs->document_no . ' Anda ditolak oleh atasan.',
             'url'     => route('pengajuan-bs.index'),
         ];
     }

@@ -1,19 +1,15 @@
 @php
     $amountIcons = [
         'APPROVED' => 'bi-check-circle-fill',
-        'REJECTED' => 'bi-x-circle-fill',
+        'NOT_APPROVED' => 'bi-x-circle-fill',
         'PENDING' => 'bi-hourglass-split',
-        'DIFFERENCE' => 'bi-arrow-left-right',
         'REVISION' => 'bi-pencil-square',
-        'RECHECK' => 'bi-arrow-repeat',
     ];
     $amountGroups = [
-        'APPROVED' => ['label' => 'Disetujui Finance', 'amount' => $totals->nominal_finance, 'count' => $totals->checked_count, 'tone' => 'approved'],
-        'REJECTED' => ['label' => 'Ditolak', 'amount' => $totals->nominal_rejected, 'count' => $totals->rejected_count, 'tone' => 'rejected'],
+        'APPROVED' => ['label' => 'Dikonfirmasi Finance', 'amount' => $totals->nominal_finance, 'count' => $totals->checked_count, 'tone' => 'approved'],
+        'NOT_APPROVED' => ['label' => 'Total Ditolak', 'amount' => $totals->nominal_not_approved, 'count' => $totals->not_approved_count, 'tone' => 'rejected'],
         'PENDING' => ['label' => 'Pending / Belum Dicek', 'amount' => $totals->nominal_unchecked, 'count' => $totals->unchecked_count, 'tone' => 'pending'],
-        'DIFFERENCE' => ['label' => 'Selisih Persetujuan Finance', 'amount' => $totals->selisih, 'count' => $totals->different_count, 'tone' => 'difference'],
         'REVISION' => ['label' => 'Perlu Revisi (keputusan lama)', 'amount' => $totals->nominal_revision, 'count' => $totals->revision_count, 'tone' => 'revision'],
-        'RECHECK' => ['label' => 'Perlu Cek Ulang', 'amount' => $totals->nominal_recheck, 'count' => $totals->recheck_count, 'tone' => 'recheck'],
     ];
 @endphp
 <div class="recap-breakdown recap-breakdown-separated">
@@ -27,8 +23,10 @@
                 {{ $group['label'] }}
             </span>
             <strong>{{ $money($group['amount']) }}</strong>
-            <small>{{ $group['count'] }} {{ $statusCode === 'DIFFERENCE' ? 'transaksi dengan selisih' : 'transaksi' }}</small>
+            <small>{{ $group['count'] }} transaksi</small>
         </a>
     @endforeach
 </div>
-<p class="recap-amount-note">Pending hanya untuk pengajuan yang belum dicek. Selisih persetujuan = nominal pengajuan − nominal disetujui Finance.</p>
+@unless($isDashboard)
+    <p class="recap-amount-note">Total ditolak mencakup penolakan penuh dan selisih yang tidak disetujui Finance. Pending hanya untuk pengajuan yang belum dicek.</p>
+@endunless

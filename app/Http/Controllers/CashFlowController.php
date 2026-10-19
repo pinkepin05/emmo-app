@@ -18,10 +18,11 @@ class CashFlowController extends Controller
     public function index()
     {
         $userId = (int) auth()->id();
-        $currentPeriod = $this->periods->current();
-        $snapshots = $this->snapshots($userId, $currentPeriod);
+        $currentPeriod = app(\App\Services\BonSementaraService::class)->getActivePeriode();
+        $showAllPeriods = request()->boolean('semua_periode');
+        $snapshots = $this->snapshots($userId, $currentPeriod, $showAllPeriods);
         $currentSnapshot = $snapshots->firstWhere('periode', $currentPeriod);
-        return view('cash-flow.index', compact('snapshots', 'currentSnapshot', 'currentPeriod'));
+        return view('cash-flow.index', compact('snapshots', 'currentSnapshot', 'currentPeriod', 'showAllPeriods'));
     }
 
     public function show(string $periode)
@@ -49,6 +50,14 @@ class CashFlowController extends Controller
         // 3) Baca nomor halaman aktif dari query string
         $masukPage  = LengthAwarePaginator::resolveCurrentPage('masuk_page');
         $keluarPage = LengthAwarePaginator::resolveCurrentPage('keluar_page');
+        $sharedPage = LengthAwarePaginator::resolveCurrentPage('shared_page');
+        $sharedUsage = $this->cashFlowService->sharedUsage($userId, $periode);
+        $pagedSharedUsage = new LengthAwarePaginator(
+            $sharedUsage->forPage($sharedPage, $perPage)->values(),
+            $sharedUsage->count(), $perPage, $sharedPage,
+            ['path' => LengthAwarePaginator::resolveCurrentPath(), 'pageName' => 'shared_page']
+        );
+        $pagedSharedUsage->withQueryString()->fragment('sec-shared-bs');
 
         // 4) Potong data per halaman, bungkus jadi paginator independen
         $pagedMasuk = new LengthAwarePaginator(
@@ -69,14 +78,14 @@ class CashFlowController extends Controller
 
         return view('cash-flow.show', compact(
             'snapshot', 'status', 'transactions', 'periode',
-            'pagedMasuk', 'pagedKeluar',
+            'pagedMasuk', 'pagedKeluar', 'pagedSharedUsage',
             'totalMasuk', 'totalKeluar', 'totalPenyesuaian'
         ));
     }
 
     public function export()
     {
-        $snapshots = $this->snapshots((int) auth()->id(), $this->periods->current());
+        $snapshots = $this->snapshots((int) auth()->id(), $this->periods->current(), request()->boolean('semua_periode'));
         $statuses = Periode::whereIn('periode', $snapshots->pluck('periode'))->pluck('status', 'periode')->all();
 
         return Excel::download(new CashFlowExport($snapshots, $statuses), 'stok-kas-semua-periode.xlsx');
@@ -89,6 +98,7 @@ class CashFlowController extends Controller
         $snapshot = $this->cashFlowService->recalculateSnapshot($userId, $periode);
         $status = Periode::where('periode', $periode)->value('status') ?? 'OPEN';
         $transactions = $this->cashFlowService->details($userId, $periode);
+        $transactions['shared_bs'] = $this->cashFlowService->sharedUsage($userId, $periode)->all();
 
         return Excel::download(
             new CashFlowExport(collect([$snapshot]), [$periode => $status], $transactions),
@@ -96,12 +106,22 @@ class CashFlowController extends Controller
         );
     }
 
-    private function snapshots(int $userId, string $currentPeriod)
+    private function snapshots(int $userId, string $currentPeriod, bool $showAllPeriods = false)
     {
-        $periods = Periode::orderBy('periode')->pluck('periode')->push($currentPeriod)->unique()->sort();
-        foreach ($periods as $period) $this->cashFlowService->recalculateSnapshot($userId, $period);
+        if ($showAllPeriods) {
+            return $this->cashFlowService->dashboardPeriods($userId)
+                ->filter(fn ($period) => $period <= $currentPeriod)
+                ->map(fn ($period) => $this->cashFlowService->recalculateSnapshot($userId, $period))
+                ->sortByDesc('periode')->values();
+        }
 
-        return StockCashFlowSnapshot::where('user_id', $userId)->orderByDesc('periode')->get();
+        $periods = Periode::where('periode', '<=', $currentPeriod)
+            ->orderBy('periode')->pluck('periode')->push($currentPeriod)->unique()->sort();
+        $calculated = $periods->mapWithKeys(fn ($period) => [$period => $this->cashFlowService->recalculateSnapshot($userId, $period)]);
+
+        return StockCashFlowSnapshot::where('user_id', $userId)
+            ->where('periode', '<=', $currentPeriod)->orderByDesc('periode')->get()
+            ->map(fn ($snapshot) => $calculated->get($snapshot->periode, $snapshot));
     }
 
    

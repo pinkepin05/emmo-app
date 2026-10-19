@@ -10,6 +10,8 @@ class TransaksiPerjalananDinasDetail extends Model
 {
     use HasFactory, SoftDeletes; // 🎯 TAMBAHKAN SoftDeletes
 
+    use \App\Models\Concerns\HasDetailPhoto;
+
     protected $table = 'transaksi_perjalanan_dinas_detail';
     public $timestamps = false;
     
@@ -20,7 +22,9 @@ class TransaksiPerjalananDinasDetail extends Model
         'transaksi_id',
         'cost_category_id',
         'remark',
-        'nominal'
+        'nominal',
+        'photo_path',
+        'photo_name'
     ];
 
     public function header()

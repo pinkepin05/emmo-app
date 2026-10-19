@@ -13,13 +13,12 @@
     <div class="recap-workspace" id="finance-workspace">
         <a class="recap-back" href="{{ route('dashboard.transaksi') }}#pemakaian-bs"><i class="bi bi-arrow-left" aria-hidden="true"></i>Kembali ke Dashboard Transaksi</a>
         <header class="recap-head">
-            <div><div class="recap-eyebrow">Pemeriksaan dan laporan Finance</div><h1>Pengecekan Pemakaian BS</h1><p>Periksa pengajuan, bandingkan hasil Finance, dan telusuri riwayat dalam satu tempat.</p></div>
+            <div><div class="recap-eyebrow">Pemeriksaan dan laporan Finance</div><h1>Pengecekan Pemakaian BS</h1><p>Buka Detail Transaksi untuk memeriksa pengajuan, melihat hasil Finance, dan menelusuri jejak auditnya.</p></div>
         </header>
         @include('bs-usage-checks.shared')
         <nav class="recap-nav" aria-label="Tampilan pengecekan Finance">
             <a href="{{ route('bs-usage-checks.index', array_merge($selection, ['tampilan' => 'transaksi'])) }}" @if(!$isDetail && !$isDraft) aria-current="page" @endif><i class="bi bi-list-check" aria-hidden="true"></i>Daftar transaksi</a>
             <a href="{{ route('bs-usage-checks.index', array_merge(array_diff_key($selection, ['status_selisih' => true]), ['tampilan' => 'draft'])) }}" @if($isDraft) aria-current="page" @endif><i class="bi bi-save" aria-hidden="true"></i>Draft pemeriksaan</a>
-            <a href="{{ route('bs-usage-checks.index', array_merge($selection, ['tampilan' => 'rincian', 'mode' => 'terakhir'])) }}" @if($isDetail) aria-current="page" @endif><i class="bi bi-clock-history" aria-hidden="true"></i>Rincian &amp; riwayat</a>
         </nav>
         <form method="GET" action="{{ route('bs-usage-checks.index') }}" class="recap-filter" aria-label="Filter pengecekan dan laporan Finance">
             <input type="hidden" name="tampilan" value="{{ $filters['tampilan'] }}">
@@ -48,13 +47,15 @@
                 </div>
                 <p class="recap-filter-note mt-2 mb-0">{{ $isDraft ? 'Tanggal dan periode mengikuti tanggal pengecekan yang disimpan pada draft.' : 'Tanggal dan periode mengikuti pemeriksaan Finance yang dikonfirmasi. Transaksi yang belum diperiksa tidak masuk hasil filter tanggal/periode. Cek terakhir dipilih berdasarkan urutan penyimpanan sebelum filter diterapkan.' }}</p>
             </details>
+           {{-- ... (bagian atas file tetap sama) ... --}}
             @if(!$isDetail && !$isDraft)
-                <nav class="recap-status-tabs" aria-label="Filter status Finance">
-                    @foreach(['' => 'Semua status', 'PENDING' => 'Belum Dicek', 'REVISION' => 'Perlu Revisi (keputusan lama)', 'RECHECK' => 'Perlu Cek Ulang', 'APPROVED' => 'Disetujui', 'REJECTED' => 'Ditolak', 'REVIEWED' => 'Pernah diperiksa'] as $value => $label)
+                <nav class="recap-status-tabs" aria-label="Filter status Pengecekan Finance">
+                    @foreach(['' => 'Semua status', 'PENDING' => 'Belum Dicek', 'REVIEWED' => 'Sudah Dicek'] as $value => $label)
                         <a href="{{ route('bs-usage-checks.index', array_merge($filters, ['status_finance' => $value])) }}" @if($status === $value) aria-current="true" @endif>{{ $label }}</a>
                     @endforeach
                 </nav>
             @endif
+{{-- ... (bagian bawah file tetap sama) ... --}}
         </form>
         @if($isDetail)
             @include('bs-usage-checks.report')

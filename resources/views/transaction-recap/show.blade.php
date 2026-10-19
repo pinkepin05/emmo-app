@@ -1,64 +1,152 @@
 @extends('layouts.app-with-sidebar', ['panel' => 'transaksi'])
-@section('title', 'Rincian Transaksi — '.$transaction->transaksi_id)
+
+@section('title', 'Detail Transaksi — '.$transaction->transaksi_id)
+
 @section('content')
     @include('transaction-recap.assets')
+
     @php
+    $fromMonitoring ??= false;
+    $monitoringContext ??= null;
+    $backToPeriod = false;
+    $backFragment = 'pemakaian-bs';
+
+    if ($fromMonitoring) {
+        $backRoute = 'monitoring-finance.user';
+        $backFilters = [
+            'company' => $monitoringContext['company'], 'user' => $monitoringContext['user'],
+            'periode' => $monitoringContext['periode'] ?? $transaction->periode, 'page' => $monitoringContext['page'] ?? 1,
+        ];
+        if (!empty($monitoringContext['jenis_filter'])) $backFilters['jenis_filter'] = $monitoringContext['jenis_filter'];
+        $backFragment = 'monitoring-transactions';
+    } else {
         $backFilters = request()->only(['pemakaian_periode', 'pemakaian_status', 'pemakaian_referensi', 'pemakaian_page']);
         $backFilters['pemakaian_periode'] = request()->query->has('pemakaian_periode') ? (request('pemakaian_periode') ?? '') : $transaction->periode;
         $backFilters['jenis'] = $jenis;
         $backRoute = 'transaction-recap.module';
-        $isEvent = in_array($jenis, ['EDK', 'ELK']);
-        $statusLabel = match($transaction->status) { 'VALIDATED' => 'Dikonfirmasi', 'DRAFT' => 'Belum dikonfirmasi', 'PENDING_OWNER' => 'Menunggu pemohon', 'REJECTED_OWNER' => 'Ditolak pemohon', default => $transaction->status };
-    @endphp
+        $backToPeriod = request('dari') === 'periode' && auth()->user()->can('akses.master-data');
+        if ($backToPeriod) { $backRoute = 'periode.show'; $backFilters = ['periode' => $transaction->periode]; $backFragment = 'period-closing-review'; }
+    }
+
+    $workspaceContext = request()->only(['pemakaian_periode', 'pemakaian_status', 'pemakaian_referensi', 'pemakaian_page', 'dari', 'company', 'user', 'page', 'jenis_filter']);
+    if ($fromMonitoring) {
+        $workspaceContext = array_merge($workspaceContext, [
+            'dari' => 'monitoring', 'company' => $monitoringContext['company'], 'user' => $monitoringContext['user'],
+            'page' => $monitoringContext['page'] ?? 1, 'pemakaian_periode' => $monitoringContext['periode'] ?? $transaction->periode,
+        ]);
+        if (!empty($monitoringContext['jenis_filter'])) $workspaceContext['jenis_filter'] = $monitoringContext['jenis_filter'];
+        else unset($workspaceContext['jenis_filter']);
+    }
+    if (request()->query->has('pemakaian_periode')) $workspaceContext['pemakaian_periode'] ??= '';
+
+    $workspaceParams = ['jenis' => $jenis, 'source' => $transaction->id] + $workspaceContext;
+    $detailUrl = route('transaction-recap.show', $workspaceParams);
+    $reviewUrl = route('transaction-recap.show', $workspaceParams + ['pemeriksaan' => 1]);
+   $isEvent = in_array($jenis, ['EDK', 'ELK'], true);
+
+$statusLabel = match ($transaction->status) {
+    'VALIDATED' => 'Dikonfirmasi',
+    'DRAFT' => 'Belum dikonfirmasi',
+    'PENDING_OWNER' => 'Menunggu pemohon',
+    'REJECTED_OWNER' => 'Ditolak pemohon',
+    default => $transaction->status,
+};
+
+$bs = $isEvent ? null : $transaction->bonSementara;
+
+$isPerjalananDinas = $bs !== null
+    && $bs->tipe_pengajuan === 'perjalanan_dinas';
+@endphp
     <div class="recap-workspace">
-        <a class="recap-back" href="{{ route($backRoute, $backFilters) }}#pemakaian-bs"><i class="bi bi-arrow-left" aria-hidden="true"></i>Kembali ke Daftar {{ \App\Services\BsUsageCheckService::LABELS[$jenis] }}</a>
-        <header class="recap-head"><div><div class="recap-eyebrow">{{ \App\Services\BsUsageCheckService::LABELS[$jenis] }}</div><h1>Rincian Transaksi</h1><p>{{ $transaction->transaksi_id ?: $jenis.' #'.$transaction->id }}</p></div><span class="recap-status {{ $transaction->status === 'VALIDATED' ? 'approved' : 'pending' }}">{{ $statusLabel }}</span></header>
+       {{-- Tombol Kembali --}}
+<a class="recap-back" href="{{ route($backRoute, $backFilters) }}#{{ $backFragment }}">
+    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+    @if($backToPeriod) Kembali ke Periode {{ $transaction->periode }}
+    @elseif($fromMonitoring) Kembali ke Monitoring User
+    @else Kembali ke Daftar {{ \App\Services\BsUsageCheckService::LABELS[$jenis] }}
+    @endif
+</a>
+
+        <header class="recap-head">
+            <div>
+                <div class="recap-eyebrow">{{ \App\Services\BsUsageCheckService::LABELS[$jenis] }}</div>
+                <h1>Detail Transaksi</h1>
+                <p>{{ $transaction->transaksi_id ?: $jenis.' #'.$transaction->id }}</p>
+            </div>
+            <div class="recap-head-actions">
+                <span class="recap-status {{ $transaction->status === 'VALIDATED' ? 'approved' : 'pending' }}">{{ $statusLabel }}</span>
+                @if(!$reviewMode && $isFinance && $canReview)
+                    <a class="btn btn-primary btn-sm" href="{{ $reviewUrl }}" data-review-action>
+                        {{ $latestDecision ? 'Cek Ulang' : 'Periksa Pengajuan' }}
+                    </a>
+                @endif
+            </div>
+        </header>
+
         @include('bs-usage-checks.shared')
         @include('transaction-recap.correction')
+
+        <nav class="recap-nav" aria-label="Bagian detail transaksi">
+            <a href="{{ $detailUrl }}" @if(!$reviewMode) aria-current="page" @endif><i class="bi bi-file-earmark-text" aria-hidden="true"></i>Rincian &amp; Hasil</a>
+        </nav>
+
+        @if($reviewMode)
+            @if($canReview)
+                <h2 class="h5 mb-3">{{ $formData['draft'] ? 'Lanjutkan draft pemeriksaan' : ($latestDecision ? 'Cek ulang pengajuan' : 'Periksa pengajuan') }}</h2>
+                @include('bs-usage-checks.form', $formData + ['unifiedWorkspace' => true])
+            @else
+                <div class="alert alert-info" role="status">{{ $periodClosed ? 'Periode transaksi sudah ditutup. Rincian dan hasil Finance tetap dapat dilihat.' : 'Menunggu konfirmasi pengajuan sebelum diperiksa Finance.' }}</div>
+                <a class="btn btn-outline-primary" href="{{ $detailUrl }}">Lihat Rincian &amp; Hasil</a>
+            @endif
+        @else
+        @if($closingExclusion)
+            <div class="alert alert-warning" role="status"><strong>Dikecualikan saat tutup buku.</strong> Transaksi ini dikunci pada periode {{ $closingExclusion['period'] }} dan nominalnya tidak dihitung sebagai pengeluaran penutupan.</div>
+        @endif
         <div class="recap-detail-grid">
             <div>
-                <section class="recap-card"><h2>Informasi pengajuan</h2><dl>
-                    @foreach(['User' => $transaction->user->nama, 'Tanggal transaksi' => \Carbon\Carbon::parse($transaction->tanggal)->format('d/m/Y'), 'Periode' => $transaction->periode, 'Keterangan' => $transaction->description ?: '—'] as $label => $value)<dt>{{ $label }}</dt><dd>{{ $value }}</dd>@endforeach
-                    @if($isEvent)
-                        <dt>Kelompok jam kerja</dt><dd>{{ $transaction->jamKerja?->code ?? '—' }}</dd>
-                        <dt>Hari libur</dt><dd>{{ $transaction->is_libur ? 'Ya' : 'Tidak' }}</dd>
-                        @if($jenis === 'ELK')<dt>Lokasi Event</dt><dd>{{ $transaction->wilayah?->nama ?? '—' }}</dd>@endif
-                        <dt>Plafon</dt><dd>{{ $transaction->plafon_value !== null ? 'Rp '.number_format($transaction->plafon_value, 2, ',', '.') : '—' }}</dd>
-                    @endif
-                </dl></section>
-                <section class="recap-card"><h2>Rincian biaya yang diajukan</h2>
-                    <div class="table-responsive"><table class="table small"><thead><tr><th scope="col">Item</th>@unless($isEvent)<th scope="col">Keterangan</th>@endunless<th scope="col" class="text-end">Nominal</th></tr></thead><tbody>
-                        @if($isEvent)
-                            @foreach($items as $item)<tr><td>{{ $item['cost_category_name'] }}</td><td class="text-end text-nowrap">Rp {{ number_format($item['nominal_asal'], 2, ',', '.') }}</td></tr>@endforeach
-                        @else
-                            @foreach($transaction->details()->with('costCategory')->get() as $detail)<tr><td>{{ $detail->costCategory?->nama }}</td><td class="text-break">{{ $detail->remark }}</td><td class="text-end text-nowrap">Rp {{ number_format($detail->nominal, 2, ',', '.') }}</td></tr>@endforeach
-                        @endif
-                    </tbody></table></div>
-                    <p class="small text-muted mb-0">Nominal asli dari pengajuan user. Hasil Finance terakhir ditampilkan di bawah rincian ini.</p>
-                    @if($transaction->foto_event_1 || $transaction->foto_event_2 || $transaction->foto_event_3)
-                        <h3 class="h6 mt-4">Bukti kegiatan</h3><div class="recap-help-links">
-                            @foreach(['foto_event_1', 'foto_event_2', 'foto_event_3'] as $photo)
-                                @if($transaction->$photo)<a href="{{ asset('storage/'.$transaction->$photo) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary"><i class="bi bi-image me-1" aria-hidden="true"></i>Bukti Event {{ $loop->iteration }} <span class="visually-hidden">(tab baru)</span></a>@endif
-                            @endforeach
+                {{-- ================= INFORMASI PENGAJUAN ================= --}}
+                @include('transaction-recap.submission-info')
+
+                {{-- 🎯 BARU: LAMPIRAN PERJALANAN DINAS (dari Pengajuan BS) --}}
+                @if($isPerjalananDinas && !empty($bs->attachment_path))
+                    <section class="recap-card mt-3">
+                        <h2>Lampiran Perjalanan Dinas</h2>
+                        <div class="d-flex align-items-center gap-3 p-3 rounded" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8efff 100%); border: 1px solid #c7d2fe;">
+                            @php
+                                $ext = strtolower(pathinfo($bs->attachment_path, PATHINFO_EXTENSION));
+                                $icon = $ext === 'pdf' ? 'bi-file-earmark-pdf-fill text-danger' : 'bi-file-earmark-image-fill text-success';
+                            @endphp
+                            <i class="bi {{ $icon }}" style="font-size: 2rem;"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold" style="font-size: 0.95rem;">
+                                    {{ $bs->attachment_name ?? 'Dokumen Pendukung' }}
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-cloud-check me-1"></i>
+                                    {{ strtoupper($ext) }} • Terunggah pada {{ \App\Support\AppTime::format($bs->created_at) }}
+                                </small>
+                            </div>
+                            <a href="{{ asset('storage/' . $bs->attachment_path) }}"
+                               target="_blank"
+                               class="btn btn-sm btn-primary"
+                               style="border-radius: 8px;">
+                                <i class="bi bi-eye me-1"></i> Lihat / Unduh
+                            </a>
                         </div>
-                    @endif
-                </section>
-                @if($financeResult)
-                    @include('transaction-recap.finance-result', ['row' => $financeResult])
-                @else
-                    <section class="recap-card"><h2>Hasil Finance</h2><p class="small text-muted mb-0">Pengajuan belum dikonfirmasi. Hasil Finance masuk rekap setelah konfirmasi pengajuan.</p></section>
+                    </section>
                 @endif
-                @if($isEvent)@include('partials.event-confirmation', ['event' => $transaction, 'eventType' => $jenis])@endif
-                @include('transaction-recap.decision-history')
+
+                {{-- ================= RINCIAN BIAYA ================= --}}
+                @include('transaction-recap.cost-details')
+
+                @if($isEvent)
+                    @include('partials.event-confirmation', ['event' => $transaction, 'eventType' => $jenis])
+                @endif
+
             </div>
-            <aside>
-                <section class="recap-card"><div class="recap-eyebrow">Total pengajuan</div><div class="recap-detail-amount">Rp {{ number_format($items->sum('nominal_asal'), 2, ',', '.') }}</div><p class="recap-meta">{{ $items->count() }} kategori biaya</p>
-                    @can('akses.approval-finance')
-                        @if(!\App\Services\BsUsageCheckService::awaitingResubmission($transaction))<a class="btn btn-primary w-100 mt-2" href="{{ route('bs-usage-checks.create', [$jenis, $transaction->id]) }}">Periksa Pengajuan</a>@else<p class="small text-muted">Menunggu konfirmasi pengajuan sebelum diperiksa Finance.</p>@endif
-                    @endcan
-                </section>
-                <section class="recap-card"><h2>Alur pengajuan</h2><ol class="recap-step-list"><li>User melengkapi rincian dan mengonfirmasi pengajuan.</li><li>Finance menyetujui atau menolak dengan alasan.</li><li>Jika ditolak, user dapat berdiskusi dengan Finance, memperbaiki transaksi, lalu mengonfirmasi pengajuan kembali.</li><li>Finance memeriksa ulang dan menyimpan keputusan baru. Riwayat keputusan tetap tersimpan.</li></ol></section>
-            </aside>
+
         </div>
+        @include('transaction-recap.decision-history')
+        @endif
     </div>
 @endsection

@@ -96,7 +96,7 @@
                                     ];
                                 @endphp
                                 <span class="badge-status {{ $colors[$bs->status] ?? 'bg-secondary text-white' }}">
-                                    {{ str_replace('_', ' ', $bs->status) }}
+                                    {{ $bs->status_label }}
                                 </span>
                             </td>
 

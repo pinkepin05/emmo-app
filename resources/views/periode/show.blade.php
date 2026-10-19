@@ -41,7 +41,15 @@
         </div>
     @endif
 
+    @if(session('success'))<div class="alert alert-success" role="status">{{ session('success') }}</div>@endif
+    @if($errors->any())<div class="alert alert-danger" role="alert"><ul class="mb-0">@foreach($errors->all() as $message)<li>{{ $message }}</li>@endforeach</ul></div>@endif
+    @if($status === 'OPEN')
+        @include('periode.closing-review')
+    @endif
+    @include('periode.closing-history')
+
     {{-- RINGKASAN NOMINAL PER PERIODE --}}
+    <p class="small text-muted">Nominal transaksi di bawah mengikuti pengajuan asal. Pengeluaran dan saldo penutupan mengikuti hasil Finance pada Stok Kas; transaksi yang dikecualikan tetap tercantum sebagai arsip.</p>
     <div class="row g-3 mb-4">
         <div class="col"><div class="card-x p-3 sum-card">BS Disetujui ({{ $bs->count() }})<b>Rp {{ number_format($totals['bsApproved'], 0, ',', '.') }}</b></div></div>
         <div class="col"><div class="card-x p-3 sum-card">Operasional ({{ $operasional->count() }})<b>Rp {{ number_format($totals['operasional'], 0, ',', '.') }}</b></div></div>
@@ -73,7 +81,7 @@
                     <table class="table-x w-100 mb-0">
                         <thead>
                             <tr>
-                                <th>ID</th><th>Tanggal</th><th>User</th><th>Deskripsi</th>
+                                <th>ID</th><th>Tanggal</th><th>User</th><th>Deskripsi</th><th>Status</th>
                                 @if($nominalCol)<th class="text-end">Nominal</th>@endif
                                 <th class="text-end">Aksi</th>
                             </tr>
@@ -82,14 +90,20 @@
                         @foreach($rows as $r)
                             <tr>
                                 <td><code>{{ $r->document_no ?? $r->transaksi_id }}</code></td>
-                                <td>{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
+                                <td>{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}
+                                    @if(in_array($routeShow, ['transaksi_operasional.show', 'transaksi_perjalanan_dinas.show']) && substr($r->tanggal, 0, 7) !== $periode)
+                                        <div class="small text-muted">Dicatat di periode {{ $periode }}</div>
+                                    @endif
+                                </td>
                                 <td>{{ $r->user_nama ?? '-' }}</td>
                                 <td>{{ \Illuminate\Support\Str::limit($r->description ?? '-', 60) }}</td>
+                                <td><span class="badge text-bg-{{ ($r->status ?? '') === 'VALIDATED' ? 'success' : 'secondary' }}">{{ match($r->status ?? '') { 'DRAFT' => 'Draft', 'PENDING_OWNER' => 'Menunggu Pemohon', 'REJECTED_OWNER' => 'Ditolak Pemohon', 'VALIDATED' => 'Dikonfirmasi', default => $r->status ?? '—' } }}</span></td>
                                 @if($nominalCol)
                                     <td class="text-end">{{ number_format($r->{$nominalCol} ?? 0, 0, ',', '.') }}</td>
                                 @endif
                                 <td class="text-end">
-                                    <a class="btn btn-sm btn-outline-primary" href="{{ route($routeShow, $r->id) }}">Detail</a>
+                                    @php($detailType = match($routeShow) { 'transaksi_operasional.show' => 'OPR', 'transaksi_perjalanan_dinas.show' => 'PD', 'perongkosan_event_dalam_kota.show' => 'EDK', 'perongkosan_event_luar_kota.show' => 'ELK', default => null })
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ $detailType ? route('transaction-recap.show', ['jenis' => $detailType, 'source' => $r->id, 'pemakaian_periode' => $periode, 'dari' => 'periode']) : route($routeShow, $r->id) }}">Detail</a>
                                 </td>
                             </tr>
                         @endforeach

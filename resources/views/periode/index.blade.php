@@ -34,7 +34,7 @@
         }
         .btn-history{background:#fff;border:1px solid var(--border-color);color:var(--text-secondary);text-decoration:none;}
         .btn-history:hover{color:var(--text-primary);background:#f1f5f9;}
-        .btn-close-periode{background:#ef4444;color:#fff;border:none;}
+        .btn-close-periode{background:#ef4444;color:#fff;border:none;text-decoration:none;}
         .btn-close-periode:hover{background:#dc2626;}
         .btn-reopen-periode{background:#f59e0b;color:#fff;border:none;}
         .btn-reopen-periode:hover{background:#d97706;}
@@ -64,7 +64,7 @@
         <i class="bi bi-info-circle-fill fs-5"></i>
         <div class="small">
             <strong>Mode Auto-Roll Aktif:</strong> Sistem otomatis membuka periode baru saat bulan di dunia nyata berganti.
-            Finance dapat menutup periode lama setelah seluruh draft diselesaikan dan saldo diperiksa. Sisa saldo BS diteruskan ke periode berikutnya.
+            Finance dapat menutup periode lama setelah memeriksa saldo dan transaksi. Transaksi tertunda dapat dikecualikan dengan alasan tercatat; transaksi tersebut dikunci dan tidak dihitung sebagai pengeluaran penutupan. Sisa saldo BS diteruskan ke periode berikutnya.
             Periode CLOSED dapat <strong>dibuka kembali</strong> selama periode sesudahnya belum memiliki transaksi.
         </div>
     </div>
@@ -120,11 +120,9 @@
                                             <i class="bi bi-lock-fill"></i> Terkunci
                                         </span>
                                     @else
-                                        <form action="{{ route('periode.close', $p->id) }}" method="POST"
-                                              onsubmit="return confirm('Tutup buku periode {{ $p->periode }}? Transaksi periode ini akan dibekukan.');">
-                                            @csrf
-                                            <button class="btn-close-periode"><i class="bi bi-lock-fill"></i> Tutup Buku</button>
-                                        </form>
+                                        <a href="{{ route('periode.show', $p->periode) }}#period-closing-review" class="btn-close-periode">
+                                            <i class="bi bi-lock-fill"></i> Tutup Buku
+                                        </a>
                                     @endif
                                 @else
                                     <button type="button" class="btn-reopen-periode btn-reopen"

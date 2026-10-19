@@ -1,0 +1,73 @@
+.expense-photo[data-photo-input] { min-width: 0; max-width: 320px; width: 100%; display: grid; align-items: start; gap: .5rem; text-align: left; }
+.expense-photo small { font-size: .75rem; line-height: 1.5; }
+.expense-photo .expense-photo-upload { position: relative; display: flex; align-items: center; gap: .6rem; width: 100%; min-width: 0; height: 48px; margin: 0; padding: 0 .8rem; overflow: hidden; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #334155; font-size: .82rem; font-weight: 600; cursor: pointer; }
+.expense-photo .expense-photo-upload:hover { background: #f8fafc; border-color: #94a3b8; }
+.expense-photo .expense-photo-upload:focus-within { border-color: #6366f1; outline: 3px solid #e0e7ff; outline-offset: 1px; }
+.expense-photo .expense-photo-upload:has(.is-invalid) { border-color: #dc2626; }
+.expense-photo .expense-photo-upload:has(:disabled) { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+.expense-photo .expense-photo-upload-icon { margin-left: auto; color: #64748b; }
+.expense-photo .expense-photo-upload > .expense-photo-input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.expense-photo .expense-photo-upload > .expense-photo-input:disabled { cursor: not-allowed; }
+.expense-photo .expense-photo-help { margin: 0; color: #64748b; font-size: .69rem; line-height: 1.4; }
+.expense-photo-link { display: inline-flex; align-items: center; gap: .5rem; margin-top: .35rem; font-size: .8rem; }
+.expense-photo-link img { display: block; flex: 0 0 auto; width: 72px; height: 54px; max-width: 100%; object-fit: contain; background: #f8fafc; border: 1px solid #dbe2eb; border-radius: 8px; }
+.expense-photo .expense-photo-card { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: .65rem; width: 100%; min-width: 0; padding: .65rem; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+.expense-photo .expense-photo-card .expense-photo-link { display: block; margin: 0; }
+.expense-photo .expense-photo-card .expense-photo-link img { width: 56px; height: 56px; object-fit: contain; background: #fff; }
+.expense-photo .expense-photo-meta { min-width: 0; display: grid; gap: .2rem; }
+.expense-photo .expense-photo-state { color: #64748b; font-size: .66rem; font-weight: 500; }
+.expense-photo .expense-photo-state.is-new { color: #047857; }
+.expense-photo .expense-photo-filename { display: block; min-width: 0; max-width: 100%; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; font-size: .76rem; font-weight: 600; line-height: 1.5; }
+.expense-photo .expense-photo-card-actions { display: flex; align-items: center; flex-wrap: wrap; column-gap: .7rem; row-gap: .15rem; }
+.expense-photo .expense-photo-action, .expense-photo .expense-photo-cancel { display: inline-flex; align-items: center; min-height: 30px; padding: .15rem 0; border: 0; border-radius: 3px; background: transparent; color: #4f46e5; font-size: .72rem; line-height: 1.4; font-weight: 600; text-decoration: none; cursor: pointer; }
+.expense-photo .expense-photo-cancel { color: #64748b; }
+.expense-photo .expense-photo-action:hover, .expense-photo .expense-photo-cancel:hover { text-decoration: underline; }
+.expense-photo .expense-photo-cancel:disabled { opacity: .5; cursor: not-allowed; }
+.expense-photo .expense-photo-action:focus-visible, .expense-photo .expense-photo-cancel:focus-visible, .expense-photo .expense-photo-link:focus-visible { outline: 2px solid #6366f1; outline-offset: 3px; }
+.expense-photo .expense-photo-remove { display: inline-flex; align-items: center; gap: .3rem; min-height: 30px; padding: 0; margin: 0; border: 0; background: transparent; color: #b91c1c; font-size: .72rem; font-weight: 500; white-space: normal; cursor: pointer; }
+.expense-photo .expense-photo-remove:hover { background: transparent; }
+.expense-photo .expense-photo-remove input { width: 14px; height: 14px; margin: 0; flex-shrink: 0; }
+.expense-photo-saved.is-removing .expense-photo-link { opacity: .45; }
+.expense-photo .expense-photo-error { margin: 0; color: #dc2626; font-size: .75rem; overflow-wrap: anywhere; }
+[data-photo-preview][hidden], [data-photo-error][hidden] { display: none !important; }
+.photo-lightbox-open { overflow: hidden; }
+.photo-lightbox { width: min(960px, calc(100vw - 2rem)); max-width: none; max-height: calc(100dvh - 2rem); margin: auto; padding: 0; border: 0; border-radius: 16px; color: #1e293b; box-shadow: 0 24px 80px #0f172a66; }
+.photo-lightbox::backdrop { background: #0f172abf; }
+.photo-lightbox-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; }
+.photo-lightbox-header h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.photo-lightbox-name { margin: .25rem 0 0; font-size: .8rem; color: #64748b; overflow-wrap: anywhere; }
+.photo-lightbox-close { flex-shrink: 0; width: 44px; height: 44px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; font-size: 1.5rem; cursor: pointer; }
+.photo-lightbox-body { display: grid; place-items: center; min-height: 160px; padding: 1rem; background: #f1f5f9; }
+.photo-lightbox-body img { display: block; max-width: 100%; max-height: calc(100dvh - 16rem); width: auto; height: auto; object-fit: contain; }
+.photo-lightbox-body [hidden] { display: none; }
+.photo-lightbox-message { margin: 1rem; text-align: center; color: #64748b; }
+.photo-lightbox-footer { padding: .75rem 1.25rem; text-align: right; font-size: .875rem; border-top: 1px solid #e2e8f0; }
+@media (max-width: 767px) {
+    .expense-photo[data-photo-input] { max-width: 100%; }
+    .expense-photo .expense-photo-upload { height: 44px; }
+    .expense-photo .expense-photo-action, .expense-photo .expense-photo-cancel, .expense-photo .expense-photo-remove { min-height: 36px; }
+    .photo-lightbox { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); border-radius: 12px; }
+    .photo-lightbox-header { padding: .75rem; }
+    .photo-lightbox-body { padding: .5rem; }
+}
+/* Sejajarkan input pada tabel rincian biaya */
+@media (min-width: 768px) {
+    #tabel-detail tbody > tr > td {
+        vertical-align: top !important;
+        padding-top: .75rem;
+    }
+
+    /* Samakan tinggi input */
+    #tabel-detail .form-control,
+    #tabel-detail .form-select,
+    #tabel-detail .input-group-text {
+        height: 48px;
+    }
+
+    #tabel-detail .btn-hapus {
+        width: 48px;
+        height: 48px;
+        margin-top: 0;
+    }
+}
+

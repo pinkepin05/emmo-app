@@ -1,5 +1,7 @@
 # Pengecekan Pemakaian BS oleh Finance
 
+Pembaruan 7 Oktober 2026: [persetujuan Finance per rincian biaya](persetujuan-finance-per-rincian.md) menggantikan penggabungan per kategori. [Konfirmasi Finance](sinkronisasi-stok-kas-finance.md) menentukan pengurangan saldo BS dan Stok Kas.
+
 Perluasan 29 September 2026: dashboard kini mencakup empat modul, keputusan Finance eksplisit, serta konfirmasi pengajuan Event. Lihat [dokumentasi rekap transaksi terbaru](dashboard-rekap-transaksi.md). Aturan dan hasil uji di bawah mendokumentasikan implementasi awal 25 September.
 
 Implementasi: 25 September 2026. Migrasi sudah diterapkan pada database MySQL lokal.
@@ -40,7 +42,7 @@ Panel **Konfirmasi Pemakaian BS** tersedia di `/dashboard/transaksi#pemakaian-bs
 - Hasil Finance diambil dari ID pengecekan terakhir per pasangan jenis dan ID sumber. Cek ulang tidak menggandakan jumlah transaksi atau total. Hasil pengecekan tetap diambil meskipun periode pengecekannya berbeda dari periode pemakaian yang dipilih.
 - Filter menggunakan **periode pemakaian** dan jenis OPR/PD. Default bulan berjalan; **Semua Periode** membuka seluruh periode. Pagination berisi 10 transaksi per halaman; kartu tetap menghitung seluruh hasil filter.
 - User biasa hanya melihat transaksi dengan `source.user_id` miliknya. Pemilik saldo BS tidak otomatis melihat transaksi input anggota lain pada panel ini. Finance dengan permission `akses.approval-finance` serta role yang sudah mempunyai `canSeeAllTransactions()` dapat melihat seluruh transaksi. Tautan rincian tetap mengikuti izin masing-masing modul; catatan internal Finance tidak ditampilkan.
-- **Belum Dicek** berarti belum ada hasil Finance. Jika kategori atau nominal sumber berubah setelah diperiksa, status menjadi **Perlu Cek Ulang**. Perbandingan dilakukan per kategori, termasuk kategori ditambahkan/dihapus, bukan hanya total. PD yang soft-deleted tidak dihitung.
+- **Belum Dicek** (`PENDING`) berarti belum ada keputusan Finance untuk versi pengajuan terbaru. Pengajuan yang berubah setelah diperiksa juga masuk Pending, termasuk jumlah dan seluruh nominal terbarunya. Pemeriksaan terbaru membandingkan ID rincian, kategori, nominal, keterangan, dan versi pengajuan; pemeriksaan lama per kategori tetap menggunakan perbandingan kategori. PD yang soft-deleted tidak dihitung.
 - Kedua status tersebut masuk nominal menunggu dan menampilkan selisih kosong (`—`), bukan menganggap persetujuan Finance nol. Nominal Finance lama tetap terlihat dengan penanda bahwa rincian sudah berubah, tetapi tidak masuk total Finance/selisih terkini.
 - Persetujuan Finance sebesar nol tetap merupakan hasil sah dan menghasilkan selisih. Status **Sesuai** memerlukan seluruh item sesuai; selisih antaritem yang saling meniadakan tetap **Tidak Sesuai**.
 - Panel hanya membaca data pemakaian dan pengecekan. Tidak ada migrasi tambahan untuk dashboard, dan perhitungan Sisa BS tetap memakai aturan existing.

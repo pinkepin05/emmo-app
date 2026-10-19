@@ -107,15 +107,14 @@
                 <h1 class="cf-title">Detail Cash Flow</h1>
                 <p class="cf-subtitle">
                     {{ $periodLabel }} · {{ $periodName }} — saldo laporan mencakup BS dan event
-                    sesuai rincian. Sisa Saldo BS dihitung terpisah.
+                    sesuai konfirmasi Finance terakhir. Pengeluaran ini mengurangi Sisa Saldo BS.
                 </p>
             </div>
             <div class="cf-actions">
-                <a href="{{ route('bs-balance.show', ['periode' => $periode]) }}" class="btn-cf ghost">Rincian Saldo BS</a>
                 <a href="{{ route('cash-flow.export-period', $periodLabel) }}" class="btn-cf primary" title="Export periode ini ke Excel">
                     <i class="bi bi-file-earmark-excel"></i> Export Excel
                 </a>
-                <a href="{{ route('cash-flow.index') }}" class="btn-cf ghost">
+                <a href="{{ route('cash-flow.index', request()->boolean('semua_periode') ? ['semua_periode' => 1] : []) }}" class="btn-cf ghost">
                     <i class="bi bi-arrow-left"></i> Kembali
                 </a>
             </div>
@@ -148,6 +147,9 @@
                 </div>
             @endif
 
+            @if(!$snapshot->finance_confirmed)
+                <p class="cf-subtitle">Arsip periode ditutup menggunakan perhitungan sebelum sinkronisasi Finance.</p>
+            @endif
             <div class="cf-stats">
                 <div class="cf-stat">
                     <span class="lbl">Saldo Awal</span>
@@ -161,10 +163,10 @@
                     <span class="lbl">Total Keluar</span>
                     <span class="val amt neg">- Rp {{ number_format($totalKeluar, 0, ',', '.') }}</span>
                 </div>
-                @if($showClosingBalance)
+                @if($showClosingBalance || $snapshot->finance_confirmed)
                     <div class="cf-stat">
-                        <span class="lbl">Saldo Akhir</span>
-                        <span class="val amt {{ $snapshot->saldo_akhir < 0 ? 'neg' : 'neu' }}">{{ $rpSigned($snapshot->saldo_akhir) }}</span>
+                        <span class="lbl">{{ $showClosingBalance ? 'Saldo Akhir' : 'Sisa Saldo BS' }}</span>
+                        <span class="val amt {{ $snapshot->saldo_berjalan < 0 ? 'neg' : 'neu' }}">{{ $rpSigned($snapshot->saldo_berjalan) }}</span>
                     </div>
                 @endif
             </div>
@@ -266,6 +268,7 @@
     </div>
 </div>
 
+        @include('cash-flow.partials.shared-bs-usage')
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

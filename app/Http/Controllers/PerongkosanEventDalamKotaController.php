@@ -16,17 +16,21 @@ use Illuminate\Support\Facades\Storage;
 
 class PerongkosanEventDalamKotaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $filters = $request->validate(['periode' => ['nullable', 'string', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/D']]);
+        $periode = $filters['periode'] ?? null;
         $query = PerongkosanEventDalamKota::with(['user']);
 
         if (!auth()->user()->canSeeAllTransactions()) {
             $query->where('user_id', auth()->id());
         }
 
-        $events = $query->orderBy('tanggal', 'desc')->paginate(10);
+        if ($periode) $query->where('periode', $periode);
+        if ($request->boolean('dilaporkan')) $query->where('status', 'VALIDATED');
+        $events = $query->orderBy('tanggal', 'desc')->paginate(10)->withQueryString();
 
-        return view('perongkosan_event_dalam_kota.index', compact('events'));
+        return view('perongkosan_event_dalam_kota.index', compact('events', 'periode'));
     }
 
     public function create()
@@ -243,7 +247,7 @@ class PerongkosanEventDalamKotaController extends Controller
     {
         $event = PerongkosanEventDalamKota::findOrFail($id);
 
-        if (!auth()->user()->canAccessTransaction($event)) {
+        if (!auth()->user()->canDeleteTransaction($event)) {
             abort(403, 'Anda tidak memiliki akses untuk menghapus transaksi ini.');
         }
 
@@ -277,6 +281,7 @@ class PerongkosanEventDalamKotaController extends Controller
         }
         if ($periode) $query->where('periode', $periode);
 
+        if ($request->boolean('dilaporkan')) $query->where('status', 'VALIDATED');
         $events = $query->orderBy('tanggal')->get();
         $jams = \App\Models\EventHourGroup::pluck('code', 'id');
 

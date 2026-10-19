@@ -45,6 +45,7 @@ try {
         'source_token' => $form->viewData('sourceToken'), 'review_token' => $form->viewData('reviewToken'),
         'keputusan' => 'APPROVED', 'catatan_keputusan' => 'Catatan draft untuk pemeriksaan selanjutnya',
         'details' => $form->viewData('items')->map(fn ($item) => [
+            'source_detail_id' => $item['source_detail_id'],
             'cost_category_id' => $item['cost_category_id'], 'nominal_disetujui' => '60.00',
             'catatan' => 'Catatan internal draft',
         ])->all(),
@@ -59,7 +60,7 @@ try {
     }
     // Module navigation fixtures include real status filters and empty periods.
     foreach (['OPR', 'PD', 'EDK', 'ELK'] as $type) {
-        foreach (['' => '', 'pending' => 'PENDING', 'approved' => 'APPROVED', 'difference' => 'DIFFERENCE', 'revision' => 'REVISION', 'recheck' => 'RECHECK', 'rejected' => 'REJECTED', 'empty' => ''] as $suffix => $status) {
+        foreach (['' => '', 'pending' => 'PENDING', 'approved' => 'APPROVED', 'difference' => 'DIFFERENCE', 'revision' => 'REVISION', 'rejected' => 'REJECTED', 'empty' => ''] as $suffix => $status) {
             $response = $test->get(route('transaction-recap.module', ['jenis' => $type,
                 'pemakaian_periode' => $suffix === 'empty' ? '2099-01' : '', 'pemakaian_status' => $status]))->assertOk();
             file_put_contents($directory.'/module-'.$type.($suffix ? '-'.$suffix : '').'.html', $response->getContent());

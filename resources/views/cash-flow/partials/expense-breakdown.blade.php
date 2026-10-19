@@ -6,10 +6,17 @@
         <span class="bd-value amt">Rp {{ number_format($snapshot->total_masuk ?? 0, 0, ',', '.') }}</span>
     </div>
 
+    {{-- ✨ DIPISAH MENJADI DUA ✨ --}}
     <div class="bd-cell bd-red" role="listitem">
-        <span class="bd-label">Pengeluaran BS</span>
-        <span class="bd-value amt">Rp {{ number_format($snapshot->total_keluar_bs ?? 0, 0, ',', '.') }}</span>
+        <span class="bd-label">Operasional Sales</span>
+        <span class="bd-value amt">{{ $snapshot->total_keluar_operasional === null ? 'Belum tersedia' : 'Rp '.number_format($snapshot->total_keluar_operasional, 0, ',', '.') }}</span>
     </div>
+
+    <div class="bd-cell bd-amber" role="listitem">
+        <span class="bd-label">Perjalanan Dinas</span>
+        <span class="bd-value amt">{{ $snapshot->total_keluar_perjalanan_dinas === null ? 'Belum tersedia' : 'Rp '.number_format($snapshot->total_keluar_perjalanan_dinas, 0, ',', '.') }}</span>
+    </div>
+    {{-- ========================== --}}
 
     <div class="bd-cell bd-slate" role="listitem">
         <span class="bd-label">Event Dalam Kota</span>

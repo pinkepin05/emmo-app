@@ -14,13 +14,13 @@
             <td role="cell">
                 <div class="recap-actions">
                     @if($draft->source)
-                        <a class="btn btn-sm btn-primary" href="{{ route('bs-usage-checks.create', [$draft->jenis_transaksi, $draft->transaksi_pemakaian_id]) }}">Lanjutkan Draft</a>
+                        <a class="btn btn-sm btn-primary" href="{{ route('transaction-recap.show', ['jenis' => $draft->jenis_transaksi, 'source' => $draft->transaksi_pemakaian_id, 'pemeriksaan' => 1]) }}">Lanjutkan Draft</a>
                     @else<span class="text-muted small">Sumber sudah tidak tersedia.</span>@endif
                 </div>
                 <details class="recap-decision-note"><summary>Lihat isi draft</summary>
                     <p>Rencana keputusan: {{ \App\Services\BsUsageCheckService::decisionLabel($draft->keputusan) }}</p>
                     @if($draft->catatan_keputusan)<p>{{ $draft->catatan_keputusan }}</p>@endif
-                    @foreach($draft->details as $item)<p><strong>{{ $item['cost_category_name'] }}</strong><br>Asal: {{ $money($item['nominal_asal']) }}<br>Hasil sementara: {{ $item['nominal_disetujui'] === null ? 'Belum diisi' : $money($item['nominal_disetujui']) }}<br>{{ $item['catatan'] ?? '' }}</p>@endforeach
+                    @foreach($draft->details as $item)<p><strong>{{ $item['cost_category_name'] }}</strong><br>{{ $item['source_remark'] ?? '—' }}<br>Asal: {{ $money($item['nominal_asal']) }}<br>Hasil sementara: {{ $item['nominal_disetujui'] === null ? 'Belum diisi' : $money($item['nominal_disetujui']) }}<br>{{ $item['catatan'] ?? '' }}</p>@endforeach
                 </details>
             </td>
         </tr>

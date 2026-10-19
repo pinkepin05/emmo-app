@@ -8,8 +8,6 @@
             <dt>Pending / Belum Dicek</dt><dd>{{ $financeMoney($row->nominal_user) }}</dd>
         @elseif($row->finance_status === 'REVISION')
             <dt>Perlu Revisi (keputusan lama)</dt><dd>{{ $financeMoney($row->nominal_user) }}</dd>
-        @elseif($row->finance_status === 'RECHECK')
-            <dt>Pengajuan Perlu Cek Ulang</dt><dd>{{ $financeMoney($row->nominal_user) }}</dd>
         @elseif($row->finance_status === 'REJECTED')
             <dt>Ditolak</dt><dd>{{ $financeMoney($row->nominal_user) }}</dd>
         @endif
@@ -24,12 +22,4 @@
     @if($row->catatan_keputusan)
         <div class="mt-3"><h3 class="h6">{{ $row->needs_recheck ? 'Catatan keputusan sebelumnya' : 'Catatan keputusan untuk user' }}</h3><p class="small text-break mb-0" style="white-space:pre-wrap">{{ $row->catatan_keputusan }}</p></div>
     @endif
-    @can('akses.approval-finance')
-        @if($row->check_id)
-            <div class="recap-help-links">
-                <a class="btn btn-sm btn-outline-secondary" href="{{ route('bs-usage-checks.show', $row->check_id) }}">Rincian Pemeriksaan Finance</a>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ route('bs-usage-checks.index', ['tampilan' => 'rincian', 'mode' => 'semua', 'jenis_source' => $row->jenis, 'source_id' => $row->source_id]) }}">Riwayat Pemeriksaan</a>
-            </div>
-        @endif
-    @endcan
 </section>

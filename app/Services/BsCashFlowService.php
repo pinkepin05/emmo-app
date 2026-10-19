@@ -6,6 +6,7 @@ use App\Models\ApprovalBsFinance;
 use App\Models\BsCashFlowSnapshot;
 use App\Models\PengajuanBs;
 use App\Models\Periode;
+use App\Models\StockCashFlowSnapshot;
 use App\Models\TransaksiOperasionalHeader;
 use App\Models\TransaksiPerjalananDinasHeader;
 use App\Support\Money;
@@ -40,18 +41,28 @@ class BsCashFlowService
     public function calculate(int $userId, string $periode): array
     {
         $periode = $this->periods->normalize($periode);
+        if (Periode::where('periode', $periode)->where('status', 'CLOSED')->exists()) {
+            $frozen = BsCashFlowSnapshot::where('user_id', $userId)->where('periode', $periode)->first();
+            if ($frozen?->saldo_akhir !== null) {
+                return $frozen->only(['saldo_awal', 'total_masuk', 'total_keluar', 'penyesuaian', 'saldo_akhir', 'opening_final', 'finance_confirmed']);
+            }
+        }
         $previous = $this->periods->previous($periode);
         $previousRecord = Periode::where('periode', $previous)->first();
         $opening = 0;
         $ready = !Periode::where('periode', '<', $periode)->exists();
 
         if ($previousRecord?->status === 'CLOSED') {
-            $prior = BsCashFlowSnapshot::where('user_id', $userId)->where('periode', $previous)->first();
+            // Continue the published cash closing balance, including historical event costs.
+            // Both current ledgers must inherit it once, even if the old BS-only balance differs.
+            $prior = StockCashFlowSnapshot::where('user_id', $userId)->where('periode', $previous)
+                ->whereNotNull('saldo_akhir')->first()
+                ?? BsCashFlowSnapshot::where('user_id', $userId)->where('periode', $previous)->first();
             if ($prior && $prior->saldo_akhir !== null) {
                 $opening = Money::minor($prior->saldo_akhir);
                 $ready = $prior->opening_final;
             } else {
-                // Bootstrap the new BS-only summary without rewriting legacy snapshots.
+                // Bootstrap a missing prior summary without rewriting existing closed snapshots.
                 $prior = $this->calculate($userId, $previous);
                 $opening = Money::minor($prior['saldo_akhir']);
                 $ready = $prior['opening_final'];
@@ -59,12 +70,8 @@ class BsCashFlowService
         }
 
         $incoming = Money::minor($this->receipts($userId, $periode)->sum('nominal_approved'));
-        $outgoing = 0;
-        foreach ([TransaksiOperasionalHeader::class, TransaksiPerjalananDinasHeader::class] as $model) {
-            foreach ($this->expenses($model, $userId, $periode)->withSum('details', 'nominal')->get() as $header) {
-                $outgoing += Money::minor($header->details_sum_nominal);
-            }
-        }
+        $outgoing = app(FinanceBsExpenseService::class)->expenses($userId, $periode)
+            ->sum(fn ($row) => Money::minor($row['nominal']));
         $adjustment = $this->adjustment($userId, $periode);
 
         return [
@@ -76,6 +83,7 @@ class BsCashFlowService
                 ? Money::decimal($opening + $incoming - $outgoing + $adjustment)
                 : null,
             'opening_final' => (bool) $ready,
+            'finance_confirmed' => true,
         ];
     }
 
@@ -109,6 +117,8 @@ class BsCashFlowService
         return PengajuanBs::pluck('user_id')->merge(BsCashFlowSnapshot::pluck('user_id'))
             ->merge(TransaksiOperasionalHeader::whereNotNull('bs_owner_id')->pluck('bs_owner_id'))
             ->merge(TransaksiPerjalananDinasHeader::whereNotNull('bs_owner_id')->pluck('bs_owner_id'))
+            ->merge(\App\Models\PerongkosanEventDalamKota::pluck('user_id'))
+            ->merge(\App\Models\PerongkosanEventLuarKota::pluck('user_id'))
             ->unique()->sort()->values()->all();
     }
 
@@ -119,13 +129,17 @@ class BsCashFlowService
 
     public function details(int $userId, string $periode): array
     {
+        $periode = $this->periods->normalize($periode);
         $result = ['masuk' => [], 'keluar' => [], 'penyesuaian' => []];
         foreach ($this->receipts($userId, $periode)->with('pengajuanBs')->orderBy('tanggal_cair')->get() as $receipt) {
             $result['masuk'][] = ['type' => 'BS Dicairkan', 'date' => $receipt->tanggal_cair,
                 'description' => $receipt->pengajuanBs?->document_no ?? '-', 'nominal' => $receipt->nominal_approved,
                 'url' => route('pengajuan-bs.show', $receipt->pengajuan_bs_id)];
         }
-        foreach ([TransaksiOperasionalHeader::class => 'Operasional Area Sales', TransaksiPerjalananDinasHeader::class => 'Perjalanan Dinas'] as $model => $label) {
+        $snapshot = $this->recalculateSnapshot($userId, $periode);
+        if ($snapshot->finance_confirmed) {
+            $result['keluar'] = app(FinanceBsExpenseService::class)->expenses($userId, $periode)->all();
+        } else foreach ([TransaksiOperasionalHeader::class => 'Operasional Area Sales', TransaksiPerjalananDinasHeader::class => 'Perjalanan Dinas'] as $model => $label) {
             foreach ($this->expenses($model, $userId, $periode)->with(['user', 'bonSementara'])->withSum('details', 'nominal')->orderBy('tanggal')->get() as $header) {
                 $result['keluar'][] = ['type' => $label, 'date' => $header->tanggal,
                     'description' => $header->transaksi_id.' (diinput: '.($header->user?->nama ?? '-').')',

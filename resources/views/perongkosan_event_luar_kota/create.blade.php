@@ -23,7 +23,7 @@
             --text-muted: #94a3b8;
             --border-color: #e2e8f0;
             --border-strong: #cbd5e1;
-            --input-bg: #f8fafc;
+            --input-bg: #ffffff;
             --accent-primary: #3b82f6;
             --accent-success: #10b981;
             --accent-info: #0ea5e9;
